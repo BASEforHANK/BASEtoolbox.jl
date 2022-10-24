@@ -6,4 +6,4 @@ Note that the toolbox is not a 1-for-1 replication package for the linked paper.
 
 There is also currently an issue with MKL on macOS. Therefore, we use OpenBLAS for macOS machines. Note, that MKL offers considerable speed-ups.
 
-To get started, clone or download the repository. The full documentation can be found [here](/docs/build/index.html) or locally in `docs/build`.
+To get started, clone or download the repository. The full documentation can be found locally in `docs/build`.
