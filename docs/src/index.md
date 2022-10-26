@@ -1,6 +1,6 @@
 # BASEforHANK.jl Documentation
 ## Introduction
-This manual documents the Julia module **BASEforHANK**, that implements the and BAyesian Solution and
+This manual documents the Julia module **BASEforHANK**, that provides a toolbox for the BAyesian Solution and
 Estimation (BASE) of a heterogeneous-agent New-Keynesian (HANK) model. It accompanies the paper
 [Shocks, Frictions, and Inequality in US Business Cycles](https://www.benjaminborn.de/publication/bbl_inequality_2020/).
 

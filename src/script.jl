@@ -1,8 +1,8 @@
 #------------------------------------------------------------------------------
 # Header: load module
 #------------------------------------------------------------------------------
-# make sure that your pwd is set to the folder containing script and BASEforHANK
-# otherwise adjust the load path
+# ATTENTION: make sure that your present working directory pwd() is set to the folder
+# containing script.jl and BASEforHANK.jl. Otherwise adjust the load path.
 
 # pre-process user inputs for model setup
 include("3_NumericalBasics/PreprocessInputs.jl")
