@@ -141,8 +141,8 @@ julia> n_par = NumericalParameters(mmin = -6.6, mmax = 1000)
 	sol_algo::Symbol   	   = :schur # options: :schur (Klein's method), :lit (linear time iteration), :litx (linear time iteration with Howard improvement)
 	verbose::Bool		   = true   # verbose model
 	reduc_value::Float64   = 1e-5   # Lost fraction of "energy" in the DCT compression for value functions
-	reduc_copula::Integer  = 20     # maximal sum of polynomial degrees used in copula perturbations
-                                    # set to ny_copula + nk_copula + nm_copula for no initial reduction
+	reduc_marginal_value::Float64 = 1e-2   # Lost fraction of "energy" in the DCT compression for marginal value functions
+
 	further_compress::Bool = true   # run model-reduction step based on MA(∞) representation
 	further_compress_critC = eps()  # critical value for eigenvalues for Value functions
     further_compress_critS = ϵ      # critical value for eigenvalues for copula

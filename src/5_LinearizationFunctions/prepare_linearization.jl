@@ -64,22 +64,25 @@ function prepare_linearization(KSS, VmSS, VkSS, distrSS, n_par, m_par)
     # ------------------------------------------------------------------------------
     # 2 a.) Discrete cosine transformation of marginal value functions
     # ------------------------------------------------------------------------------
-    indk, indm, _ = Value_jacob_dct(VkSS, VmSS, n_par, m_par, 1.0/m_par.μw, 1.0, 1.0, m_par.RB, 
-                                    m_par.τ_prog, m_par.τ_lev, n_par.H, 1.0, 1.0, rSS, wSS, NSS, 
-                                    profitsSS, unionprofitsSS, av_tax_rateSS, 1.0)
-    VmSS        = log.(invmutil(VmSS,m_par))
-    VkSS        = log.(invmutil(VkSS,m_par))
+    # Vector of all prices in the household problem (in SS)
+    price_vectorSS = [1.0/m_par.μw, 1.0, 1.0, m_par.RB, 
+        m_par.τ_prog, m_par.τ_lev, n_par.H, 1.0, 1.0, rSS, wSS, NSS, 
+        profitsSS, unionprofitsSS, av_tax_rateSS, 1.0][:]
+
+    indk, indm, _ = DCT_select_V(VkSS, VmSS, TransitionMatSS, price_vectorSS, n_par, m_par)
+    VmSS          = log.(invmutil(VmSS,m_par))
+    VkSS          = log.(invmutil(VkSS,m_par))
     compressionIndexesVm = sort(unique(vcat(indm...)))
     compressionIndexesVk = sort(unique(vcat(indk...)))
-    
+
     # ------------------------------------------------------------------------------
     # 2b.) Select polynomials for copula perturbation
     # ------------------------------------------------------------------------------
-    SELECT                = [ ((i+j+k)<=n_par.reduc_copula) & 
-                             (!((i==1) & (j ==1)) & !((k==1) & (j ==1)) & !((k==1) & (i ==1))) 
-                             for i = 1:n_par.nm_copula, j = 1:n_par.nk_copula, k = 1:n_par.ny_copula]
-    
+    SELECT                = [ (!((i==1) & (j ==1)) & !((k==1) & (j ==1)) & !((k==1) & (i ==1))) 
+                    for i = 1:n_par.nm_copula, j = 1:n_par.nk_copula, k = 1:n_par.ny_copula]
+
     compressionIndexesCOP = findall(SELECT[:])     # store indices of selected coeffs 
+
 
     # ------------------------------------------------------------------------------
     # 2c.) Store Compression Indexes
