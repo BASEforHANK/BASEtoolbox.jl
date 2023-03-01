@@ -79,6 +79,9 @@ println("One model solution takes")
 @btime lr_reduc = update_model(sr_reduc, lr_full, m_par)
 @set! sr_reduc.n_par.verbose = true;
 
+# Fix seed for random number generation
+BASEforHANK.Random.seed!(e_set.seed)
+
 if e_set.estimate_model == true
 
         # warning: estimation might take a long time!
