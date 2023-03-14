@@ -9,8 +9,8 @@
 # Plot IRFs
 ###############################################################################################
 function plot_irfs(IRFs, SHOCKs, select_variables, nice_var_names, nice_s_names, horizon, model_names::Array{String}, n_plotcol; savepdf = false, suffix="")
-    styles = [:dash  :dashdot  :solid :dashdotdot :dot :dash :solid]
-    colorlist = [:blue, :firebrick1, :black, :green, :orange, :purple, :yellow]
+    styles = [:solid :dash :dashdot :dashdotdot :dot :dash :solid]
+    colorlist = [ :black, :blue, :firebrick1, :green, :orange, :purple, :yellow]
     pvec = Vector{Plots.Plot{Plots.GRBackend}}(undef, length(SHOCKs))
     counts = 0
     for s in SHOCKs

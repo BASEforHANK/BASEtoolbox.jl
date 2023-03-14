@@ -6,5 +6,5 @@ include("../5_LinearizationFunctions/LinearSolution_estim.jl")
 include("../5_LinearizationFunctions/SolveDiffEq.jl")
 include("../5_LinearizationFunctions/compute_reduction.jl")
 include("../5_LinearizationFunctions/Shuffle.jl")
-include("../5_LinearizationFunctions/DCT_select_V.jl")
+include("../5_LinearizationFunctions/first_stage_reduction.jl")
 

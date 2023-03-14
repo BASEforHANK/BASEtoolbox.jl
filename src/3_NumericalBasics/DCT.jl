@@ -47,3 +47,17 @@ function compress(compressionIndexes::AbstractArray, XU::AbstractArray,
     θ = XU2[compressionIndexes]
     return θ
 end
+
+function select_ind(Theta, reduc_value::Float64)
+    # Select the multidimensional DCT coefficients that maintain 1-reduc_value of the "energy" of V
+
+    Theta = Theta[:]                          # Discrete cosine transformation of marginal liquid asset value
+    ind = sortperm(abs.(Theta[:]); rev=true)   # Indexes of coefficients sorted by their absolute size
+    coeffs = 1                                     # Container to store the number of retained coefficients
+    # Find the important basis functions (discrete cosine) for VmSS
+    while norm(Theta[ind[1:coeffs]]) / norm(Theta) < 1 - reduc_value
+        coeffs += 1                                    # add retained coefficients until only n_par.reduc_value hare of energy is lost
+    end
+    select_ind = ind[1:coeffs]
+    return select_ind
+end

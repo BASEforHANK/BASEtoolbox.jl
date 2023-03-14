@@ -6,7 +6,7 @@
 
 # pre-process user inputs for model setup
 include("3_NumericalBasics/PreprocessInputs.jl")
-using BenchmarkTools, LinearAlgebra
+using BenchmarkTools, LinearAlgebra, Random, Revise
 
 push!(LOAD_PATH, pwd())
 using BASEforHANK   
@@ -28,8 +28,11 @@ e_set = BASEforHANK.e_set;
 # @load BASEforHANK.e_set.save_posterior_file par_final e_set
 # m_par = BASEforHANK.Flatten.reconstruct(m_par, par_final[1:length(par_final)-length(e_set.meas_error_input)])
 
+# Fix seed for random number generation
+BASEforHANK.Random.seed!(e_set.seed)
+
 ################################################################################
-# Comment in the following block to be able to go straight to plotting (comment out lines 40-8)
+# Comment in the following block to be able to go straight to plotting (comment out lines 40-53)
 ################################################################################
 # @load "7_Saves/steadystate.jld2" sr_full
 # @load "7_Saves/linearresults.jld2" lr_full
@@ -37,8 +40,15 @@ e_set = BASEforHANK.e_set;
 # @load BASEforHANK.e_set.save_posterior_file sr_mc lr_mc er_mc m_par_mc smoother_output
 # @set! e_set.estimate_model = false 
 
-# Calculate Steady State at prior mode to find further compressed representation of Vm, Vk
-sr_full = compute_steadystate(m_par)
+# Calculate Steady State at prior mode 
+println("Calculating the steady state")
+ss_full = call_find_steadystate(m_par)
+# Find sparse DCT representation
+println("preparing the linearization")
+sr_full = call_prepare_linearization(ss_full, m_par)
+# COMPACT call of both of the above:
+# sr_full = compute_steadystate(m_par)
+
 jldsave("7_Saves/steadystate.jld2", true; sr_full) # true enables compression
 # @load "7_Saves/steadystate.jld2" sr_full
 
@@ -56,8 +66,8 @@ fr_borr = sum(distr_m[sr_full.n_par.grid_m.<0])
 
 println("Steady State Moments:")
 println("Liquid to Illiquid Assets Ratio:", B/K)
-println("Capital to Output Ratio:", K/Y)
-println("Government Debt to Output Ratio:", Bgov/Y)
+println("Capital to Output Ratio:", K/Y/4.0)
+println("Government Debt to Output Ratio:", Bgov/Y/4.0)
 println("Government spending to Output Ratio:", G/Y)
 println("TOP 10 Wealth Share:", T10W)
 println("Fraction of Borrower:", fr_borr)
@@ -78,9 +88,6 @@ println("One model solution takes")
 @set! sr_reduc.n_par.verbose = false
 @btime lr_reduc = update_model(sr_reduc, lr_full, m_par)
 @set! sr_reduc.n_par.verbose = true;
-
-# Fix seed for random number generation
-BASEforHANK.Random.seed!(e_set.seed)
 
 if e_set.estimate_model == true
 
@@ -105,6 +112,7 @@ if e_set.estimate_model == true
         # !! The following file is not provided !!
         #      @load BASEforHANK.e_set.save_posterior_file sr_mc lr_mc er_mc  m_par_mc draws_raw posterior accept_rate par_final hessian_sym smoother_output e_set
 end
+
 
 ##############################################################################################
 # Graphical Model Output

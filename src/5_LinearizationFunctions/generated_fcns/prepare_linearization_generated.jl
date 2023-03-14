@@ -65,27 +65,27 @@ function prepare_linearization(KSS, VmSS, VkSS, distrSS, n_par, m_par)
     # ------------------------------------------------------------------------------
     # STEP 2: Dimensionality reduction
     # ------------------------------------------------------------------------------
-    # 2 a.) Discrete cosine transformation of marginal value functions
+    # 2 a.) Selection of DCT coefficients for reduction of the marginal value functions
     # ------------------------------------------------------------------------------
     # Vector of all prices in the household problem (in SS)
-    price_vectorSS = [1.0/m_par.μw, 1.0, 1.0, m_par.RB, 
-        m_par.τ_prog, m_par.τ_lev, n_par.H, 1.0, 1.0, rSS, wSS, NSS, 
-        profitsSS, unionprofitsSS, av_tax_rateSS, 1.0][:]
-
-    indk, indm, _ = DCT_select_V(VkSS, VmSS, TransitionMatSS, price_vectorSS, n_par, m_par)
+    price_vectorSS = [1.0/m_par.μw, 1.0, m_par.RB, m_par.τ_prog, m_par.τ_lev, 
+                     rSS, wSS, profitsSS, unionprofitsSS, av_tax_rateSS, 1.0][:]
+ 
+    indk, indm, _ = first_stage_reduction(VkSS, VmSS, TransitionMat_aSS, TransitionMat_nSS, 
+                                        NSS, m_a_starSS, k_a_starSS, m_n_starSS,
+                                        price_vectorSS, n_par, m_par)
     VmSS          = log.(invmutil(VmSS,m_par))
     VkSS          = log.(invmutil(VkSS,m_par))
     compressionIndexesVm = sort(unique(vcat(indm...)))
     compressionIndexesVk = sort(unique(vcat(indk...)))
-
+    
     # ------------------------------------------------------------------------------
     # 2b.) Select polynomials for copula perturbation
     # ------------------------------------------------------------------------------
     SELECT                = [ (!((i==1) & (j ==1)) & !((k==1) & (j ==1)) & !((k==1) & (i ==1))) 
-                    for i = 1:n_par.nm_copula, j = 1:n_par.nk_copula, k = 1:n_par.ny_copula]
-
+                             for i = 1:n_par.nm_copula, j = 1:n_par.nk_copula, k = 1:n_par.ny_copula]
+    
     compressionIndexesCOP = findall(SELECT[:])     # store indices of selected coeffs 
-
 
     # ------------------------------------------------------------------------------
     # 2c.) Store Compression Indexes
@@ -236,8 +236,8 @@ function copula_marg_equi_y(distr_i, grid_i, nx)
     aux_marginal[1]     = CDF_i[1]
     aux_marginal[end-1] = CDF_i[end-1]
     copula_marginal     = copy(aux_marginal)
-    jlast               = nx
-    for i = nx-1:-1:1
+    jlast               = nx-1
+    for i = nx-2:-1:1
         j = locate(aux_marginal[i], CDF_i) + 1
         if jlast == j 
             j -=1

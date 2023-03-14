@@ -25,7 +25,9 @@ The function takes the parameter `struct` `ModelParameters` as input `m_par` (se
 To find the stationary equilibrium, we proceed in roughly the following steps:
 
 1. instantiate the parameter `struct` `NumericalParameters` as `n_par` (see [Parameters](@ref)).
-   Within the struct, we set the number of income states [`ny`] and use the [`BASEforHANK.Tauchen()`](@ref) method to obtain a grid and a transition matrix of income, given the autocorrelation of the income process [`m_par.ρ_h`]. Then, include entrepreneurial state.
+   Within the struct, we set the number of income states [`ny`] and use the [`BASEforHANK.Tauchen()`](@ref) 
+   method to obtain a grid and a transition matrix of income, given the autocorrelation of the income process [`m_par.ρ_h`]. 
+   Then, include entrepreneurial state.
 2. find equilibrium capital stock (by finding a root of [`BASEforHANK.Kdiff()`](@ref)), where
     the supply of capital by households is calculated in [`BASEforHANK.Ksupply()`](@ref),
     which uses the Endogenous Grid Method (see [`BASEforHANK.EGM_policyupdate`](@ref))
@@ -37,13 +39,17 @@ BASEforHANK.prepare_linearization
 ```
 We first calculate other equilibrium quantities and produce distributional summary statistics ([`BASEforHANK.distrSummaries()`](@ref)). Next, we reduce the dimensionality:
 
-1. compute coefficients of the Chebyshev polynomials that serve as basis functions
-    for ``V_m`` and ``V_k``, using the Discrete Cosine Transformation (Julia-package
-    `FFTW`), and retain those that either explain a large share of the variance of 
-    coefficients in the steady-state value functions (up to `100*(1-n_par.reduc)` percent) 
-    or a large share of the variation in coefficients that match the Jacobian of the value 
-    function with respect to price changes. The corresponding indices are saved in `compressionIndexes`.
-2. prepare a node mesh on which the time-varying linear interpolant of the copula
+1. Find the sparse representation of fluctuations of ``V_m`` and ``V_k`` around the steady state. For this purpose,
+    calculate the derivatives of ``V_m`` and ``V_k`` with respect to all prices
+    that enter the household problem. Then transform these derivatives using the 
+    Discrete Cosine Transformation (Julia-package `FFTW`) into polynomial coefficients. 
+    Calculate the average absolute value of those coefficients and retain those that explain a large 
+    share of the variance of coefficients (up to `100*(1-n_par.reduc_marginal_value)` percent). 
+    Add, in the same way, polynomial coefficients that explain  ``V_m`` and ``V_k`` themselves. 
+    The quality of the latter approximation is controlled by `n_par.reduc_value`. 
+    The corresponding indices are saved in `compressionIndexes`. This whole step 
+    is being done in [`BASEforHANK.first_stage_reduction`](@ref).
+2. Prepare a node mesh on which the time-varying linear interpolant of the copula
      is defined. The grid in each ``m``, ``k``, and ``y`` dimension is selected 
      such that each resulting bin holds approximately the same share of the
      respective aggregate variable. 

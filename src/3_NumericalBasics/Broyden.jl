@@ -13,25 +13,21 @@ function  broyden(f,x0,critF,critX,maxiter,tau,tauS)
 
   while distF[iter+1]>critF && distX>critX && iter<maxiter-1
     iter = iter+1; # count number of iterations
+    tauF = min(tau,iter*tauS)
 
-    #  tauF = 2.0 .* tau ./ (1.0 .+ exp(iter.*tauS)) .+ (1.0 .- 2.0 ./ (1.0 .+ exp(iter.*tauS)))
-     tauF = min(tau,iter*tauS)
+    Fold = copy(Fnow); # Store last function values
+    xold = copy(xnow); # Store last x guess
+    xnow = xnow - tauF.* Bnow*Fnow; # Update x guess
+    Fnow = f(xnow); # Evaluate the function
+    Fnow = Fnow[:]; # If Function is matrix valued then vectorize
+    Dx = xnow - xold; # Change in x
+    Dy = Fnow - Fold; # Change in f(x)
 
-
-     Fold = copy(Fnow); # Store last function values
-     xold = copy(xnow); # Store last x guess
-     xnow = xnow - tauF.* Bnow*Fnow; # Update x guess
-     Fnow = f(xnow); # Evaluate the function
-     Fnow = Fnow[:]; # If Function is matrix valued then vectorize
-     Dx = xnow - xold; # Change in x
-     Dy = Fnow - Fold; # Change in f(x)
     # update inverse Jacobian
-     Bnow .= Bnow .+ (Dx - Bnow*Dy)*(Dx'*Bnow)/(Dx'*Bnow*Dy);
-     distF[iter+1] = maximum(abs.(Fnow)); # Calculate the distance from zero
-     distX = maximum(abs.(Dx)); # Calculate the change in variable
+    Bnow .= Bnow .+ (Dx - Bnow*Dy)*(Dx'*Bnow)/(Dx'*Bnow*Dy);
+    distF[iter+1] = maximum(abs.(Fnow)); # Calculate the distance from zero
+    distX = maximum(abs.(Dx)); # Calculate the change in variable
 
-
-    #  println( distF[iter+1])
   end
   fval=Fnow;
   xstar=xnow;

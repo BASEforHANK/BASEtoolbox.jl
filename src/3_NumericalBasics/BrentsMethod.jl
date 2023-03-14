@@ -72,10 +72,9 @@ function Brent(g::Function, a::Real, b::Real; tol = 1e-14)
     end
     return b, iter
 end
-
-## Brent's method customized
 #-------------------------------------------------------------------------------
-## BRENT'S METHOD ##
+# Brent's method, customized to use initial guesses for value functions and 
+# distributions, based on linear interpolations from last two iterations
 #-------------------------------------------------------------------------------
 function CustomBrent(f::Function, a::Real, b::Real; tol = 1e-14)
     # Implementation of Brent's method to find a root of a function (as on wikipedia)
@@ -144,7 +143,6 @@ function CustomBrent(f::Function, a::Real, b::Real; tol = 1e-14)
             break
         end
         fb = f(b, initial, (fa[2] .+ d/(c-a).* (fc[2]-fa[2])),(fa[3] .+ d/(c-a).* (fc[3]-fa[3])),(fa[4] .+ d/(c-a).* (fc[4]-fa[4])))
-        #println(b)
     end
     return b, iter, fb
 end

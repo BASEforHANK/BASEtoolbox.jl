@@ -126,23 +126,23 @@ julia> n_par = NumericalParameters(mmin = -6.6, mmax = 1000)
 @with_kw struct NumericalParameters
 	# Numerical Parameters to be set in advance
 	m_par::ModelParameters = ModelParameters()
-	ny::Int             = 11  	    # ngrid income (4 is the coarse grid used initially in finding the StE)
-	nk::Int            	= 50        # ngrid illiquid assets (capital) (10 is the coarse grid used initially in finding the StE)
-	nm::Int            	= 50        # ngrid liquid assets (bonds) (10 is the coarse grid used initially in finding the StE)
-	ny_copula::Int    	= 10        # ngrid income for refinement
-	nk_copula::Int      = 10        # ngrid illiquid assets (capital)
-	nm_copula::Int      = 10        # ngrid liquid assets (bonds)
+	ny::Int             = 14 	    # ngrid income (4 is the coarse grid used initially in finding the StE)
+	nk::Int            	= 60       # ngrid illiquid assets (capital) (10 is the coarse grid used initially in finding the StE)
+	nm::Int            	= 60       # ngrid liquid assets (bonds) (10 is the coarse grid used initially in finding the StE)
+	ny_copula::Int    	= 5  # ngrid for copula in income (rule of thumb: divide ny, w/o entrepreneur, by two)
+	nk_copula::Int      = 4   # ngrid for copula in illiquid assets (capital, rule of thumb: divide nk by twelve)
+	nm_copula::Int      = 4   # ngrid for copula in liquid assets (bonds, rule of thumb: divide nm by twelve)
 	kmin::Float64      	= 0.0       # gridmin capital
 	kmax::Float64      	= 2250.0    # gridmax capital
 	mmin::Float64      	= -6.6      # gridmin bonds
 	mmax::Float64      	= 1750.0    # gridmax bonds
-	ϵ::Float64         	= 1.0e-14 	# precision of solution 
+	ϵ::Float64         	= 1e-13 	# precision of solution 
 	
 	sol_algo::Symbol   	   = :schur # options: :schur (Klein's method), :lit (linear time iteration), :litx (linear time iteration with Howard improvement)
 	verbose::Bool		   = true   # verbose model
-	reduc_value::Float64   = 1e-5   # Lost fraction of "energy" in the DCT compression for value functions
-	reduc_marginal_value::Float64 = 1e-2   # Lost fraction of "energy" in the DCT compression for marginal value functions
-
+	reduc_value::Float64   = 0.7e-3   # Lost fraction of "energy" in the DCT compression for value functions
+	reduc_marginal_value::Float64 = 0.7e-3   # Lost fraction of "energy" in the DCT compression for value functions
+	
 	further_compress::Bool = true   # run model-reduction step based on MA(∞) representation
 	further_compress_critC = eps()  # critical value for eigenvalues for Value functions
     further_compress_critS = ϵ      # critical value for eigenvalues for copula
@@ -155,21 +155,28 @@ julia> n_par = NumericalParameters(mmin = -6.6, mmax = 1000)
 	naggrcontrols::Int   = 16 							# (placeholder for the) number of aggregate controls
 	nstates::Int         = ny + nk + nm + naggrstates - 3 # (placeholder for the) number of states + controls in total
 	ncontrols::Int	     = 16 							# (placeholder for the) number of controls in total
-	ntotal::Int 	     = nstates+ncontrols 				# (placeholder for the) number of states+ controls in total
+	ntotal::Int 	     = nstates+ncontrols 		    # (placeholder for the) number of states+ controls in total
 	n_agg_eqn::Int 		 = nstates+ncontrols 		    # (placeholder for the) number of aggregate equations
 	naggr::Int 		     = length(aggr_names) 		    # (placeholder for the) number of aggregate states + controls
-	ntotal_r::Int 	     = nstates+ncontrols
-	nstates_r::Int 	     = nstates
-	ncontrols_r::Int 	 = ncontrols
+	ntotal_r::Int 	     = nstates+ncontrols			# (placeholder for the) number of states + controls in total after reduction
+	nstates_r::Int 	     = nstates						# (placeholder for the) number of states in total after reduction
+	ncontrols_r::Int 	 = ncontrols					# (placeholder for the) number of controls in total after reduction
 	
-	PRightStates::AbstractMatrix = Diagonal(ones(nstates))
-	PRightAll::AbstractMatrix    = Diagonal(ones(ntotal))
+	PRightStates::AbstractMatrix = Diagonal(ones(nstates)) # (placeholder for the) Matrix used for second stage reduction (states only)
+	PRightAll::AbstractMatrix    = Diagonal(ones(ntotal))  # (placeholder for the) Matrix used for second stage reduction 
 	
-	Π::Matrix{Float64}       	 = [Tauchen(m_par.ρ_h, ny - 1)[2] .* (1.0 .- m_par.ζ)  m_par.ζ .* ones(ny - 1);
-                            		m_par.ι ./ (ny-1) * ones(1, ny-1) 1.0 .- m_par.ι]
+	# income grid
 	grid_y::Array{Float64,1} 	 = [exp.(Tauchen(m_par.ρ_h, ny - 1)[1] .* m_par.σ_h ./ sqrt(1.0 .- m_par.ρ_h.^2));
-									(m_par.ζ .+ m_par.ι) / m_par.ζ]   # income grid
-	bounds_y::Array{Float64,1}   = Tauchen(m_par.ρ_h, ny-1)[3]	# (placeholder) bonds of income bins (overwritten by Tauchen)
+									(m_par.ζ .+ m_par.ι) / m_par.ζ] 
+	# Transition matrix for income in steady state
+	Π::Matrix{Float64}       	 = [Tauchen(m_par.ρ_h, ny - 1)[2] .* (1.0 .- m_par.ζ)  		m_par.ζ .* ones(ny - 1);
+                            		m_par.ι ./ (ny-1) * ones(1, ny-1) 						1.0 .- m_par.ι]
+	# bounds of income bins (except entrepreneur) 
+	bounds_y::Array{Float64,1}   = Tauchen(m_par.ρ_h, ny-1)[3]	
+
+	H::Float64            = ((Π^1000)[1,1:end-1]' * grid_y[1:end-1]) # stationary equilibrium average human capital
+	HW::Float64           = (1.0/(1.0-(Π^1000)[1,end]))		    	 # stationary equilibrium fraction workers
+
 	# initial gues for stationary distribution (needed if iterative procedure is used)
 	dist_guess::Array{Float64,3} = ones(nm, nk, ny) / (nm * nk * ny) 
 
@@ -189,13 +196,11 @@ julia> n_par = NumericalParameters(mmin = -6.6, mmax = 1000)
 	copula_marginal_k::Array{Float64,1} = collect(range(0.0, stop=1.0, length = nk_copula))
 	copula_marginal_y::Array{Float64,1} = collect(range(0.0, stop=1.0, length = ny_copula))
 
-	H::Float64            = ((Π^1000)[1,1:end-1]' * grid_y[1:end-1]) # stationary equilibrium average human capital
-	HW::Float64           = (1.0/(1.0-(Π^1000)[1,end]))		    	 # stationary equilibrium fraction workers
-	
 	# Storage for linearization results
 	LOMstate_save::Array{Float64,2}      = zeros(nstates, nstates)
 	State2Control_save::Array{Float64,2} = zeros(ncontrols, nstates)
 end
+
 
 
 @doc raw"""

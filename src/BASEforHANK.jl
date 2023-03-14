@@ -14,9 +14,9 @@ if !Sys.isapple() # issues encountered when using mkl with macos + more than 1 t
     using MKL
 end
 
-using Plots, VegaLite, StatsPlots,  OrderedCollections, JLD2, FileIO, DataFrames, CSV, LaTeXStrings, JSON, CodecZlib, Parameters, Setfield, Flatten, FieldMetadata
+using Plots, VegaLite, StatsPlots, OrderedCollections, JLD2, FileIO, DataFrames, CSV, LaTeXStrings, JSON, CodecZlib, Parameters, Setfield, Flatten, FieldMetadata
 
-using LinearAlgebra, SparseArrays, BlockDiagonals, CategoricalArrays, Random, MCMCChains, Distributions, Roots,  ForwardDiff, Optim
+using LinearAlgebra, SparseArrays, BlockDiagonals, CategoricalArrays, Random, MCMCChains, Distributions, Roots, ForwardDiff, Optim
 
 using Statistics, PrettyTables, Colors
 
@@ -29,12 +29,13 @@ using FFTW: dct, ifft
 
 import Flatten: flattenable
 export ModelParameters, NumericalParameters, EstimationSettings,
-    SteadyResults, LinearResults, EstimResults,
-    compute_steadystate, linearize_full_model, model_reduction, update_model,
+    SteadyResults, LinearResults, EstimResults, SteadyState,
+    compute_steadystate, call_find_steadystate, call_prepare_linearization, 
+    linearize_full_model, model_reduction, update_model,
     find_mode, montecarlo, mode, metaflatten, prior, compare_2_linearizations,
-    reduction_quality, reduction_quality_seq, 
-    compute_irfs_vardecomp, plot_irfs,  compute_hist_decomp, 
-    plot_vardecomp, compute_bcfreq_vardecomp, compute_vardecomp_bounds, 
+    reduction_quality, reduction_quality_seq,
+    compute_irfs_vardecomp, plot_irfs, compute_hist_decomp,
+    plot_vardecomp, compute_bcfreq_vardecomp, compute_vardecomp_bounds,
     @set!, jldsave, @load,
     @writeXSS, @make_fn, @make_fnaggr, @make_struct, @make_struct_aggr,
     @generate_equations
@@ -58,27 +59,37 @@ include("2_includeLists/include_LinearizationFunctions.jl")
 include("2_includeLists/include_Estimation.jl")
 include("2_includeLists/include_PostEstimation.jl")
 
-
 @make_fn produce_indexes
 @make_fnaggr produce_indexes_aggr
 
-
 @doc raw"""
-    compute_steadystate()
+    call_findsteadystate()
 
-Compute steady state.
+Computes the steady state and fills the SteadyState struct -- without further steps of preparing the linearization.
 
 # Returns
 `struct` `SteadyResults`, containing returns of [`find_steadystate()`](@ref)
 """
-function compute_steadystate(m_par)
+function call_find_steadystate(m_par)
     #Calculate steady state capital stock
-    println("Revise")
     KSS, VmSS, VkSS, distrSS, n_par, m_par = find_steadystate(m_par)
+
+    return SteadyState(KSS, VmSS, VkSS, distrSS, n_par)
+end
+
+@doc raw"""
+    call_prepare_linearization()
+
+Runs the prepare linearization and fills the SteadyResults struct, sr.
+
+# Returns
+`struct` `SteadyResults`, containing returns of [`find_steadystate()`](@ref)
+"""
+function call_prepare_linearization(ss, m_par)
 
     # Prepare steadys state information for linearization
     XSS, XSSaggr, indexes, indexes_r, indexes_aggr, compressionIndexes, n_par, m_par,
-    CDFSS, CDF_m, CDF_k, CDF_y, distrSS = prepare_linearization(KSS, VmSS, VkSS, distrSS, n_par, m_par)
+    CDFSS, CDF_m, CDF_k, CDF_y, distrSS = prepare_linearization(ss.KSS, ss.VmSS, ss.VkSS, ss.distrSS, ss.n_par, m_par)
 
     println("Number of DCTs for Vm:")
     println(length(compressionIndexes[1]))
@@ -93,6 +104,25 @@ function compute_steadystate(m_par)
     return SteadyResults(XSS, XSSaggr, indexes, indexes_r, indexes_aggr, compressionIndexes,
         n_par, m_par, CDFSS, CDF_m, CDF_k, CDF_y, distrSS, state_names, control_names)
 end
+
+@doc raw"""
+    compute_steadystate()
+
+Compute steady state including the preparation for linearization
+
+# Returns
+`struct` `SteadyResults`, containing returns of [`find_steadystate()`](@ref)
+"""
+function compute_steadystate(m_par)
+    #Calculate steady state capital stock
+    ss = call_find_steadystate(m_par)
+
+    sr = call_prepare_linearization(ss, m_par)
+
+    return sr
+end
+
+
 
 @doc raw"""
     linearize_full_model()
@@ -114,7 +144,7 @@ function linearize_full_model(sr::SteadyResults, m_par::ModelParameters)
     if sr.n_par.verbose
         println("Initial linearization")
     end
-    State2Control, LOMstate, SolutionError, nk, A, B = LinearSolution(sr, m_par, A, B; estim = false)
+    State2Control, LOMstate, SolutionError, nk, A, B = LinearSolution(sr, m_par, A, B; estim=false)
 
     return LinearResults(State2Control, LOMstate, A, B, SolutionError, nk)
 end
@@ -138,7 +168,7 @@ function update_model(sr::SteadyResults, lr::LinearResults, m_par::ModelParamete
     if sr.n_par.verbose
         println("Updating linearization")
     end
-    State2Control, LOMstate, SolutionError, nk, A, B = LinearSolution_estim(sr, m_par, lr.A, lr.B; estim = true)
+    State2Control, LOMstate, SolutionError, nk, A, B = LinearSolution_estim(sr, m_par, lr.A, lr.B; estim=true)
 
     return LinearResults(State2Control, LOMstate, A, B, SolutionError, nk)
 end
@@ -157,10 +187,10 @@ function model_reduction(sr, lr, m_par)
     if n_par.further_compress
         println("Reduction Step")
         indexes_r, n_par = compute_reduction(sr, lr, m_par, e_set.shock_names)
-    
+
         println("Number of reduced model factors for DCTs for Vm & Vk:")
         println(length(indexes_r.Vm) + length(indexes_r.Vk))
-    
+
         println("Number of reduced model factors for copula DCTs:")
         println(length(indexes_r.COP))
     else
@@ -232,7 +262,7 @@ parameter estimate, and save all results in `file`.
 - `mr::LinearResults`
 - `er::EstimResults`
 """
-function montecarlo(sr::SteadyResults, lr::LinearResults, er::EstimResults, m_par::ModelParameters; file::String = e_set.save_posterior_file)
+function montecarlo(sr::SteadyResults, lr::LinearResults, er::EstimResults, m_par::ModelParameters; file::String=e_set.save_posterior_file)
     hessian_sym = Symmetric(nearest_spd(inv(er.hessian_final)))
     if sr.n_par.verbose
         println("Started MCMC. This might take a while...")
@@ -272,7 +302,7 @@ function montecarlo(sr::SteadyResults, lr::LinearResults, er::EstimResults, m_pa
 
     lr = update_model(sr, lr, m_par)
 
-    smoother_output = likeli(par_final, sr, lr, er, m_par, e_set; smoother = true)
+    smoother_output = likeli(par_final, sr, lr, er, m_par, e_set; smoother=true)
 
     if sr.n_par.verbose
         println("MCMC finished.")
