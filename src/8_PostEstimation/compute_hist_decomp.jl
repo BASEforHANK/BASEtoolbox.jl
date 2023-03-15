@@ -82,7 +82,10 @@ function compute_hist_decomp(sr, lr, e_set, m_par, smoother_output, select_varia
     if savepdf
         # plot(p...) |> save(string("8_PostEstimation/Figures/Smooth/HistD.pdf"))
         for j = eachindex(select_variables)
-            plot!(p[j], title="", fontfamily = "Computer Modern") |> save(string("8_PostEstimation/Figures/Smooth/HistD_",prefix, select_variables[j], ".pdf"))
+            plot!(p[j], title="", fontfamily = "Computer Modern") 
+            savefig(p[j],string("8_PostEstimation/Figures/Smooth/HistD_",prefix, select_variables[j], ".pdf"))
+            display(p[j])
+
         end
     end
     display(plot(p...))

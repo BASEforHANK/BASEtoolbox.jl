@@ -3,17 +3,17 @@
 #------------------------------------------------------------------------------
 # ATTENTION: make sure that your present working directory pwd() is set to the folder
 # containing script.jl and BASEforHANK.jl. Otherwise adjust the load path.
+cd("./src")
 
 # pre-process user inputs for model setup
 include("3_NumericalBasics/PreprocessInputs.jl")
-using BenchmarkTools, LinearAlgebra, Random, Revise
 
 push!(LOAD_PATH, pwd())
 using BASEforHANK   
 
 # set BLAS threads to the number of Julia threads.
 # prevents BLAS from grabbing all threads on a machine
-BLAS.set_num_threads(Threads.nthreads())
+BASEforHANK.LinearAlgebra.BLAS.set_num_threads(Threads.nthreads())
 
 #------------------------------------------------------------------------------
 # initialize parameters to priors to select coefficients of DCTs of Vm, Vk]
@@ -86,7 +86,7 @@ jldsave("7_Saves/reduction.jld2", true; sr_reduc, lr_reduc)
 # model timing
 println("One model solution takes")
 @set! sr_reduc.n_par.verbose = false
-@btime lr_reduc = update_model(sr_reduc, lr_full, m_par)
+BASEforHANK.@btime lr_reduc = update_model(sr_reduc, lr_full, m_par)
 @set! sr_reduc.n_par.verbose = true;
 
 if e_set.estimate_model == true
@@ -108,9 +108,9 @@ if e_set.estimate_model == true
         jldsave(BASEforHANK.e_set.save_posterior_file, true;
                 sr_mc, lr_mc, er_mc, m_par_mc, draws_raw, posterior, accept_rate,
                 par_final, hessian_sym, smoother_output, e_set)
-
         # !! The following file is not provided !!
         #      @load BASEforHANK.e_set.save_posterior_file sr_mc lr_mc er_mc  m_par_mc draws_raw posterior accept_rate par_final hessian_sym smoother_output e_set
+
 end
 
 
@@ -123,10 +123,15 @@ using Plots, VegaLite, DataFrames, FileIO, StatsPlots, CategoricalArrays, Flatte
 select_variables = [:Ygrowth, :Cgrowth, :Igrowth, :N, :wgrowth,
         :RB, :π, :σ, :τprog, :TOP10Wshare, :TOP10Ishare]
 
-model_names = ["HANK"] # Displayed names of models to be compared
+# models to be plotted
+number_models  = 2
+model_names    = Array{String}(undef,1,number_models)
+model_names[1] = "HANK Mode"
+model_names[2] = "HANK Posterior"
 
 # enter here the models, as tupel of tupels (sr, lr, e_set, m_par), to be compared
 models_tupel = (
+        (sr_mode, lr_mode, e_set, m_par_mode),
         (sr_mc, lr_mc, e_set, m_par_mc),
         )
 
@@ -149,7 +154,7 @@ IRFs_plot = plot_irfs(IRFs, SHOCKs, select_variables, nice_var_names, nice_s_nam
 
 # export Variance Decompositions as DataFrames and Plot using VegaLite
 DF_V_Decomp = plot_vardecomp(VDs, VD_bc_s, select_vd_horizons, model_names, SHOCKs,
-        select_variables; savepdf=true, suffix="_nolegend", legend_switch=false) 
+        select_variables; savepdf=true, suffix="_nolegend", legend_switch=true) 
 
 # produce historical contributions as Array and Data Frame and plot p
 Historical_contrib_HA, DF_H_Decomp_HA, HD_plot_HA = compute_hist_decomp(sr_mc, lr_mc, e_set, m_par_mc,

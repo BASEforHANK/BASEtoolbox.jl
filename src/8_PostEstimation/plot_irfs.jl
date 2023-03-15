@@ -75,8 +75,8 @@ function plot_irfs(IRFs, SHOCKs, select_variables, nice_var_names, nice_s_names,
                         )
     end
     if savepdf
-        for j = 1:length(SHOCKs)
-            pvec[j] |> save(string("8_PostEstimation/Figures/IRFs/IRFs_to_", SHOCKs[j],suffix, ".pdf"))
+        for j = eachindex(SHOCKs)
+            savefig(pvec[j],string("8_PostEstimation/Figures/IRFs/IRFs_to_", SHOCKs[j],suffix, ".pdf"))
         end
     end
     display.(pvec)

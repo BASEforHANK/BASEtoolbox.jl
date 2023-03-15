@@ -16,7 +16,7 @@ end
 
 using Plots, VegaLite, StatsPlots, OrderedCollections, JLD2, FileIO, DataFrames, CSV, LaTeXStrings, JSON, CodecZlib, Parameters, Setfield, Flatten, FieldMetadata
 
-using LinearAlgebra, SparseArrays, BlockDiagonals, CategoricalArrays, Random, MCMCChains, Distributions, Roots, ForwardDiff, Optim
+using LinearAlgebra, SparseArrays, BlockDiagonals, CategoricalArrays, Random, MCMCChains, Distributions, Roots, ForwardDiff, Optim, BenchmarkTools
 
 using Statistics, PrettyTables, Colors
 
