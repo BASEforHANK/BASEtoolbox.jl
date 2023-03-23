@@ -17,9 +17,14 @@ P'*B*P x_t = P'*A*P x_{t+1}, where `P` is the (ntotal x r) semi-unitary model re
 - `alarm_LinearSolution`,`nk`: `alarm_LinearSolution=true` when solving algorithm fails, `nk` number of
     predetermined variables
 """
-function SolveDiffEq(Ainput::Array,Binput::Array, n_par::NumericalParameters, estim=false)
+function SolveDiffEq(
+    Ainput::Array,
+    Binput::Array,
+    n_par::NumericalParameters,
+    estim = false,
+)
     lit_fail = false
-    A = n_par.PRightAll' * (Ainput * n_par.PRightAll) 
+    A = n_par.PRightAll' * (Ainput * n_par.PRightAll)
     B = n_par.PRightAll' * (Binput * n_par.PRightAll)
     if n_par.sol_algo == :lit # linear time iteration with speed-up following Reiter (less numerically stable than schur)
         @views begin
@@ -48,13 +53,13 @@ function SolveDiffEq(Ainput::Array,Binput::Array, n_par::NumericalParameters, es
             # 
             # X21_{t+1} =  Q4 -  Q2 *(X21_t - X21_t*inv(I +  Q1*X21_t) * Q1*X21_t) * Q3; WMS formula
             #           =  Q4 -  Q2 *X21_t*inv(I +  Q1*X21_t) * Q3;  
-      
+
 
             F1 = A[:, 1:n_par.nstates_r]
             F2 = A[:, n_par.nstates_r+1:end]
             F3 = -B[:, 1:n_par.nstates_r]
             F4 = B[:, n_par.nstates_r+1:end]
-    
+
             Z = hcat(F1, F4) \ I
             Z1 = Z[1:n_par.nstates_r, :]
             Z2 = Z[n_par.nstates_r+1:end, :]
@@ -63,34 +68,34 @@ function SolveDiffEq(Ainput::Array,Binput::Array, n_par::NumericalParameters, es
             Q3 = Z1 * F3    # [Z11 Z12] * F3
             Q4 = Z2 * F3    # [Z21 Z22] * F3
 
-    
+
             diff1 = 1000.0
             i = 0
 
-            X21     = Q4 # initial guess
-            X11     = (I + Q1 *X21) \ Q3
+            X21 = Q4 # initial guess
+            X11 = (I + Q1 * X21) \ Q3
 
             while diff1 > 1e-11 && i < 1000
                 i += 1
-                X21  = Q4 - Q2*X21 * X11           
-                up = (I + Q1 *X21) \ Q3
-                diff1 = maximum(abs.(up .- X11))[1]./maximum(abs.(up))[1]
-                X11 .=  up                
+                X21 = Q4 - Q2 * X21 * X11
+                up = (I + Q1 * X21) \ Q3
+                diff1 = maximum(abs.(up .- X11))[1] ./ maximum(abs.(up))[1]
+                X11 .= up
             end
             hx = X11
             gx = X21
             nk = copy(n_par.nstates_r)
         end
         alarm_LinearSolution = false
-        if any(isnan.(X11))||any(isinf.(X11))
-            nk = n_par.nstates_r-1
+        if any(isnan.(X11)) || any(isinf.(X11))
+            nk = n_par.nstates_r - 1
             lit_fail = true
             println("divergence of X11 to infty")
-        elseif i==1000
+        elseif i == 1000
             lit_fail = true
             println("LITX not converged -> trying with Schur")
-        elseif maximum(abs.(eigvals(X11)))>1
-            nk = n_par.nstates_r-1
+        elseif maximum(abs.(eigvals(X11))) > 1
+            nk = n_par.nstates_r - 1
             alarm_LinearSolution = true
             println("No stable solution")
             println(maximum(abs.(eigvals(X11))))
@@ -103,7 +108,7 @@ function SolveDiffEq(Ainput::Array,Binput::Array, n_par::NumericalParameters, es
             F2 = A[:, n_par.nstates_r+1:end]
             F3 = -B[:, 1:n_par.nstates_r]
             F4 = B[:, n_par.nstates_r+1:end]
-    
+
             Z = hcat(F1, F4) \ I
             Z1 = Z[1:n_par.nstates_r, :]
             Z2 = Z[n_par.nstates_r+1:end, :]
@@ -112,7 +117,7 @@ function SolveDiffEq(Ainput::Array,Binput::Array, n_par::NumericalParameters, es
             Q3 = Z1 * F3    # [Z11 Z12] * F3
             Q4 = Z2 * F3    # [Z21 Z22] * F3
 
-    
+
             diff1 = 1000.0
             i = 0
 
@@ -123,57 +128,57 @@ function SolveDiffEq(Ainput::Array,Binput::Array, n_par::NumericalParameters, es
             # Q'Z = -(R1 + R2*Q*Z)*X11
             # This not only makes the system smaller, but also increases precision.
             # Then make use of the possibility to fuse left hand multiplications.  
-            F       = qr([Q2*Q4 Q2], ColumnNorm())
-            red     = count(abs.(diag(F.R)).<1.0e-9)
-            Q       = Matrix(F.Q)
-            R       = F.R*F.P'
-            R1      = R[1:end-red,1:n_par.nstates_r] # Split R matrix 
-            R2      = R[1:end-red,n_par.nstates_r+1:end] * Q[:,1:end-red]
-            Q1hat   = Q1*Q[:,1:end-red] # Matrix to build back S2S
-            Q14     = I+Q1*Q4
-            Z       = -R1*(Q14 \ Q3) # initial guess
-            X11     = (Q1hat * Z + Q14) \ Q3
+            F = qr([Q2 * Q4 Q2], ColumnNorm())
+            red = count(abs.(diag(F.R)) .< 1.0e-9)
+            Q = Matrix(F.Q)
+            R = F.R * F.P'
+            R1 = R[1:end-red, 1:n_par.nstates_r] # Split R matrix 
+            R2 = R[1:end-red, n_par.nstates_r+1:end] * Q[:, 1:end-red]
+            Q1hat = Q1 * Q[:, 1:end-red] # Matrix to build back S2S
+            Q14 = I + Q1 * Q4
+            Z = -R1 * (Q14 \ Q3) # initial guess
+            X11 = (Q1hat * Z + Q14) \ Q3
             # Perform 3 update steps at once:
-            R21     = R2*R1
-            R221    = (R2^2)*R1
-            R222    = R2^3
-        
+            R21 = R2 * R1
+            R221 = (R2^2) * R1
+            R222 = R2^3
+
             # stacked iteraded (-1)^tR1*R2^t 
-            T       =-[R1 -R21 R221 ]
-            F2      = qr(T, ColumnNorm()) # T has massive reduced rank (due to economic structure)
-            red2    = count(abs.(diag(F2.R)).<1.0e-9) # find size of nullspace
-            T2      = (F2.R*F2.P')[1:end-red2,:] #keep only Rows in traingular form that correspond to range
-            QQ      = Matrix(F2.Q)[:,1:end-red2] # keep only columns of F2.Q that correspond to range, (others are 0 in T2)
+            T = -[R1 -R21 R221]
+            F2 = qr(T, ColumnNorm()) # T has massive reduced rank (due to economic structure)
+            red2 = count(abs.(diag(F2.R)) .< 1.0e-9) # find size of nullspace
+            T2 = (F2.R*F2.P')[1:end-red2, :] #keep only Rows in traingular form that correspond to range
+            QQ = Matrix(F2.Q)[:, 1:end-red2] # keep only columns of F2.Q that correspond to range, (others are 0 in T2)
             # Stacked iterated LOM for 3 periods
-            X1c     = X11^3
-            XX      = [X11; X11^2; X1c]
+            X1c = X11^3
+            XX = [X11; X11^2; X1c]
             while diff1 > 1e-11 && i < 500
                 i += 1
-                Zc = QQ*(T2*XX)
-                Z  = Zc - R222*Z*X1c#- (R1 - (R21 - (R221  * Z)*X11) *X11)  
-                for t = 1:ceil(-8  - log10(diff1)) # if close to convergence: more update steps
-                    Z = Zc - R222*Z*X1c
+                Zc = QQ * (T2 * XX)
+                Z = Zc - R222 * Z * X1c#- (R1 - (R21 - (R221  * Z)*X11) *X11)  
+                for t = 1:ceil(-8 - log10(diff1)) # if close to convergence: more update steps
+                    Z = Zc - R222 * Z * X1c
                 end
                 up = (Q1hat * Z + Q14) \ Q3
-                diff1 = maximum(abs.(up .- X11))[1]./maximum(abs.(up))[1]
-                X11 .=  up
+                diff1 = maximum(abs.(up .- X11))[1] ./ maximum(abs.(up))[1]
+                X11 .= up
                 X1c .= X11^3
-                XX  .=  [X11; X11^2; X1c]
+                XX .= [X11; X11^2; X1c]
             end
             hx = X11
-            gx = Q[:,1:end-red]*Z +Q4
+            gx = Q[:, 1:end-red] * Z + Q4
             nk = copy(n_par.nstates_r)
         end
         alarm_LinearSolution = false
-        if any(isnan.(X11))||any(isinf.(X11))
-            nk = n_par.nstates_r-1
+        if any(isnan.(X11)) || any(isinf.(X11))
+            nk = n_par.nstates_r - 1
             lit_fail = true
-            println("divergence of X11 to infty") 
-        elseif i==500
+            println("divergence of X11 to infty")
+        elseif i == 500
             lit_fail = true
             println("LITX not converged -> trying with Schur")
-        elseif maximum(abs.(eigvals(X11)))>1
-            nk = n_par.nstates_r-1
+        elseif maximum(abs.(eigvals(X11))) > 1
+            nk = n_par.nstates_r - 1
             alarm_LinearSolution = true
             println("No stable solution")
             println(maximum(abs.(eigvals(X11))))
@@ -202,13 +207,13 @@ function SolveDiffEq(Ainput::Array,Binput::Array, n_par::NumericalParameters, es
         end
         # in-place reordering of eigenvalues for decomposition
         ordschur!(Schur_decomp, slt)
-    
+
         # view removes allocations
         z21 = view(Schur_decomp.Z, (nk+1):n_par.ntotal_r, 1:nk)
         z11 = view(Schur_decomp.Z, 1:nk, 1:nk)
         s11 = view(Schur_decomp.S, 1:nk, 1:nk)
         t11 = view(Schur_decomp.T, 1:nk, 1:nk)
-    
+
         if rank(z11) < nk
             @warn "invertibility condition violated"
             hx = zeros(eltype(A), n_par.nstates_r, n_par.nstates_r)

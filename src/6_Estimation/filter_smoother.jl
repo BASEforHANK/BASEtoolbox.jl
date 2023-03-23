@@ -20,8 +20,15 @@ of the model.
 # Returns
 - log-likelihood
 """
-function kalman_filter(H::Matrix{Float64}, LOM::Matrix{Float64}, Data::Array{Union{Missing,Float64},2},
-    D_miss::BitArray{2}, SCov::Matrix{Float64}, MCov::Matrix{Float64}, e_set::EstimationSettings)
+function kalman_filter(
+    H::Matrix{Float64},
+    LOM::Matrix{Float64},
+    Data::Array{Union{Missing,Float64},2},
+    D_miss::BitArray{2},
+    SCov::Matrix{Float64},
+    MCov::Matrix{Float64},
+    e_set::EstimationSettings,
+)
 
     # treat non-well-behaved covariance matrix
     SIG = lyapd(LOM, SCov) #0.040247 seconds (27 allocations: 4.188 MiB)
@@ -71,7 +78,9 @@ function kalman_filter(H::Matrix{Float64}, LOM::Matrix{Float64}, Data::Array{Uni
             end
             return log_lik
         else
-            log_lik += -logdet_Ω - resi' * OmegaInv * resi - (t[2] - length(miss_temp)) * log(2.0 * π)
+            log_lik +=
+                -logdet_Ω - resi' * OmegaInv * resi -
+                (t[2] - length(miss_temp)) * log(2.0 * π)
         end
 
         # update
@@ -97,8 +106,15 @@ function kalman_filter(H::Matrix{Float64}, LOM::Matrix{Float64}, Data::Array{Uni
     return loglik
 end
 
-function kalman_filter(H::Matrix{Float64}, LOM::Matrix{Float64}, Data::Array{Float64,2},
-    D_nomiss::BitArray{2}, SCov::Matrix{Float64}, MCov::Matrix{Float64}, e_set::EstimationSettings)
+function kalman_filter(
+    H::Matrix{Float64},
+    LOM::Matrix{Float64},
+    Data::Array{Float64,2},
+    D_nomiss::BitArray{2},
+    SCov::Matrix{Float64},
+    MCov::Matrix{Float64},
+    e_set::EstimationSettings,
+)
     # kalman filter variant without missing data
 
     # treat non-well-behaved covariance matrix
@@ -202,8 +218,15 @@ applying the Kalman smoother to the state-space representation (`H`,`LOM`) of th
     and backward iteration [`Sigma_tgT`]
 - `s`,`m`: smoothed structural shocks [`s`] and measurement errors [`m`]
 """
-function kalman_filter_smoother(H::Array{Float64,2}, LOM::Array{Float64,2}, Data, D_nomiss::BitArray{2},
-    SCov::Array{Float64,2}, MCov::Array{Float64,2}, e_set)
+function kalman_filter_smoother(
+    H::Array{Float64,2},
+    LOM::Array{Float64,2},
+    Data,
+    D_nomiss::BitArray{2},
+    SCov::Array{Float64,2},
+    MCov::Array{Float64,2},
+    e_set,
+)
 
     T, n_obs_vars = size(Data)
     n_states = size(LOM)[1]
@@ -223,7 +246,8 @@ function kalman_filter_smoother(H::Array{Float64,2}, LOM::Array{Float64,2}, Data
 
     for t = 1:T
         # compute likelihood contribution
-        resi[D_nomiss[t, :], t] = Data[t, D_nomiss[t, :]] .- H[D_nomiss[t, :], :] * xhat_tgtm1[:, t]
+        resi[D_nomiss[t, :], t] =
+            Data[t, D_nomiss[t, :]] .- H[D_nomiss[t, :], :] * xhat_tgtm1[:, t]
         SH = Sigma_tgtm1[:, :, t] * transpose(H[D_nomiss[t, :], :])
         Ω = H[D_nomiss[t, :], :] * SH + MCov[D_nomiss[t, :], D_nomiss[t, :]]
         logdet_Ω, sign_logdet = logabsdet(Ω)
@@ -235,19 +259,30 @@ function kalman_filter_smoother(H::Array{Float64,2}, LOM::Array{Float64,2}, Data
             return log_lik
         else
             OmegaInv[D_nomiss[t, :], D_nomiss[t, :], t] = I / Ω
-            log_lik += -0.5 * n_obs_vars * log(2.0 * π) -
-                       0.5 * logdet_Ω - 0.5 * transpose(resi[D_nomiss[t, :], t]) *
-                                        OmegaInv[D_nomiss[t, :], D_nomiss[t, :], t] * resi[D_nomiss[t, :], t]
+            log_lik +=
+                -0.5 * n_obs_vars * log(2.0 * π) - 0.5 * logdet_Ω -
+                0.5 *
+                transpose(resi[D_nomiss[t, :], t]) *
+                OmegaInv[D_nomiss[t, :], D_nomiss[t, :], t] *
+                resi[D_nomiss[t, :], t]
         end
 
         # update
         K[:, D_nomiss[t, :], t] = LOM * SH * OmegaInv[D_nomiss[t, :], D_nomiss[t, :], t] # Gain
         L[:, :, t] = LOM - K[:, D_nomiss[t, :], t] * H[D_nomiss[t, :], :]
-        xhat_tgt[:, t] = xhat_tgtm1[:, t] + (SH * OmegaInv[D_nomiss[t, :], D_nomiss[t, :], t]) * resi[D_nomiss[t, :], t]
-        Sigma_tgt[:, :, t] = Sigma_tgtm1[:, :, t] - SH * (OmegaInv[D_nomiss[t, :], D_nomiss[t, :], t] * transpose(SH))
-        xhat_tgtm1[:, t+1] = LOM * xhat_tgtm1[:, t] + K[:, D_nomiss[t, :], t] * resi[D_nomiss[t, :], t]
-        Sigma_tgtm1_temp = L[:, :, t] * (Sigma_tgtm1[:, :, t] * L[:, :, t]') + K[:, D_nomiss[t, :], t] *
-                                                                               (MCov[D_nomiss[t, :], D_nomiss[t, :]] * K[:, D_nomiss[t, :], t]') + SCov
+        xhat_tgt[:, t] =
+            xhat_tgtm1[:, t] +
+            (SH * OmegaInv[D_nomiss[t, :], D_nomiss[t, :], t]) * resi[D_nomiss[t, :], t]
+        Sigma_tgt[:, :, t] =
+            Sigma_tgtm1[:, :, t] -
+            SH * (OmegaInv[D_nomiss[t, :], D_nomiss[t, :], t] * transpose(SH))
+        xhat_tgtm1[:, t+1] =
+            LOM * xhat_tgtm1[:, t] + K[:, D_nomiss[t, :], t] * resi[D_nomiss[t, :], t]
+        Sigma_tgtm1_temp =
+            L[:, :, t] * (Sigma_tgtm1[:, :, t] * L[:, :, t]') +
+            K[:, D_nomiss[t, :], t] *
+            (MCov[D_nomiss[t, :], D_nomiss[t, :]] * K[:, D_nomiss[t, :], t]') +
+            SCov
         Sigma_tgtm1[:, :, t+1] = 0.5 * (Sigma_tgtm1_temp + transpose(Sigma_tgtm1_temp))
 
     end
@@ -261,37 +296,55 @@ function kalman_filter_smoother(H::Array{Float64,2}, LOM::Array{Float64,2}, Data
     s = zeros(Float64, n_states, T)
     m = zeros(Float64, n_obs_vars, T)
     for t = T:-1:1
-        r[:, t] = H[D_nomiss[t, :], :]' * OmegaInv[D_nomiss[t, :], D_nomiss[t, :], t] * resi[D_nomiss[t, :], t] + L[:, :, t]' * r[:, t+1]
+        r[:, t] =
+            H[D_nomiss[t, :], :]' *
+            OmegaInv[D_nomiss[t, :], D_nomiss[t, :], t] *
+            resi[D_nomiss[t, :], t] + L[:, :, t]' * r[:, t+1]
         xhat_tgT[:, t] = xhat_tgtm1[:, t] + Sigma_tgtm1[:, :, t] * r[:, t]
 
-        N[:, :, t] = H[D_nomiss[t, :], :]' * OmegaInv[D_nomiss[t, :], D_nomiss[t, :], t] * H[D_nomiss[t, :], :] + L[:, :, t]' * N[:, :, t+1] * L[:, :, t]
-        Sigma_tgT[:, :, t] = Sigma_tgtm1[:, :, t] - Sigma_tgtm1[:, :, t] * N[:, :, t] * Sigma_tgtm1[:, :, t]
+        N[:, :, t] =
+            H[D_nomiss[t, :], :]' *
+            OmegaInv[D_nomiss[t, :], D_nomiss[t, :], t] *
+            H[D_nomiss[t, :], :] + L[:, :, t]' * N[:, :, t+1] * L[:, :, t]
+        Sigma_tgT[:, :, t] =
+            Sigma_tgtm1[:, :, t] - Sigma_tgtm1[:, :, t] * N[:, :, t] * Sigma_tgtm1[:, :, t]
 
         s[:, t] = SCov * r[:, t+1]
-        m[D_nomiss[t, :], t] = MCov[D_nomiss[t, :], D_nomiss[t, :]] * (OmegaInv[D_nomiss[t, :], D_nomiss[t, :], t] * resi[D_nomiss[t, :], t] - K[:, D_nomiss[t, :], t]' * r[:, t+1])
+        m[D_nomiss[t, :], t] =
+            MCov[D_nomiss[t, :], D_nomiss[t, :]] * (
+                OmegaInv[D_nomiss[t, :], D_nomiss[t, :], t] * resi[D_nomiss[t, :], t] -
+                K[:, D_nomiss[t, :], t]' * r[:, t+1]
+            )
     end
 
     return log_lik, xhat_tgt, xhat_tgT, Sigma_tgt, Sigma_tgT, s, m
 end
 
-function kalman_filter(H::Matrix{Number}, LOM::Matrix{Number}, Data::Array,
-    D_miss::BitArray{2}, SCov::Matrix{Number}, MCov::Matrix{Number}, e_set::EstimationSettings)
+function kalman_filter(
+    H::Matrix{Number},
+    LOM::Matrix{Number},
+    Data::Array,
+    D_miss::BitArray{2},
+    SCov::Matrix{Number},
+    MCov::Matrix{Number},
+    e_set::EstimationSettings,
+)
 
     # treat non-well-behaved covariance matrix
     SIG = lyapd(LOM, SCov) #0.040247 seconds (27 allocations: 4.188 MiB)
     # 0.015693 seconds (13 allocations: 2.141 MiB)
     prox!(SIG, IndPSD(), SIG) # ensures symmetric, positive definite SIG (from ProximalOperators package) 
-    t  = size(Data)
-    n  = size(LOM)
+    t = size(Data)
+    n = size(LOM)
     nH = size(H)
     xhat = zeros(eltype(LOM), n[1])
     log_lik = 0.0
     SCov_ind = findall(x -> (x .!= 0.0), SCov)
     H_slice = copy(H)
-    Z  = similar(LOM)
-    HS = H*SIG
-    K  = LOM*HS'
-    Ω  = similar(MCov)
+    Z = similar(LOM)
+    HS = H * SIG
+    K = LOM * HS'
+    Ω = similar(MCov)
     resi = Vector{eltype(xhat)}(undef, t[2])
     # ZSaux = similar(SIG)
     # KMaux = Matrix{Float64}(undef, n[1], nH[1])
@@ -304,11 +357,11 @@ function kalman_filter(H::Matrix{Number}, LOM::Matrix{Number}, Data::Array,
         H_slice[miss_temp, :] .= 0.0
 
         # compute likelihood contribution
-        resi .= Data[s, :] .- H_slice * xhat 
+        resi .= Data[s, :] .- H_slice * xhat
         #BLAS.gemv!('N', -1.0, H_slice, xhat, 1.0, copyto!(resi, Data[s, :]))
-        HS   .= H_slice * SIG
+        HS .= H_slice * SIG
         #BLAS.symm!('R', 'L', 1.0, SIG, H_slice, 0.0, HS)
-        Ω    .= HS * H_slice + MCov
+        Ω .= HS * H_slice + MCov
         #BLAS.gemm!('N', 'T', 1.0, H_slice, HS, 1.0, copyto!(Ω, MCov))
         for i in miss_temp
             Ω[i, :] .= 0.0
@@ -325,17 +378,19 @@ function kalman_filter(H::Matrix{Number}, LOM::Matrix{Number}, Data::Array,
             end
             return log_lik
         else
-            log_lik += -logdet_Ω - resi' * OmegaInv * resi - (t[2] - length(miss_temp)) * log(2.0 * π)
+            log_lik +=
+                -logdet_Ω - resi' * OmegaInv * resi -
+                (t[2] - length(miss_temp)) * log(2.0 * π)
         end
 
         # update
-        K   .= LOM * HS' * OmegaInv
+        K .= LOM * HS' * OmegaInv
         #BLAS.gemm!('N', 'T', 1.0, LOM, OmegaInv' * HS, 0.0, K) # Gain update
-        xhat .= LOM*xhat .+ K * resi
+        xhat .= LOM * xhat .+ K * resi
         #BLAS.gemv!('N', 1.0, LOM, xhat, 0.0, Lxaux)
         #BLAS.gemv!('N', 1.0, K, resi, 1.0, Lxaux)
         #copyto!(xhat, Lxaux)
-        Z .= LOM.- K * H
+        Z .= LOM .- K * H
         #copyto!(Z, LOM)
         #BLAS.gemm!('N', 'N', -1.0, K, H_slice, 1.0, Z)
 
@@ -343,7 +398,7 @@ function kalman_filter(H::Matrix{Number}, LOM::Matrix{Number}, Data::Array,
         #symmetric_square0!(Z, SIG, SIG, ZSaux)
         #symmetric_square!(K, MCov, SIG, KMaux)
         #SIG[SCov_ind] += SCov[SCov_ind]
-        SIG .= 0.5*(SIG .+ SIG')
+        SIG .= 0.5 * (SIG .+ SIG')
     end
 
     loglik = 0.5 * log_lik
@@ -452,7 +507,7 @@ function nearest_spd(A)
     k = 0
     count = 1
     while p == false && count < 100
-        R = cholesky(Ahat; check=false)
+        R = cholesky(Ahat; check = false)
         k += 1
         count = count + 1
         if ~issuccess(R)

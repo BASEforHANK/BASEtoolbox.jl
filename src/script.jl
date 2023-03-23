@@ -9,7 +9,7 @@ cd("./src")
 include("3_NumericalBasics/PreprocessInputs.jl")
 
 push!(LOAD_PATH, pwd())
-using BASEforHANK   
+using BASEforHANK
 
 # set BLAS threads to the number of Julia threads.
 # prevents BLAS from grabbing all threads on a machine
@@ -55,20 +55,20 @@ jldsave("7_Saves/steadystate.jld2", true; sr_full) # true enables compression
 #------------------------------------------------------------------------------
 # compute and display steady-state moments
 #------------------------------------------------------------------------------
-K       = exp.(sr_full.XSS[sr_full.indexes.KSS])
-B       = exp.(sr_full.XSS[sr_full.indexes.BSS])
-Bgov    = exp.(sr_full.XSS[sr_full.indexes.BgovSS])
-Y       = exp.(sr_full.XSS[sr_full.indexes.YSS])
-T10W    = exp(sr_full.XSS[sr_full.indexes.TOP10WshareSS])
-G       = exp.(sr_full.XSS[sr_full.indexes.GSS])
-distr_m = sum(sr_full.distrSS,dims=(2,3))[:]
+K = exp.(sr_full.XSS[sr_full.indexes.KSS])
+B = exp.(sr_full.XSS[sr_full.indexes.BSS])
+Bgov = exp.(sr_full.XSS[sr_full.indexes.BgovSS])
+Y = exp.(sr_full.XSS[sr_full.indexes.YSS])
+T10W = exp(sr_full.XSS[sr_full.indexes.TOP10WshareSS])
+G = exp.(sr_full.XSS[sr_full.indexes.GSS])
+distr_m = sum(sr_full.distrSS, dims = (2, 3))[:]
 fr_borr = sum(distr_m[sr_full.n_par.grid_m.<0])
 
 println("Steady State Moments:")
-println("Liquid to Illiquid Assets Ratio:", B/K)
-println("Capital to Output Ratio:", K/Y/4.0)
-println("Government Debt to Output Ratio:", Bgov/Y/4.0)
-println("Government spending to Output Ratio:", G/Y)
+println("Liquid to Illiquid Assets Ratio:", B / K)
+println("Capital to Output Ratio:", K / Y / 4.0)
+println("Government Debt to Output Ratio:", Bgov / Y / 4.0)
+println("Government spending to Output Ratio:", G / Y)
 println("TOP 10 Wealth Share:", T10W)
 println("Fraction of Borrower:", fr_borr)
 
@@ -91,25 +91,54 @@ BASEforHANK.@btime lr_reduc = update_model(sr_reduc, lr_full, m_par)
 
 if e_set.estimate_model == true
 
-        # warning: estimation might take a long time!
-        er_mode, posterior_mode, smoother_mode, sr_mode, lr_mode, m_par_mode =
-                find_mode(sr_reduc, lr_reduc, m_par)
+    # warning: estimation might take a long time!
+    er_mode, posterior_mode, smoother_mode, sr_mode, lr_mode, m_par_mode =
+        find_mode(sr_reduc, lr_reduc, m_par)
 
-        # Stores mode finding results in file e_set.save_mode_file 
-        jldsave(BASEforHANK.e_set.save_mode_file, true;
-                posterior_mode, smoother_mode, sr_mode, lr_mode, er_mode, m_par_mode, e_set)
-        # !! warning: the provided mode file does not contain smoothed covars (smoother_mode[4] and [5])!!
-        # @load BASEforHANK.e_set.save_mode_file posterior_mode sr_mode lr_mode er_mode m_par_mode smoother_mode
+    # Stores mode finding results in file e_set.save_mode_file 
+    jldsave(
+        BASEforHANK.e_set.save_mode_file,
+        true;
+        posterior_mode,
+        smoother_mode,
+        sr_mode,
+        lr_mode,
+        er_mode,
+        m_par_mode,
+        e_set,
+    )
+    # !! warning: the provided mode file does not contain smoothed covars (smoother_mode[4] and [5])!!
+    # @load BASEforHANK.e_set.save_mode_file posterior_mode sr_mode lr_mode er_mode m_par_mode smoother_mode
 
-        sr_mc, lr_mc, er_mc, m_par_mc, draws_raw, posterior, accept_rate,
-        par_final, hessian_sym, smoother_output = montecarlo(sr_mode, lr_mode, er_mode, m_par_mode)
+    sr_mc,
+    lr_mc,
+    er_mc,
+    m_par_mc,
+    draws_raw,
+    posterior,
+    accept_rate,
+    par_final,
+    hessian_sym,
+    smoother_output = montecarlo(sr_mode, lr_mode, er_mode, m_par_mode)
 
-        # Stores mcmc results in file e_set.save_posterior_file 
-        jldsave(BASEforHANK.e_set.save_posterior_file, true;
-                sr_mc, lr_mc, er_mc, m_par_mc, draws_raw, posterior, accept_rate,
-                par_final, hessian_sym, smoother_output, e_set)
-        # !! The following file is not provided !!
-        #      @load BASEforHANK.e_set.save_posterior_file sr_mc lr_mc er_mc  m_par_mc draws_raw posterior accept_rate par_final hessian_sym smoother_output e_set
+    # Stores mcmc results in file e_set.save_posterior_file 
+    jldsave(
+        BASEforHANK.e_set.save_posterior_file,
+        true;
+        sr_mc,
+        lr_mc,
+        er_mc,
+        m_par_mc,
+        draws_raw,
+        posterior,
+        accept_rate,
+        par_final,
+        hessian_sym,
+        smoother_output,
+        e_set,
+    )
+    # !! The following file is not provided !!
+    #      @load BASEforHANK.e_set.save_posterior_file sr_mc lr_mc er_mc  m_par_mc draws_raw posterior accept_rate par_final hessian_sym smoother_output e_set
 
 end
 
@@ -117,46 +146,128 @@ end
 ##############################################################################################
 # Graphical Model Output
 ###############################################################################################
-using Plots, VegaLite, DataFrames, FileIO, StatsPlots, CategoricalArrays, Flatten, Statistics, PrettyTables, Colors
+using Plots,
+    VegaLite,
+    DataFrames,
+    FileIO,
+    StatsPlots,
+    CategoricalArrays,
+    Flatten,
+    Statistics,
+    PrettyTables,
+    Colors
 
 # variables to be plotted
-select_variables = [:Ygrowth, :Cgrowth, :Igrowth, :N, :wgrowth,
-        :RB, :π, :σ, :τprog, :TOP10Wshare, :TOP10Ishare]
+select_variables = [
+    :Ygrowth,
+    :Cgrowth,
+    :Igrowth,
+    :N,
+    :wgrowth,
+    :RB,
+    :π,
+    :σ,
+    :τprog,
+    :TOP10Wshare,
+    :TOP10Ishare,
+]
 
 # models to be plotted
-number_models  = 2
-model_names    = Array{String}(undef,1,number_models)
+number_models = 2
+model_names = Array{String}(undef, 1, number_models)
 model_names[1] = "HANK Mode"
 model_names[2] = "HANK Posterior"
 
 # enter here the models, as tupel of tupels (sr, lr, e_set, m_par), to be compared
-models_tupel = (
-        (sr_mode, lr_mode, e_set, m_par_mode),
-        (sr_mc, lr_mc, e_set, m_par_mc),
-        )
+models_tupel = ((sr_mode, lr_mode, e_set, m_par_mode), (sr_mc, lr_mc, e_set, m_par_mc))
 
 timeline = collect(1954.75:0.25:2019.75)
 select_vd_horizons = [4 16 100] # horizons for variance decompositions
-recessions_vec = [1957.5, 1958.25, 1960.25, 1961.0, 1969.75, 1970.75, 1973.75, 1975.0, 1980.0, 1980.5, 1981.5, 1982.75, 1990.5, 1991.0, 2001.0, 2001.75, 2007.75, 2009.25] # US recession dates for plotting
+recessions_vec = [
+    1957.5,
+    1958.25,
+    1960.25,
+    1961.0,
+    1969.75,
+    1970.75,
+    1973.75,
+    1975.0,
+    1980.0,
+    1980.5,
+    1981.5,
+    1982.75,
+    1990.5,
+    1991.0,
+    2001.0,
+    2001.75,
+    2007.75,
+    2009.25,
+] # US recession dates for plotting
 
 # "nice" names for labels
-nice_var_names = ["Output growth", "Consumption growth", "Investment growth", "Employment",
-        "Wage growth", "Nominal rate", "Inflation", "Income risk", "Tax progressivity",
-        "Top 10 wealth share", "Top 10 inc. share"]
-nice_s_names = ["TFP", "Inv.-spec. tech.", "Price markup", "Wage markup", "Risk premium",
-        "Mon. policy", "Structural deficit", "Tax progr.", "Income risk"]
+nice_var_names = [
+    "Output growth",
+    "Consumption growth",
+    "Investment growth",
+    "Employment",
+    "Wage growth",
+    "Nominal rate",
+    "Inflation",
+    "Income risk",
+    "Tax progressivity",
+    "Top 10 wealth share",
+    "Top 10 inc. share",
+]
+nice_s_names = [
+    "TFP",
+    "Inv.-spec. tech.",
+    "Price markup",
+    "Wage markup",
+    "Risk premium",
+    "Mon. policy",
+    "Structural deficit",
+    "Tax progr.",
+    "Income risk",
+]
 
 # compute IRFs for all models in tupel, all variables in select_variables
 IRFs, VDs, SHOCKs, VD_bc_s = compute_irfs_vardecomp(models_tupel, select_variables)
 
 # display IRFs and export as pdf
-IRFs_plot = plot_irfs(IRFs, SHOCKs, select_variables, nice_var_names, nice_s_names, 40, model_names, 4; savepdf=true) 
+IRFs_plot = plot_irfs(
+    IRFs,
+    SHOCKs,
+    select_variables,
+    nice_var_names,
+    nice_s_names,
+    40,
+    model_names,
+    4;
+    savepdf = true,
+)
 
 # export Variance Decompositions as DataFrames and Plot using VegaLite
-DF_V_Decomp = plot_vardecomp(VDs, VD_bc_s, select_vd_horizons, model_names, SHOCKs,
-        select_variables; savepdf=true, suffix="_nolegend", legend_switch=true) 
+DF_V_Decomp = plot_vardecomp(
+    VDs,
+    VD_bc_s,
+    select_vd_horizons,
+    model_names,
+    SHOCKs,
+    select_variables;
+    savepdf = true,
+    suffix = "_nolegend",
+    legend_switch = true,
+)
 
 # produce historical contributions as Array and Data Frame and plot p
-Historical_contrib_HA, DF_H_Decomp_HA, HD_plot_HA = compute_hist_decomp(sr_mc, lr_mc, e_set, m_par_mc,
-        smoother_output, select_variables, timeline; savepdf=true, prefix="HA_") 
-
+Historical_contrib_HA, DF_H_Decomp_HA, HD_plot_HA = compute_hist_decomp(
+    sr_mc,
+    lr_mc,
+    e_set,
+    m_par_mc,
+    smoother_output,
+    select_variables,
+    timeline;
+    savepdf = true,
+    prefix = "HA_",
+)

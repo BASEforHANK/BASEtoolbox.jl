@@ -3,9 +3,15 @@
 ###############################################################################################
 
 
-function compute_vardecomp_bounds(models, select_variables, model_names; n_replic = 1000, percentile_bounds = (0.05, 0.95))
+function compute_vardecomp_bounds(
+    models,
+    select_variables,
+    model_names;
+    n_replic = 1000,
+    percentile_bounds = (0.05, 0.95),
+)
 
-    _,_, SHOCKs, VDorig = compute_irfs_vardecomp(models, select_variables)
+    _, _, SHOCKs, VDorig = compute_irfs_vardecomp(models, select_variables)
 
     n_models = length(models)
     VD_lower = Array{Array{Float64}}(undef, n_models)
@@ -35,26 +41,48 @@ function compute_vardecomp_bounds(models, select_variables, model_names; n_repli
         end
         VDaux = hcat([zeros(n_replic) for j = 1:length(select_variables), k = 1:n_shocks])
         draw_ind = rand(1:size(draws, 1), n_replic)
-        Threads.@threads for s = eachindex(draw_ind)
-            A=lr.A; B=lr.B; State2Control=lr.State2Control; LOMstate=lr.LOMstate; SolutionError=lr.SolutionError; nk=lr.nk
-            lr_local = LinearResults(copy(State2Control), copy(LOMstate), copy(A), copy(B), copy(SolutionError), copy(nk))
+        Threads.@threads for s in eachindex(draw_ind)
+            A = lr.A
+            B = lr.B
+            State2Control = lr.State2Control
+            LOMstate = lr.LOMstate
+            SolutionError = lr.SolutionError
+            nk = lr.nk
+            lr_local = LinearResults(
+                copy(State2Control),
+                copy(LOMstate),
+                copy(A),
+                copy(B),
+                copy(SolutionError),
+                copy(nk),
+            )
             dd = draws[draw_ind[s], :]
             if e_set.me_treatment != :fixed
-                m_par_local = Flatten.reconstruct(m_par, dd[1:size(draws, 2)-length(e_set.meas_error_input)])
+                m_par_local = Flatten.reconstruct(
+                    m_par,
+                    dd[1:size(draws, 2)-length(e_set.meas_error_input)],
+                )
             else
                 m_par_local = Flatten.reconstruct(m_par, dd)
             end
             lr_local = update_model(sr, lr_local, m_par_local)
-            VD_bc_s, _ = compute_bcfreq_vardecomp(sr, lr_local, e_set, m_par_local; passband=(6,32), ngrid=512)
+            VD_bc_s, _ = compute_bcfreq_vardecomp(
+                sr,
+                lr_local,
+                e_set,
+                m_par_local;
+                passband = (6, 32),
+                ngrid = 512,
+            )
             # Dimensions of IRF: variable x time x shock
-    
+
             for d1 = 1:length(select_variables)
                 for d2 = 1:n_shocks
-                    VDaux[d1, d2][s] = VD_bc_s[selector[d1], d2]*100
+                    VDaux[d1, d2][s] = VD_bc_s[selector[d1], d2] * 100
                 end
             end
         end
-    
+
         VD_lower[j] = quantile.(VDaux, percentile_bounds[1])
         VD_upper[j] = quantile.(VDaux, percentile_bounds[2])
     end
@@ -79,8 +107,14 @@ function compute_vardecomp_bounds(models, select_variables, model_names; n_repli
             end
         end
     end
-    VDdf = DataFrame(model = modelname_vec, variable = variablename_vec, shock = shockname_vec, 
-                     lower_bound = VDlow_vec, point_estimate = VD_vec, upper_bound = VDup_vec)
+    VDdf = DataFrame(
+        model = modelname_vec,
+        variable = variablename_vec,
+        shock = shockname_vec,
+        lower_bound = VDlow_vec,
+        point_estimate = VD_vec,
+        upper_bound = VDup_vec,
+    )
 
     return VDdf
 

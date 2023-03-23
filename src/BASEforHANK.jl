@@ -14,9 +14,33 @@ if !Sys.isapple() # issues encountered when using mkl with macos + more than 1 t
     using MKL
 end
 
-using Plots, VegaLite, StatsPlots, OrderedCollections, JLD2, FileIO, DataFrames, CSV, LaTeXStrings, JSON, CodecZlib, Parameters, Setfield, Flatten, FieldMetadata
+using Plots,
+    VegaLite,
+    StatsPlots,
+    OrderedCollections,
+    JLD2,
+    FileIO,
+    DataFrames,
+    CSV,
+    LaTeXStrings,
+    JSON,
+    CodecZlib,
+    Parameters,
+    Setfield,
+    Flatten,
+    FieldMetadata
 
-using LinearAlgebra, SparseArrays, BlockDiagonals, CategoricalArrays, Random, MCMCChains, Distributions, Roots, ForwardDiff, Optim, BenchmarkTools
+using LinearAlgebra,
+    SparseArrays,
+    BlockDiagonals,
+    CategoricalArrays,
+    Random,
+    MCMCChains,
+    Distributions,
+    Roots,
+    ForwardDiff,
+    Optim,
+    BenchmarkTools
 
 using Statistics, PrettyTables, Colors
 
@@ -28,16 +52,41 @@ using SpecialFunctions: erf
 using FFTW: dct, ifft
 
 import Flatten: flattenable
-export ModelParameters, NumericalParameters, EstimationSettings,
-    SteadyResults, LinearResults, EstimResults, SteadyState,
-    compute_steadystate, call_find_steadystate, call_prepare_linearization, 
-    linearize_full_model, model_reduction, update_model,
-    find_mode, montecarlo, mode, metaflatten, prior, compare_2_linearizations,
-    reduction_quality, reduction_quality_seq,
-    compute_irfs_vardecomp, plot_irfs, compute_hist_decomp,
-    plot_vardecomp, compute_bcfreq_vardecomp, compute_vardecomp_bounds,
-    @set!, jldsave, @load,
-    @writeXSS, @make_fn, @make_fnaggr, @make_struct, @make_struct_aggr,
+export ModelParameters,
+    NumericalParameters,
+    EstimationSettings,
+    SteadyResults,
+    LinearResults,
+    EstimResults,
+    SteadyState,
+    compute_steadystate,
+    call_find_steadystate,
+    call_prepare_linearization,
+    linearize_full_model,
+    model_reduction,
+    update_model,
+    find_mode,
+    montecarlo,
+    mode,
+    metaflatten,
+    prior,
+    compare_2_linearizations,
+    reduction_quality,
+    reduction_quality_seq,
+    compute_irfs_vardecomp,
+    plot_irfs,
+    compute_hist_decomp,
+    plot_vardecomp,
+    compute_bcfreq_vardecomp,
+    compute_vardecomp_bounds,
+    @set!,
+    jldsave,
+    @load,
+    @writeXSS,
+    @make_fn,
+    @make_fnaggr,
+    @make_struct,
+    @make_struct_aggr,
     @generate_equations
 
 include("1_Model/input_aggregate_names.jl")
@@ -49,7 +98,7 @@ include("1_Model/Parameters.jl")
 include("3_NumericalBasics/Structs.jl")
 include("6_Estimation/prior.jl")
 
-e_set = EstimationSettings(shock_names=shock_names)
+e_set = EstimationSettings(shock_names = shock_names)
 @make_struct IndexStruct
 @make_struct_aggr IndexStructAggr
 
@@ -88,8 +137,19 @@ Runs the prepare linearization and fills the SteadyResults struct, sr.
 function call_prepare_linearization(ss, m_par)
 
     # Prepare steadys state information for linearization
-    XSS, XSSaggr, indexes, indexes_r, indexes_aggr, compressionIndexes, n_par, m_par,
-    CDFSS, CDF_m, CDF_k, CDF_y, distrSS = prepare_linearization(ss.KSS, ss.VmSS, ss.VkSS, ss.distrSS, ss.n_par, m_par)
+    XSS,
+    XSSaggr,
+    indexes,
+    indexes_r,
+    indexes_aggr,
+    compressionIndexes,
+    n_par,
+    m_par,
+    CDFSS,
+    CDF_m,
+    CDF_k,
+    CDF_y,
+    distrSS = prepare_linearization(ss.KSS, ss.VmSS, ss.VkSS, ss.distrSS, ss.n_par, m_par)
 
     println("Number of DCTs for Vm:")
     println(length(compressionIndexes[1]))
@@ -101,8 +161,23 @@ function call_prepare_linearization(ss, m_par)
     println(length(compressionIndexes[3]))
 
 
-    return SteadyResults(XSS, XSSaggr, indexes, indexes_r, indexes_aggr, compressionIndexes,
-        n_par, m_par, CDFSS, CDF_m, CDF_k, CDF_y, distrSS, state_names, control_names)
+    return SteadyResults(
+        XSS,
+        XSSaggr,
+        indexes,
+        indexes_r,
+        indexes_aggr,
+        compressionIndexes,
+        n_par,
+        m_par,
+        CDFSS,
+        CDF_m,
+        CDF_k,
+        CDF_y,
+        distrSS,
+        state_names,
+        control_names,
+    )
 end
 
 @doc raw"""
@@ -144,7 +219,8 @@ function linearize_full_model(sr::SteadyResults, m_par::ModelParameters)
     if sr.n_par.verbose
         println("Initial linearization")
     end
-    State2Control, LOMstate, SolutionError, nk, A, B = LinearSolution(sr, m_par, A, B; estim=false)
+    State2Control, LOMstate, SolutionError, nk, A, B =
+        LinearSolution(sr, m_par, A, B; estim = false)
 
     return LinearResults(State2Control, LOMstate, A, B, SolutionError, nk)
 end
@@ -168,7 +244,8 @@ function update_model(sr::SteadyResults, lr::LinearResults, m_par::ModelParamete
     if sr.n_par.verbose
         println("Updating linearization")
     end
-    State2Control, LOMstate, SolutionError, nk, A, B = LinearSolution_estim(sr, m_par, lr.A, lr.B; estim=true)
+    State2Control, LOMstate, SolutionError, nk, A, B =
+        LinearSolution_estim(sr, m_par, lr.A, lr.B; estim = true)
 
     return LinearResults(State2Control, LOMstate, A, B, SolutionError, nk)
 end
@@ -203,8 +280,23 @@ function model_reduction(sr, lr, m_par)
         @set! n_par.ntotal_r = n_par.ntotal
     end
 
-    return SteadyResults(sr.XSS, sr.XSSaggr, sr.indexes, indexes_r, sr.indexes_aggr, sr.compressionIndexes,
-        n_par, m_par, sr.CDFSS, sr.CDF_m, sr.CDF_k, sr.CDF_y, sr.distrSS, state_names, control_names)
+    return SteadyResults(
+        sr.XSS,
+        sr.XSSaggr,
+        sr.indexes,
+        indexes_r,
+        sr.indexes_aggr,
+        sr.compressionIndexes,
+        n_par,
+        m_par,
+        sr.CDFSS,
+        sr.CDF_m,
+        sr.CDF_k,
+        sr.CDF_y,
+        sr.distrSS,
+        state_names,
+        control_names,
+    )
 end
 
 
@@ -234,9 +326,20 @@ function find_mode(sr::SteadyResults, lr::LinearResults, m_par::ModelParameters)
         @load e_set.mode_start_file par_final
         par_start = copy(par_final)
     end
-    par_final, hessian_final, posterior_mode, meas_error, meas_error_std,
-    parnames, Data, Data_missing, H_sel, priors, smoother_output, m_par, sr, lr =
-        mode_finding(sr, lr, m_par, e_set, par_start)
+    par_final,
+    hessian_final,
+    posterior_mode,
+    meas_error,
+    meas_error_std,
+    parnames,
+    Data,
+    Data_missing,
+    H_sel,
+    priors,
+    smoother_output,
+    m_par,
+    sr,
+    lr = mode_finding(sr, lr, m_par, e_set, par_start)
 
     if sr.n_par.verbose
         println("Mode finding finished.")
@@ -244,7 +347,17 @@ function find_mode(sr::SteadyResults, lr::LinearResults, m_par::ModelParameters)
 
     lr = update_model(sr, lr, m_par)
 
-    er = EstimResults(par_final, hessian_final, meas_error, meas_error_std, parnames, Data, Data_missing, H_sel, priors)
+    er = EstimResults(
+        par_final,
+        hessian_final,
+        meas_error,
+        meas_error_std,
+        parnames,
+        Data,
+        Data_missing,
+        H_sel,
+        priors,
+    )
 
     return er, posterior_mode, smoother_output, sr, lr, m_par
 end
@@ -262,13 +375,20 @@ parameter estimate, and save all results in `file`.
 - `mr::LinearResults`
 - `er::EstimResults`
 """
-function montecarlo(sr::SteadyResults, lr::LinearResults, er::EstimResults, m_par::ModelParameters; file::String=e_set.save_posterior_file)
+function montecarlo(
+    sr::SteadyResults,
+    lr::LinearResults,
+    er::EstimResults,
+    m_par::ModelParameters;
+    file::String = e_set.save_posterior_file,
+)
     hessian_sym = Symmetric(nearest_spd(inv(er.hessian_final)))
     if sr.n_par.verbose
         println("Started MCMC. This might take a while...")
     end
     if e_set.multi_chain_init == true
-        init_draw, init_success = multi_chain_init(er.par_final, hessian_sym, sr, lr, er, m_par, e_set)
+        init_draw, init_success =
+            multi_chain_init(er.par_final, hessian_sym, sr, lr, er, m_par, e_set)
 
         par_final = init_draw
         if init_success == false
@@ -278,7 +398,8 @@ function montecarlo(sr::SteadyResults, lr::LinearResults, er::EstimResults, m_pa
         par_final = copy(er.par_final)
     end
 
-    draws_raw, posterior, accept_rate = rwmh(par_final, hessian_sym, sr, lr, er, m_par, e_set)
+    draws_raw, posterior, accept_rate =
+        rwmh(par_final, hessian_sym, sr, lr, er, m_par, e_set)
 
     ##
     parnames_ascii = collect(metaflatten(m_par, label))
@@ -288,26 +409,41 @@ function montecarlo(sr::SteadyResults, lr::LinearResults, er::EstimResults, m_pa
         end
     end
 
-    chn = Chains(reshape(draws_raw[e_set.burnin+1:end, :], (size(draws_raw[e_set.burnin+1:end, :])..., 1)),
-        [string(parnames_ascii[i]) for i = 1:length(parnames_ascii)])
+    chn = Chains(
+        reshape(
+            draws_raw[e_set.burnin+1:end, :],
+            (size(draws_raw[e_set.burnin+1:end, :])..., 1),
+        ),
+        [string(parnames_ascii[i]) for i = 1:length(parnames_ascii)],
+    )
     chn_summary = summarize(chn)
     par_final = chn_summary[:, :mean]
 
     ##
     if e_set.me_treatment != :fixed
-        m_par = Flatten.reconstruct(m_par, par_final[1:length(par_final)-length(er.meas_error)])
+        m_par =
+            Flatten.reconstruct(m_par, par_final[1:length(par_final)-length(er.meas_error)])
     else
         m_par = Flatten.reconstruct(m_par, par_final)
     end
 
     lr = update_model(sr, lr, m_par)
 
-    smoother_output = likeli(par_final, sr, lr, er, m_par, e_set; smoother=true)
+    smoother_output = likeli(par_final, sr, lr, er, m_par, e_set; smoother = true)
 
     if sr.n_par.verbose
         println("MCMC finished.")
     end
-    return sr, lr, er, m_par, draws_raw, posterior, accept_rate, par_final, hessian_sym, smoother_output
+    return sr,
+    lr,
+    er,
+    m_par,
+    draws_raw,
+    posterior,
+    accept_rate,
+    par_final,
+    hessian_sym,
+    smoother_output
 end
 
 end # module BASEforHANK

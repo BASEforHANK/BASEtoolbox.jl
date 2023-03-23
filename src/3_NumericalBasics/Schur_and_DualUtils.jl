@@ -7,13 +7,13 @@ function real_schur(A, B)
     λ = abs.(α) ./ abs.(F.beta)
     select_ev = λ .>= 1.0
     # select_ev = abs.(λ) .>= 1.0
-    nk  = sum(select_ev) # Number of state Variables based on Eigenvalues
+    nk = sum(select_ev) # Number of state Variables based on Eigenvalues
     return F, select_ev, nk, λ
 end
 
 
 function tot_dual(x::ForwardDiff.Dual)
-    a = sum(ForwardDiff.partials(x,:))
+    a = sum(ForwardDiff.partials(x, :))
     return a
 end
 function realpart(x::ForwardDiff.Dual)

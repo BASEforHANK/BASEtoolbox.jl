@@ -10,11 +10,35 @@ Solve model with [`LinearSolution_estim()`](@ref), compute likelihood with [`kal
 *if `smoother==True`:*
 - `smoother_output`: returns from [`kalman_filter_smoother()`](@ref)
 """
-function likeli(par, Data, Data_missing, H_sel, priors, meas_error, meas_error_std,
-    sr, lr, m_par, e_set; smoother = false)
+function likeli(
+    par,
+    Data,
+    Data_missing,
+    H_sel,
+    priors,
+    meas_error,
+    meas_error_std,
+    sr,
+    lr,
+    m_par,
+    e_set;
+    smoother = false,
+)
 
-    return likeli_backend(par, Data, Data_missing, H_sel, priors, meas_error, meas_error_std,
-        sr, lr, m_par, e_set, smoother)
+    return likeli_backend(
+        par,
+        Data,
+        Data_missing,
+        H_sel,
+        priors,
+        meas_error,
+        meas_error_std,
+        sr,
+        lr,
+        m_par,
+        e_set,
+        smoother,
+    )
 end
 
 @doc raw"""
@@ -32,12 +56,36 @@ Solve model with [`LinearSolution_estim()`](@ref), compute likelihood with [`kal
 """
 function likeli(par, sr, lr, er, m_par, e_set; smoother = false)
 
-    return likeli_backend(par, er.Data, er.Data_missing, er.H_sel, er.priors, er.meas_error, er.meas_error_std,
-        sr, lr, m_par, e_set, smoother)
+    return likeli_backend(
+        par,
+        er.Data,
+        er.Data_missing,
+        er.H_sel,
+        er.priors,
+        er.meas_error,
+        er.meas_error_std,
+        sr,
+        lr,
+        m_par,
+        e_set,
+        smoother,
+    )
 end
 
-function likeli_backend(par, Data, Data_missing, H_sel, priors, meas_error, meas_error_std,
-    sr, lr, m_par, e_set, smoother)
+function likeli_backend(
+    par,
+    Data,
+    Data_missing,
+    H_sel,
+    priors,
+    meas_error,
+    meas_error_std,
+    sr,
+    lr,
+    m_par,
+    e_set,
+    smoother,
+)
 
     # check priors, abort if they are violated
     prior_like::eltype(par), alarm_prior::Bool = prioreval(Tuple(par), Tuple(priors))
@@ -62,7 +110,8 @@ function likeli_backend(par, Data, Data_missing, H_sel, priors, meas_error, meas
         # covariance of structural shocks
         SCov = zeros(eltype(par), sr.n_par.nstates_r, sr.n_par.nstates_r)
         for i in e_set.shock_names
-            SCov[getfield(sr.indexes_r, i), getfield(sr.indexes_r, i)] = (getfield(m_par, Symbol("σ_", i))) .^ 2
+            SCov[getfield(sr.indexes_r, i), getfield(sr.indexes_r, i)] =
+                (getfield(m_par, Symbol("σ_", i))) .^ 2
         end
 
         # covariance of measurement errors, assumption: ME ordered after everything else
@@ -85,7 +134,10 @@ function likeli_backend(par, Data, Data_missing, H_sel, priors, meas_error, meas
 
         # solve model using candidate parameters
         # BLAS.set_num_threads(1)
-        State2Control::Array{eltype(par),2}, LOM::Array{eltype(par),2}, alarm_LinearSolution::Bool = LinearSolution_estim(sr, m_par, lr.A, lr.B; estim = true)
+        State2Control::Array{eltype(par),2},
+        LOM::Array{eltype(par),2},
+        alarm_LinearSolution::Bool =
+            LinearSolution_estim(sr, m_par, lr.A, lr.B; estim = true)
 
         # BLAS.set_num_threads(Threads.nthreads())
         if alarm_LinearSolution # abort if model doesn't solve
@@ -101,7 +153,8 @@ function likeli_backend(par, Data, Data_missing, H_sel, priors, meas_error, meas
                 log_like = kalman_filter(H, LOM, Data, Data_missing, SCov, MCov, e_set)
                 # log_like = kalman_filter_herbst(Data, LOM, SCov, H, MCov, 0, e_set)
             else
-                smoother_output = kalman_filter_smoother(H, LOM, Data, .!Data_missing, SCov, MCov, e_set)
+                smoother_output =
+                    kalman_filter_smoother(H, LOM, Data, .!Data_missing, SCov, MCov, e_set)
                 log_like = smoother_output[1]
             end
         end

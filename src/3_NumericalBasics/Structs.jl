@@ -19,8 +19,7 @@ macro make_struct_aggr(struct_name)
             $(fieldsSS_states...)
             $(fields_states...)
         end
-    end
-    )
+    end)
 end
 
 @doc raw"""
@@ -67,53 +66,51 @@ macro make_struct(struct_name)
             Vk::Array{Int,1}
             $(fields_controls...)
         end
-    end
-    )
+    end)
 end
 struct SteadyState
-    KSS
-    VmSS
-    VkSS
-    distrSS
-    n_par
+    KSS::Any
+    VmSS::Any
+    VkSS::Any
+    distrSS::Any
+    n_par::Any
 end
 
 struct SteadyResults
-    XSS
-    XSSaggr
-    indexes
-    indexes_r
-    indexes_aggr
-    compressionIndexes
-    n_par
-    m_par
-    CDFSS
-    CDF_m
-    CDF_k
-    CDF_y
-    distrSS
-    state_names
-    control_names
+    XSS::Any
+    XSSaggr::Any
+    indexes::Any
+    indexes_r::Any
+    indexes_aggr::Any
+    compressionIndexes::Any
+    n_par::Any
+    m_par::Any
+    CDFSS::Any
+    CDF_m::Any
+    CDF_k::Any
+    CDF_y::Any
+    distrSS::Any
+    state_names::Any
+    control_names::Any
 end
 
 struct LinearResults
-    State2Control
-    LOMstate
-    A
-    B
-    SolutionError
-    nk
+    State2Control::Any
+    LOMstate::Any
+    A::Any
+    B::Any
+    SolutionError::Any
+    nk::Any
 end
 
 struct EstimResults
-    par_final
-    hessian_final
-    meas_error
-    meas_error_std
-    parnames
-    Data
-    Data_missing
-    H_sel
-    priors
+    par_final::Any
+    hessian_final::Any
+    meas_error::Any
+    meas_error_std::Any
+    parnames::Any
+    Data::Any
+    Data_missing::Any
+    H_sel::Any
+    priors::Any
 end
-  

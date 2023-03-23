@@ -18,23 +18,39 @@ by [`LinearSolution()`](@ref)).
 # Returns
 as in [`LinearSolution()`](@ref)
 """
-function LinearSolution_estim(sr::SteadyResults, m_par::ModelParameters, A::Array, B::Array; estim=true)
+function LinearSolution_estim(
+    sr::SteadyResults,
+    m_par::ModelParameters,
+    A::Array,
+    B::Array;
+    estim = true,
+)
 
     ############################################################################
     # Calculate dericatives of non-lineear difference equation
     ############################################################################
-    length_X0   = length(sr.XSSaggr) 
-    BA          = ForwardDiff.jacobian(x-> Fsys_agg(x[1:length_X0], x[length_X0+1:end], 
-                    sr.XSSaggr, sr.distrSS, m_par, sr.n_par, sr.indexes_aggr), zeros(2*length_X0))
+    length_X0 = length(sr.XSSaggr)
+    BA = ForwardDiff.jacobian(
+        x -> Fsys_agg(
+            x[1:length_X0],
+            x[length_X0+1:end],
+            sr.XSSaggr,
+            sr.distrSS,
+            m_par,
+            sr.n_par,
+            sr.indexes_aggr,
+        ),
+        zeros(2 * length_X0),
+    )
 
-    for k = eachindex(aggr_names)
-        if !(any(distr_names.==aggr_names[k]))
+    for k in eachindex(aggr_names)
+        if !(any(distr_names .== aggr_names[k]))
             j = getfield(sr.indexes, Symbol(aggr_names[k]))
-            for h = eachindex(aggr_names)
-                if !(any(distr_names.==aggr_names[h]))
+            for h in eachindex(aggr_names)
+                if !(any(distr_names .== aggr_names[h]))
                     i = getfield(sr.indexes, Symbol(aggr_names[h]))
-                    A[j,i] = BA[k, h + length_X0]
-                    B[j,i] = BA[k, h]
+                    A[j, i] = BA[k, h+length_X0]
+                    B[j, i] = BA[k, h]
                 end
             end
         end

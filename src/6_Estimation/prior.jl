@@ -42,7 +42,9 @@ Compute the location and shape parameter of the Beta distribution from the mean 
 - `b`: shape parameter of beta distribution [scalar]
 """
 function beta_pars(betamean, betavariance)
-    b = (betamean - 2 * betamean^2 + betamean^3 - betavariance + betamean * betavariance) / betavariance
+    b =
+        (betamean - 2 * betamean^2 + betamean^3 - betavariance + betamean * betavariance) /
+        betavariance
     a = -betamean * b / (betamean - 1)
 
     return a, b

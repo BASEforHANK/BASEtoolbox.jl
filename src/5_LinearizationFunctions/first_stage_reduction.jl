@@ -43,30 +43,48 @@ function first_stage_reduction(
 
     # Derivatives of policy functions as central finite differences
     Dk_ak = spdiagm(
-        m_par.β .* m_par.λ .*
-        centralderiv(reshape(k_a_starSS, (n_par.nm, n_par.nk, n_par.ny)), n_par.mesh_k, 2)[:],
+        m_par.β .* m_par.λ .* centralderiv(
+            reshape(k_a_starSS, (n_par.nm, n_par.nk, n_par.ny)),
+            n_par.mesh_k,
+            2,
+        )[:],
     )
     Dm_ak = spdiagm(
-        m_par.β .* m_par.λ .*
-        centralderiv(reshape(m_a_starSS, (n_par.nm, n_par.nk, n_par.ny)), n_par.mesh_k, 2)[:],
+        m_par.β .* m_par.λ .* centralderiv(
+            reshape(m_a_starSS, (n_par.nm, n_par.nk, n_par.ny)),
+            n_par.mesh_k,
+            2,
+        )[:],
     )
     Dk_am = spdiagm(
-        m_par.β .* m_par.λ .*
-        centralderiv(reshape(k_a_starSS, (n_par.nm, n_par.nk, n_par.ny)), n_par.mesh_m, 1)[:],
+        m_par.β .* m_par.λ .* centralderiv(
+            reshape(k_a_starSS, (n_par.nm, n_par.nk, n_par.ny)),
+            n_par.mesh_m,
+            1,
+        )[:],
     )
     Dm_am = spdiagm(
-        m_par.β .* m_par.λ .*
-        centralderiv(reshape(m_a_starSS, (n_par.nm, n_par.nk, n_par.ny)), n_par.mesh_m, 1)[:],
+        m_par.β .* m_par.λ .* centralderiv(
+            reshape(m_a_starSS, (n_par.nm, n_par.nk, n_par.ny)),
+            n_par.mesh_m,
+            1,
+        )[:],
     )
     Dk_nk = m_par.β .* (1.0 .- m_par.λ)
     Dm_nk = spdiagm(
-        m_par.β .* (1.0 .- m_par.λ) .*
-        centralderiv(reshape(m_n_starSS, (n_par.nm, n_par.nk, n_par.ny)), n_par.mesh_k, 2)[:],
+        m_par.β .* (1.0 .- m_par.λ) .* centralderiv(
+            reshape(m_n_starSS, (n_par.nm, n_par.nk, n_par.ny)),
+            n_par.mesh_k,
+            2,
+        )[:],
     )
     Dk_nm = 0.0
     Dm_nm = spdiagm(
-        m_par.β .* (1.0 .- m_par.λ) .*
-        centralderiv(reshape(m_n_starSS, (n_par.nm, n_par.nk, n_par.ny)), n_par.mesh_m, 1)[:],
+        m_par.β .* (1.0 .- m_par.λ) .* centralderiv(
+            reshape(m_n_starSS, (n_par.nm, n_par.nk, n_par.ny)),
+            n_par.mesh_m,
+            1,
+        )[:],
     )
 
     # Joint transition matrix taking policy function marginals into account
@@ -110,10 +128,14 @@ function first_stage_reduction(
     theta_k = (sum(abs.(Theta_k); dims = 2))
 
     # Find those DCT indexes that explain the average derivative well
-    indm[1] =
-        select_ind(reshape(theta_m, (n_par.nm, n_par.nk, n_par.ny)), n_par.reduc_marginal_value)
-    indk[1] =
-        select_ind(reshape(theta_k, (n_par.nm, n_par.nk, n_par.ny)), n_par.reduc_marginal_value)
+    indm[1] = select_ind(
+        reshape(theta_m, (n_par.nm, n_par.nk, n_par.ny)),
+        n_par.reduc_marginal_value,
+    )
+    indk[1] = select_ind(
+        reshape(theta_k, (n_par.nm, n_par.nk, n_par.ny)),
+        n_par.reduc_marginal_value,
+    )
 
     # Add the indexes that fit the shape of the marginal value functions themselves well
     indk[end] = select_ind(
@@ -136,13 +158,13 @@ function VFI(price::Vector, VkSS::Array, VmSS::Array, NSS::Float64, n_par, m_par
     price = exp.(price)
 
     # Read out individual "prices" (WARNING: hard coded order)
-    mcw   = price[1]
-    q     = price[2]
-    RL    = price[3]
+    mcw = price[1]
+    q = price[2]
+    RL = price[3]
     τprog = price[4]
-    τlev  = price[5]
-    r     = price[6]
-    w     = price[7]
+    τlev = price[5]
+    r = price[6]
+    w = price[7]
 
     profits = price[8]
     unionprofits = price[9]
@@ -152,11 +174,11 @@ function VFI(price::Vector, VkSS::Array, VmSS::Array, NSS::Float64, n_par, m_par
 
     # Fixed inputs / prices that have the same impact on decisions/Value 
     # Functions as some of the above
-    A  = 1.0     #  shows up only multiplicatively with RL
-    π  = 1.0     #  shows up only multiplicatively with RL
-    H  = n_par.H # in StSt: shows up only multiplicatively with w
+    A = 1.0     #  shows up only multiplicatively with RL
+    π = 1.0     #  shows up only multiplicatively with RL
+    H = n_par.H # in StSt: shows up only multiplicatively with w
     Ht = 1.0     # shows up only multiplicatively with w
-    N  = NSS     # shows up only multiplicatively with w
+    N = NSS     # shows up only multiplicatively with w
 
     # Human capital transition
     Π = n_par.Π .+ zeros(eltype(price), 1)[1]

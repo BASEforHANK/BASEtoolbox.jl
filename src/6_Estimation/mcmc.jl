@@ -13,7 +13,15 @@ Sample the posterior of the parameter vector using the Random-Walk Metropolis Ha
 - `posterior`: vector of posteriors for the respective draws
 - `accept_rate`: acceptance rate
 """
-function rwmh(xhat::Vector{Float64}, Σ::Symmetric{Float64,Array{Float64,2}}, sr, lr, er, m_par, e_set)
+function rwmh(
+    xhat::Vector{Float64},
+    Σ::Symmetric{Float64,Array{Float64,2}},
+    sr,
+    lr,
+    er,
+    m_par,
+    e_set,
+)
 
     NormDist = MvNormal(zeros(length(xhat)), Σ)
     accept = 0
@@ -64,7 +72,15 @@ Draw overdispersed initial values for multi-chain RWMH.
 - `init_draw`: overdispersed starting value for chain
 - `init_draw`: Bool variable indicating whether search was succesful
 """
-function multi_chain_init(xhat::Vector{Float64}, Σ::Symmetric{Float64,Array{Float64,2}}, sr, lr, er, m_par, e_set)
+function multi_chain_init(
+    xhat::Vector{Float64},
+    Σ::Symmetric{Float64,Array{Float64,2}},
+    sr,
+    lr,
+    er,
+    m_par,
+    e_set,
+)
 
     init_scale = 2 * e_set.mhscale # overdispersed initial values
     NormDist = MvNormal(zeros(length(xhat)), Σ)

@@ -35,7 +35,7 @@ function prepare_linearization(KSS, VmSS, VkSS, distrSS, n_par, m_par)
     rSS       = interest(KSS, 1.0./m_par.μ, NSS, m_par) + 1.0 
     wSS       = wage(KSS, 1.0./m_par.μ, NSS, m_par)
     YSS       = output(KSS, 1.0, NSS, m_par)                              # stationary income distribution
-    
+
     profitsSS = profitsSS_fnc(YSS,m_par.RB,m_par)
     unionprofitsSS  = (1.0 .- 1.0/m_par.μw) .* wSS .* NSS
     LC              = 1.0./m_par.μw *wSS.*NSS  
@@ -54,11 +54,11 @@ function prepare_linearization(KSS, VmSS, VkSS, distrSS, n_par, m_par)
 
     VmSS      .*= eff_int
 
-    
+
     # Produce distributional summary statistics
     distr_mSS, distr_kSS, distr_ySS, TOP10WshareSS, TOP10IshareSS,TOP10InetshareSS, GiniWSS, GiniCSS, sdlogySS = 
         distrSummaries(distrSS, 1.0, c_a_starSS, c_n_starSS, n_par, incnet,incgross, m_par)
-    
+
     # ------------------------------------------------------------------------------
     # STEP 2: Dimensionality reduction
     # ------------------------------------------------------------------------------
@@ -67,7 +67,7 @@ function prepare_linearization(KSS, VmSS, VkSS, distrSS, n_par, m_par)
     # Vector of all prices in the household problem (in SS)
     price_vectorSS = [1.0/m_par.μw, 1.0, m_par.RB, m_par.τ_prog, m_par.τ_lev, 
                      rSS, wSS, profitsSS, unionprofitsSS, av_tax_rateSS, 1.0][:]
- 
+
     indk, indm, _ = first_stage_reduction(VkSS, VmSS, TransitionMat_aSS, TransitionMat_nSS, 
                                         NSS, m_a_starSS, k_a_starSS, m_n_starSS,
                                         price_vectorSS, n_par, m_par)
@@ -75,13 +75,13 @@ function prepare_linearization(KSS, VmSS, VkSS, distrSS, n_par, m_par)
     VkSS          = log.(invmutil(VkSS,m_par))
     compressionIndexesVm = sort(unique(vcat(indm...)))
     compressionIndexesVk = sort(unique(vcat(indk...)))
-    
+
     # ------------------------------------------------------------------------------
     # 2b.) Select polynomials for copula perturbation
     # ------------------------------------------------------------------------------
     SELECT                = [ (!((i==1) & (j ==1)) & !((k==1) & (j ==1)) & !((k==1) & (i ==1))) 
                              for i = 1:n_par.nm_copula, j = 1:n_par.nk_copula, k = 1:n_par.ny_copula]
-    
+
     compressionIndexesCOP = findall(SELECT[:])     # store indices of selected coeffs 
 
     # ------------------------------------------------------------------------------
@@ -91,8 +91,8 @@ function prepare_linearization(KSS, VmSS, VkSS, distrSS, n_par, m_par)
     compressionIndexes[1] = compressionIndexesVm
     compressionIndexes[2] = compressionIndexesVk
     compressionIndexes[3] = compressionIndexesCOP
-    
-    
+
+
     # ------------------------------------------------------------------------------
     # 2d.) Produce marginals
     # ------------------------------------------------------------------------------
@@ -103,7 +103,7 @@ function prepare_linearization(KSS, VmSS, VkSS, distrSS, n_par, m_par)
     CDF_m                = cumsum(distr_mSS[:])          # Marginal distribution (cdf) of liquid assets
     CDF_k                = cumsum(distr_kSS[:])          # Marginal distribution (cdf) of illiquid assets
     CDF_y                = cumsum(distr_ySS[:])          # Marginal distribution (cdf) of income
-  
+
     # Calculate interpolation nodes for the copula as those elements of the marginal distribution 
     # that yield close to equal aggregate shares in liquid wealth, illiquid wealth and income.
     # Entrepreneur state treated separately. 
@@ -115,14 +115,14 @@ function prepare_linearization(KSS, VmSS, VkSS, distrSS, n_par, m_par)
     # DO NOT DELETE OR EDIT NEXT LINE! This is needed for parser.
     # aggregate steady state marker
     # @include "../3_Model/input_aggregate_steady_state.jl"
-    
+
     # write to XSS vector
     @writeXSS
-    
+
     # produce indexes to access XSS etc.
     indexes               = produce_indexes(n_par, compressionIndexesVm, compressionIndexesVk, compressionIndexesCOP)
     indexes_aggr          = produce_indexes_aggr(n_par)
-    
+
     @set! n_par.ntotal    = length(vcat(compressionIndexes...)) + (n_par.ny + n_par.nm + n_par.nk - 3 + n_par.naggr) 
     @set! n_par.nstates   = n_par.ny + n_par.nk + n_par.nm - 3 + n_par.naggrstates + length(compressionIndexes[3]) # add to no. of states the coefficients that perturb the copula
     @set! n_par.ncontrols = length(vcat(compressionIndexes[1:2]...)) + n_par.naggrcontrols
@@ -143,7 +143,7 @@ function prepare_linearization(KSS, VmSS, VkSS, distrSS, n_par, m_par)
 end
 
 function copula_marg_equi_y(distr_i, grid_i, nx)
-    
+
     CDF_i        = cumsum(distr_i[:])          # Marginal distribution (cdf) of liquid assets
     aux_marginal = collect(range(CDF_i[1], stop = CDF_i[end], length = nx))
 
@@ -198,7 +198,7 @@ function copula_marg_equi(distr_i, grid_i, nx)
 end
 
 function equishares(x1, x2, grid_i, distr_i, nx) 
-        
+
     FN_Wshares = cumsum(grid_i .* distr_i) ./ sum(grid_i .* distr_i)
     Wshares    = diff(mylinearinterpolate(cumsum(distr_i), FN_Wshares, [x1; x2]))
     dev_equi   = Wshares .- 1.0 ./ nx

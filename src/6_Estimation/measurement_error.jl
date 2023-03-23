@@ -18,12 +18,13 @@ function measurement_error(Data, observed_vars, e_set)
     if !isempty(e_set.meas_error_input)
 
         # find correct positions for measurement error
-        meas_error_index = Vector{Int}(undef,length(e_set.meas_error_input))
+        meas_error_index = Vector{Int}(undef, length(e_set.meas_error_input))
         for i in eachindex(e_set.meas_error_input)
-            meas_error_index[i] = findall(x->x==e_set.meas_error_input[i], observed_vars)[1]
+            meas_error_index[i] =
+                findall(x -> x == e_set.meas_error_input[i], observed_vars)[1]
         end
         meas_error = OrderedDict(zip(e_set.meas_error_input, meas_error_index))
-        
+
         # create measurement error according to selected treatment
         if e_set.me_treatment == :unbounded
             # inverse gamma prior
@@ -31,7 +32,8 @@ function measurement_error(Data, observed_vars, e_set)
             meas_error_std = e_set.me_std_cutoff * ones(length(e_set.meas_error_input))
         elseif e_set.me_treatment == :bounded || e_set.me_treatment == :fixed
             # data dependent hard upper bound on measurement error standard deviation
-            meas_error_prior = Array{Uniform{Float64}}(undef,length(e_set.meas_error_input))
+            meas_error_prior =
+                Array{Uniform{Float64}}(undef, length(e_set.meas_error_input))
             meas_error_std = Vector{Float64}(undef, length(e_set.meas_error_input))
             m_iter = 1
             for (k, v) in meas_error # read out position of measurement errors
@@ -44,7 +46,7 @@ function measurement_error(Data, observed_vars, e_set)
         end
     else
         # in case of no measurement error
-        meas_error = OrderedDict{Symbol, Int}()
+        meas_error = OrderedDict{Symbol,Int}()
         meas_error_prior = repeat([InverseGamma(ig_pars(0.0005, 0.001^2)...)], 0)
         meas_error_std = Vector{Float64}(undef, 0)
     end

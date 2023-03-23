@@ -7,11 +7,18 @@ Return deviations from aggregate equilibrium conditions.
 (which is how function is called by [`LinearSolution_estim()`](@ref)), variable-vectors
 `X`,`XPrime`, and `XSS` only contain the aggregate variables of the model.
 """
-function Fsys_agg(X::AbstractArray, XPrime::AbstractArray, XSS::Array{Float64,1},distrSS::AbstractArray, m_par::ModelParameters,
-              n_par::NumericalParameters, indexes::Union{IndexStructAggr,IndexStruct})
-              # The function call with Duals takes
-              # Reserve space for error terms
-    F = zeros(eltype(X),size(X))
+function Fsys_agg(
+    X::AbstractArray,
+    XPrime::AbstractArray,
+    XSS::Array{Float64,1},
+    distrSS::AbstractArray,
+    m_par::ModelParameters,
+    n_par::NumericalParameters,
+    indexes::Union{IndexStructAggr,IndexStruct},
+)
+    # The function call with Duals takes
+    # Reserve space for error terms
+    F = zeros(eltype(X), size(X))
     ############################################################################
     #            I. Read out argument values                                   #
     ############################################################################
@@ -32,5 +39,3 @@ function Fsys_agg(X::AbstractArray, XPrime::AbstractArray, XSS::Array{Float64,1}
 
     return F
 end
-
-
