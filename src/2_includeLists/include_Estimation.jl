@@ -3,4 +3,4 @@ include("../6_Estimation/filter_smoother.jl")
 # include("Estimation/prior.jl")
 include("../6_Estimation/mcmc.jl")
 include("../6_Estimation/measurement_error.jl")
-include("../6_Estimation/mode_finding.jl")
+

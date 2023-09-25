@@ -6,7 +6,7 @@
 cd("./src")
 
 # pre-process user inputs for model setup
-include("3_NumericalBasics/PreprocessInputs.jl")
+include("Preprocessor/PreprocessInputs.jl")
 
 push!(LOAD_PATH, pwd())
 using BASEforHANK
@@ -34,9 +34,9 @@ BASEforHANK.Random.seed!(e_set.seed)
 ################################################################################
 # Comment in the following block to be able to go straight to plotting (comment out lines 40-53)
 ################################################################################
-# @load "7_Saves/steadystate.jld2" sr_full
-# @load "7_Saves/linearresults.jld2" lr_full
-# @load "7_Saves/reduction.jld2" sr_reduc lr_reduc
+@load "7_Saves/steadystate.jld2" sr_full
+@load "7_Saves/linearresults.jld2" lr_full
+@load "7_Saves/reduction.jld2" sr_reduc lr_reduc
 # @load BASEforHANK.e_set.save_posterior_file sr_mc lr_mc er_mc m_par_mc smoother_output
 # @set! e_set.estimate_model = false 
 

@@ -1,5 +1,5 @@
 # __precompile__(false)
-# Code runs on Julia 1.7.1
+# Code runs on Julia 1.9.3
 # ------------------------------------------------------------------------------
 ## Package Calls
 # ------------------------------------------------------------------------------
@@ -14,102 +14,106 @@ if !Sys.isapple() # issues encountered when using mkl with macos + more than 1 t
     using MKL
 end
 
-using Plots,
-    VegaLite,
-    StatsPlots,
-    OrderedCollections,
-    JLD2,
-    FileIO,
-    DataFrames,
-    CSV,
-    LaTeXStrings,
-    JSON,
-    CodecZlib,
-    Parameters,
-    Setfield,
-    Flatten,
-    FieldMetadata
+using   Plots,
+        VegaLite,
+        StatsPlots,
+        OrderedCollections,
+        JLD2,
+        FileIO,
+        DataFrames,
+        CSV,
+        LaTeXStrings,
+        JSON,
+        CodecZlib,
+        Parameters,
+        Setfield,
+        Flatten,
+        FieldMetadata
 
-using LinearAlgebra,
-    SparseArrays,
-    BlockDiagonals,
-    CategoricalArrays,
-    Random,
-    MCMCChains,
-    Distributions,
-    Roots,
-    ForwardDiff,
-    Optim,
-    BenchmarkTools
+using   LinearAlgebra,
+        SparseArrays,
+        BlockDiagonals,
+        Random,
+        MCMCChains,
+        Distributions,
+        Roots,
+        ForwardDiff,
+        Optim,
+        BenchmarkTools,
+        Statistics, 
+        PrettyTables, 
+        Colors
 
-using Statistics, PrettyTables, Colors
-
-# using MatrixEquations, ProximalOperators,KrylovKit,SpecialFunctions,FFTW
+using CategoricalArrays: CategoricalArray
 using MatrixEquations: lyapd
 using ProximalOperators: prox!, IndPSD
-using KrylovKit: eigsolve
-using SpecialFunctions: erf
 using FFTW: dct, ifft
 
+# Submodules only required by sibling modules
+include("SubModules/BfH_tools.jl")
+include("SubModules/BfH_EconFunc.jl")
+
+# Submodules that define functions used by parent
+include("SubModules/BfH_Parsing.jl")
+using .BfH_Parsing
+include("SubModules/BfH_Steady.jl")
+using .BfH_Steady
+include("SubModules/BfH_Macro.jl")
+using .BfH_Macro
+
 import Flatten: flattenable
-export ModelParameters,
-    NumericalParameters,
-    EstimationSettings,
-    SteadyResults,
-    LinearResults,
-    EstimResults,
-    SteadyState,
-    compute_steadystate,
-    call_find_steadystate,
-    call_prepare_linearization,
-    linearize_full_model,
-    model_reduction,
-    update_model,
-    find_mode,
-    montecarlo,
-    mode,
-    metaflatten,
-    prior,
-    compare_2_linearizations,
-    reduction_quality,
-    reduction_quality_seq,
-    compute_irfs_vardecomp,
-    plot_irfs,
-    compute_hist_decomp,
-    plot_vardecomp,
-    compute_bcfreq_vardecomp,
-    compute_vardecomp_bounds,
-    @set!,
-    jldsave,
-    @load,
-    @writeXSS,
-    @make_fn,
-    @make_fnaggr,
-    @make_struct,
-    @make_struct_aggr,
-    @generate_equations
+
+# Structs to export
+export  ModelParameters,
+        NumericalParameters,
+        EstimationSettings,
+        SteadyResults,
+        LinearResults,
+        EstimResults,
+        SteadyState
+
+# Own Functions to export
+export  compute_steadystate,
+        call_find_steadystate,
+        call_prepare_linearization,
+        linearize_full_model,
+        model_reduction,
+        update_model,
+        find_mode,
+        montecarlo,
+        compare_2_linearizations,
+        reduction_quality,
+        reduction_quality_seq,
+        compute_irfs_vardecomp,
+        plot_irfs,
+        compute_hist_decomp,
+        plot_vardecomp,
+        compute_bcfreq_vardecomp,
+        compute_vardecomp_bounds
+
+# Macros to export
+export  @writeXSS,
+        @generate_equations
+
+# Functions passed through from 3rd Party packages
+export  mode,
+        metaflatten,
+        prior,
+        jldsave,
+        @set!,
+        @load
 
 include("1_Model/input_aggregate_names.jl")
-
+include("6_Estimation/prior.jl")
 # ------------------------------------------------------------------------------
 ## Define Functions
 # ------------------------------------------------------------------------------
-include("1_Model/Parameters.jl")
-include("3_NumericalBasics/Structs.jl")
-include("6_Estimation/prior.jl")
 
-e_set = EstimationSettings(shock_names = shock_names)
-@make_struct IndexStruct
-@make_struct_aggr IndexStructAggr
-
-include("2_includeLists/include_NumericalBasics.jl")
-include("2_includeLists/include_HetAgentsFcns.jl")
-include("2_includeLists/include_LinearizationFunctions.jl")
+#include("2_includeLists/include_LinearizationFunctions.jl")
+include("6_Estimation/mode_finding.jl")
 include("2_includeLists/include_Estimation.jl")
 include("2_includeLists/include_PostEstimation.jl")
 
-@make_fn produce_indexes
-@make_fnaggr produce_indexes_aggr
 
 @doc raw"""
     call_findsteadystate()

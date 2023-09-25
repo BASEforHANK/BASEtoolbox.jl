@@ -27,7 +27,7 @@ function kalman_filter(
     D_miss::BitArray{2},
     SCov::Matrix{Float64},
     MCov::Matrix{Float64},
-    e_set::EstimationSettings,
+    e_set,
 )
 
     # treat non-well-behaved covariance matrix
@@ -113,7 +113,7 @@ function kalman_filter(
     D_nomiss::BitArray{2},
     SCov::Matrix{Float64},
     MCov::Matrix{Float64},
-    e_set::EstimationSettings,
+    e_set,
 )
     # kalman filter variant without missing data
 
@@ -327,7 +327,7 @@ function kalman_filter(
     D_miss::BitArray{2},
     SCov::Matrix{Number},
     MCov::Matrix{Number},
-    e_set::EstimationSettings,
+    e_set,
 )
 
     # treat non-well-behaved covariance matrix
