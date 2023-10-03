@@ -6,10 +6,11 @@
 cd("./src")
 
 # pre-process user inputs for model setup
-include("Preprocessor/PreprocessInputs.jl")
+@time include("Preprocessor/PreprocessInputs.jl")
 
 push!(LOAD_PATH, pwd())
-using BASEforHANK
+#@time include("BASEforHANK.jl")
+@time using BASEforHANK
 
 # set BLAS threads to the number of Julia threads.
 # prevents BLAS from grabbing all threads on a machine
@@ -21,6 +22,7 @@ BASEforHANK.LinearAlgebra.BLAS.set_num_threads(Threads.nthreads())
 #------------------------------------------------------------------------------
 m_par = ModelParameters()
 priors = collect(metaflatten(m_par, prior)) # model parameters
+ggg = collect(metaflatten(m_par, label)) # model parameters
 par_prior = mode.(priors)
 m_par = BASEforHANK.Flatten.reconstruct(m_par, par_prior)
 e_set = BASEforHANK.e_set;
@@ -34,9 +36,9 @@ BASEforHANK.Random.seed!(e_set.seed)
 ################################################################################
 # Comment in the following block to be able to go straight to plotting (comment out lines 40-53)
 ################################################################################
-@load "7_Saves/steadystate.jld2" sr_full
-@load "7_Saves/linearresults.jld2" lr_full
-@load "7_Saves/reduction.jld2" sr_reduc lr_reduc
+@load "Saves/steadystate.jld2" sr_full
+@load "Saves/linearresults.jld2" lr_full
+@load "Saves/reduction.jld2" sr_reduc lr_reduc
 # @load BASEforHANK.e_set.save_posterior_file sr_mc lr_mc er_mc m_par_mc smoother_output
 # @set! e_set.estimate_model = false 
 
@@ -49,8 +51,8 @@ sr_full = call_prepare_linearization(ss_full, m_par)
 # COMPACT call of both of the above:
 # sr_full = compute_steadystate(m_par)
 
-jldsave("7_Saves/steadystate.jld2", true; sr_full) # true enables compression
-# @load "7_Saves/steadystate.jld2" sr_full
+jldsave("Saves/steadystate.jld2", true; sr_full) # true enables compression
+# @load "Saves/steadystate.jld2" sr_full
 
 #------------------------------------------------------------------------------
 # compute and display steady-state moments
@@ -74,14 +76,14 @@ println("Fraction of Borrower:", fr_borr)
 
 # linearize the full model
 lr_full = linearize_full_model(sr_full, m_par)
-jldsave("7_Saves/linearresults.jld2", true; lr_full)
-# @load "7_Saves/linearresults.jld2" lr_full
+jldsave("Saves/linearresults.jld2", true; lr_full)
+# @load "Saves/linearresults.jld2" lr_full
 
 # Find sparse state-space representation
 sr_reduc = model_reduction(sr_full, lr_full, m_par);
 lr_reduc = update_model(sr_reduc, lr_full, m_par)
-jldsave("7_Saves/reduction.jld2", true; sr_reduc, lr_reduc)
-# @load "7_Saves/reduction.jld2" sr_reduc lr_reduc
+jldsave("Saves/reduction.jld2", true; sr_reduc, lr_reduc)
+# @load "Saves/reduction.jld2" sr_reduc lr_reduc
 
 # model timing
 println("One model solution takes")
@@ -146,17 +148,6 @@ end
 ##############################################################################################
 # Graphical Model Output
 ###############################################################################################
-using Plots,
-    VegaLite,
-    DataFrames,
-    FileIO,
-    StatsPlots,
-    CategoricalArrays,
-    Flatten,
-    Statistics,
-    PrettyTables,
-    Colors
-
 # variables to be plotted
 select_variables = [
     :Ygrowth,

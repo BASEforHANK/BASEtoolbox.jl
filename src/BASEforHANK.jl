@@ -14,54 +14,33 @@ if !Sys.isapple() # issues encountered when using mkl with macos + more than 1 t
     using MKL
 end
 
-using   Plots,
-        VegaLite,
-        StatsPlots,
-        OrderedCollections,
+using   LinearAlgebra,
         JLD2,
         FileIO,
-        DataFrames,
-        CSV,
-        LaTeXStrings,
-        JSON,
-        CodecZlib,
-        Parameters,
         Setfield,
         Flatten,
+        Distributions,
+        Random,
         FieldMetadata
 
-using   LinearAlgebra,
-        SparseArrays,
-        BlockDiagonals,
-        Random,
-        MCMCChains,
-        Distributions,
-        Roots,
-        ForwardDiff,
-        Optim,
-        BenchmarkTools,
-        Statistics, 
-        PrettyTables, 
-        Colors
-
-using CategoricalArrays: CategoricalArray
-using MatrixEquations: lyapd
-using ProximalOperators: prox!, IndPSD
-using FFTW: dct, ifft
-
+import  Flatten: flattenable
+import  FieldMetadata: label
 # Submodules only required by sibling modules
-include("SubModules/BfH_tools.jl")
-include("SubModules/BfH_EconFunc.jl")
+include("SubModules/Tools.jl")
+include("SubModules/EconFunc.jl")
 
 # Submodules that define functions used by parent
-include("SubModules/BfH_Parsing.jl")
-using .BfH_Parsing
-include("SubModules/BfH_Steady.jl")
-using .BfH_Steady
-include("SubModules/BfH_Macro.jl")
-using .BfH_Macro
+include("SubModules/Parsing.jl")
+using .Parsing
+include("SubModules/Steady.jl")
+using .Steady
+include("SubModules/Macro.jl")
+using .Macro
+include("SubModules/Estimation.jl")
+using .Estimation
+include("SubModules/PostEstimation.jl")
+using .PostEstimation
 
-import Flatten: flattenable
 
 # Structs to export
 export  ModelParameters,
@@ -91,28 +70,21 @@ export  compute_steadystate,
         compute_bcfreq_vardecomp,
         compute_vardecomp_bounds
 
-# Macros to export
-export  @writeXSS,
-        @generate_equations
-
 # Functions passed through from 3rd Party packages
 export  mode,
         metaflatten,
         prior,
+        label,
         jldsave,
         @set!,
         @load
 
-include("1_Model/input_aggregate_names.jl")
-include("6_Estimation/prior.jl")
+include("Model/input_aggregate_names.jl")
+include("Preprocessor/prior.jl")
 # ------------------------------------------------------------------------------
 ## Define Functions
 # ------------------------------------------------------------------------------
 
-#include("2_includeLists/include_LinearizationFunctions.jl")
-include("6_Estimation/mode_finding.jl")
-include("2_includeLists/include_Estimation.jl")
-include("2_includeLists/include_PostEstimation.jl")
 
 
 @doc raw"""
@@ -227,80 +199,6 @@ function linearize_full_model(sr::SteadyResults, m_par::ModelParameters)
         LinearSolution(sr, m_par, A, B; estim = false)
 
     return LinearResults(State2Control, LOMstate, A, B, SolutionError, nk)
-end
-
-@doc raw"""
-    update_model()
-
-Updates the linearized model (around the steady state, after parameter changes in the aggregate model) and solves,
-using [`LinearSolution_estim()`](@ref). WARNING: The function is not threadsafe in the sense that calling it will alter the
-input(!) lr.A/B across threads, if lr is not local to the thread.
-
-# Returns
-`struct` `LinearResults`, containing
-- `A::Array{Float64,2}`,`B::Array{Float64,2}`: first derivatives of [`Fsys()`](@ref) with respect to arguments `X` [`B`]
-    and `XPrime` [`A`]
-- `State2Control::Array{Float64,2}`: observation equation
-- `LOMstate::Array{Float64,2}`: state transition equation
-"""
-function update_model(sr::SteadyResults, lr::LinearResults, m_par::ModelParameters)
-
-    if sr.n_par.verbose
-        println("Updating linearization")
-    end
-    State2Control, LOMstate, SolutionError, nk, A, B =
-        LinearSolution_estim(sr, m_par, lr.A, lr.B; estim = true)
-
-    return LinearResults(State2Control, LOMstate, A, B, SolutionError, nk)
-end
-
-@doc raw"""
-    model_reduction()
-
-Produce Model Reduction based on Variance Covariance Matrix of States and Controls.
-
-# Returns/ Updates
-`struct` `SteadyResults`, containing returns of [`find_steadystate()`](@ref)
-"""
-function model_reduction(sr, lr, m_par)
-    n_par = sr.n_par
-    # Reduce further based on importance in dynamics at initial guess 
-    if n_par.further_compress
-        println("Reduction Step")
-        indexes_r, n_par = compute_reduction(sr, lr, m_par, e_set.shock_names)
-
-        println("Number of reduced model factors for DCTs for Vm & Vk:")
-        println(length(indexes_r.Vm) + length(indexes_r.Vk))
-
-        println("Number of reduced model factors for copula DCTs:")
-        println(length(indexes_r.COP))
-    else
-        println("Further model reduction switched off --> reverting to full model")
-        @set! n_par.PRightAll = Diagonal(ones(n_par.ntotal))#float(I[1:n_par.ntotal, 1:n_par.ntotal])
-        @set! n_par.PRightStates = Diagonal(ones(n_par.nstates))# float(I[1:n_par.nstates, 1:n_par.nstates])
-        indexes_r = sr.indexes
-        @set! n_par.nstates_r = n_par.nstates
-        @set! n_par.ncontrols_r = n_par.ncontrols
-        @set! n_par.ntotal_r = n_par.ntotal
-    end
-
-    return SteadyResults(
-        sr.XSS,
-        sr.XSSaggr,
-        sr.indexes,
-        indexes_r,
-        sr.indexes_aggr,
-        sr.compressionIndexes,
-        n_par,
-        m_par,
-        sr.CDFSS,
-        sr.CDF_m,
-        sr.CDF_k,
-        sr.CDF_y,
-        sr.distrSS,
-        state_names,
-        control_names,
-    )
 end
 
 

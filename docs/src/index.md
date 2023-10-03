@@ -37,9 +37,9 @@ The provided `script.jl` then shows how a typical estimation proceeds in three m
 
 ### Setting up your model
 
-To define the aggregate part of the model, include the aggregate model block in `1_Model\input_aggregate_model.jl`. The model variables are divided into *states* (distribution, productivity, ...) and
+To define the aggregate part of the model, include the aggregate model block in `Model\input_aggregate_model.jl`. The model variables are divided into *states* (distribution, productivity, ...) and
 *controls* (consumption policy or marginal utilities/value functions, prices, aggregate capital stock, ...). The aggregate variables (i.e. excluding the distribution and marginal utilities/value functions) are defined
- in `1_Model\include_aggregate_names` and their steady states in `1_Model\input_aggregate_steady_state`. Include model parameters in `struct ModelParameters` in `1_Model\Parameters.jl`.
+ in `Model\include_aggregate_names` and their steady states in `Model\input_aggregate_steady_state`. Include model parameters in `struct ModelParameters` in `Model\Parameters.jl`.
 
 The file `Parameters.jl` contains three structures to provide model parameters, numerical parameters, and estimation settings. In addition, it contains two macros that automatically create structures that contain the model variables.
 
@@ -58,11 +58,11 @@ the steady-state distribution of income and assets. It also contains the margina
 !!! tip
     `sr_full` may be saved to the local file system by calling
     ```
-    @save "7_Saves/steadystate.jld2" sr_full
+    @save "Saves/steadystate.jld2" sr_full
     ```
     and can be loaded for a future session with
     ```
-    @load "7_Saves/steadystate.jld2" sr_full
+    @load "Saves/steadystate.jld2" sr_full
     ```
 More details can be found in the section "Steady State".
 

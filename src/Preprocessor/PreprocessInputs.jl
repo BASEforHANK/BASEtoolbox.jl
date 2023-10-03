@@ -10,7 +10,7 @@ f = open("Preprocessor/template_fcns/FSYS_agg.jl")
 lines = readlines(f)
 insert_index = findall(x -> x == "    # aggregate model marker", lines)[1]
 
-g = open("1_Model/input_aggregate_model.jl")
+g = open("Model/input_aggregate_model.jl")
 s = read(g, String)
 deblank(S::String) = filter(x -> !isspace(x), S)
 number_of_equations =
@@ -43,7 +43,7 @@ f = open("Preprocessor/template_fcns/prepare_linearization.jl")
 lines = readlines(f)
 insert_index = findall(x -> x == "    # aggregate steady state marker", lines)[1]
 
-g = open("1_Model/input_aggregate_steady_state.jl")
+g = open("Model/input_aggregate_steady_state.jl")
 s = read(g, String)
 
 open("Preprocessor/generated_fcns/prepare_linearization_generated.jl", "w") do h
