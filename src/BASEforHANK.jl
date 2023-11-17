@@ -28,7 +28,8 @@ using Plots,
     Parameters,
     Setfield,
     Flatten,
-    FieldMetadata
+    FieldMetadata,
+    FiniteDiff
 
 using LinearAlgebra,
     SparseArrays,
