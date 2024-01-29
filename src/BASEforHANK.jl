@@ -21,7 +21,8 @@ using   LinearAlgebra,
         Flatten,
         Distributions,
         Random,
-        FieldMetadata
+        FieldMetadata,
+        MCMCChains
 
 import  Flatten: flattenable
 import  FieldMetadata: label

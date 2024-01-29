@@ -3,10 +3,7 @@
 # ------------------------------------------------------------------------------
 ## Package Calls
 # ------------------------------------------------------------------------------
-# Packages used: Plots Distributions BenchmarkTools JLD2 FileIO DataFrames ForwardDiff
-# SparseArrays LinearAlgebra Random LaTeXStrings MatrixEquations Roots KrylovKit JSON 
-# CodecZlib SpecialFunctions FFTW Parameters Setfield MCMCChains StatsPlots Optim CSV 
-# OrderedCollections Flatten FieldMetadata MKL
+
 
 module Parsing
 # Sibling modules
@@ -23,6 +20,7 @@ using   LinearAlgebra,
         Optim
 
 import Flatten: flattenable    
+import FieldMetadata: label
 
 export  ModelParameters,
         NumericalParameters,

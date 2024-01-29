@@ -11,7 +11,7 @@ cd("./src")
 push!(LOAD_PATH, pwd())
 @time include("BASEforHANK.jl")
 @time using .BASEforHANK
-
+using BenchmarkTools
 # set BLAS threads to the number of Julia threads.
 # prevents BLAS from grabbing all threads on a machine
 BASEforHANK.LinearAlgebra.BLAS.set_num_threads(Threads.nthreads())
@@ -22,7 +22,7 @@ BASEforHANK.LinearAlgebra.BLAS.set_num_threads(Threads.nthreads())
 #------------------------------------------------------------------------------
 m_par = ModelParameters()
 priors = collect(metaflatten(m_par, prior)) # model parameters
-ggg = collect(metaflatten(m_par, label)) # model parameters
+
 par_prior = mode.(priors)
 m_par = BASEforHANK.Flatten.reconstruct(m_par, par_prior)
 e_set = BASEforHANK.e_set;
@@ -88,7 +88,7 @@ jldsave("Output/Saves/reduction.jld2", true; sr_reduc, lr_reduc)
 # model timing
 println("One model solution takes")
 @set! sr_reduc.n_par.verbose = false
-BASEforHANK.@btime lr_reduc = update_model(sr_reduc, lr_full, m_par)
+@btime lr_reduc = update_model(sr_reduc, lr_full, m_par)
 @set! sr_reduc.n_par.verbose = true;
 
 if e_set.estimate_model == true
@@ -170,7 +170,7 @@ model_names[1] = "HANK Mode"
 model_names[2] = "HANK Posterior"
 
 # enter here the models, as tupel of tupels (sr, lr, e_set, m_par), to be compared
-models_tupel = ((sr_full, lr_full, e_set, m_par), (sr_reduc, lr_reduc, e_set, m_par))
+models_tupel = ((sr_mc, lr_mc, e_set, m_par_mc), (sr_mode, lr_mode, e_set, m_par_mode))
 
 timeline = collect(1954.75:0.25:2019.75)
 select_vd_horizons = [4 16 100] # horizons for variance decompositions
@@ -235,7 +235,7 @@ IRFs_plot = plot_irfs(
     model_names,
     4;
     savepdf = true,
-    disp = true
+    disp_switch = true
 )
 
 # export Variance Decompositions as DataFrames and Plot using VegaLite
@@ -249,7 +249,7 @@ DF_V_Decomp, DF_V_Decomp_bc = plot_vardecomp(
     savepdf = true,
     suffix = "_nolegend",
     legend_switch = true,
-    disp = true
+    disp_switch = true
 )
 
 # produce historical contributions as Array and Data Frame and plot p

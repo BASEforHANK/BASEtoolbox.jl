@@ -147,7 +147,7 @@ function compute_hist_decomp(
             savefig(
                 p[j],
                 string(
-                    "PostEstimationOutput/Figures/Smooth/HistD_",
+                    "Output/Figures/Smooth/HistD_",
                     prefix,
                     select_variables[j],
                     ".pdf",
