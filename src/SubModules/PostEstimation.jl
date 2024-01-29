@@ -12,7 +12,13 @@ module PostEstimation
     # 3rd Party modules
     using   Plots,
             VegaLite,
-            StatsPlots
+            StatsPlots,
+            LinearAlgebra,
+            CategoricalArrays,
+            DataFrames
+            
+    using FFTW: ifft
+
         
     include("PostEstimation/compute_hist_decomp.jl")
     include("PostEstimation/compute_irfs_vardecomp.jl")
@@ -20,6 +26,12 @@ module PostEstimation
     include("PostEstimation/plot_irfs.jl")
     include("PostEstimation/plot_vardecomp.jl")
     include("PostEstimation/compute_bcfreq_vardecomp.jl")
-        
+    
+    export compute_irfs_vardecomp,
+        plot_irfs,
+        compute_hist_decomp,
+        plot_vardecomp,
+        compute_bcfreq_vardecomp,
+        compute_vardecomp_bounds
 
 end # end submodule Estimation

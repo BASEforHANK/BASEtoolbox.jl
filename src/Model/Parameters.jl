@@ -268,11 +268,11 @@ stored in the fields `mode_start_file`, `data_file`, `save_mode_file` and `save_
         [InverseGamma(ig_pars(0.01, 0.01^2)...), InverseGamma(ig_pars(0.01, 0.01^2)...)]
 
     # Leave empty to start with prior mode
-    mode_start_file::String = "Saves/parameter_example.jld2"
+    mode_start_file::String = "Output/Saves/parameter_example.jld2"
 
-    data_file::String = "bbl_data_inequality.csv"
-    save_mode_file::String = "Saves/HANK_mode.jld2"
-    save_posterior_file::String = "Saves/HANK_chain.jld2"
+    data_file::String = "Data/bbl_data_inequality.csv"
+    save_mode_file::String = "Output/Saves/HANK_mode.jld2"
+    save_posterior_file::String = "Output/Saves/HANK_chain.jld2"
 
     estimate_model::Bool = true
 

@@ -9,8 +9,8 @@ cd("./src")
 @time include("Preprocessor/PreprocessInputs.jl")
 
 push!(LOAD_PATH, pwd())
-#@time include("BASEforHANK.jl")
-@time using BASEforHANK
+@time include("BASEforHANK.jl")
+@time using .BASEforHANK
 
 # set BLAS threads to the number of Julia threads.
 # prevents BLAS from grabbing all threads on a machine
@@ -36,9 +36,9 @@ BASEforHANK.Random.seed!(e_set.seed)
 ################################################################################
 # Comment in the following block to be able to go straight to plotting (comment out lines 40-53)
 ################################################################################
-@load "Saves/steadystate.jld2" sr_full
-@load "Saves/linearresults.jld2" lr_full
-@load "Saves/reduction.jld2" sr_reduc lr_reduc
+@load "Output/Saves/steadystate.jld2" sr_full
+@load "Output/Saves/linearresults.jld2" lr_full
+@load "Output/Saves/reduction.jld2" sr_reduc lr_reduc
 # @load BASEforHANK.e_set.save_posterior_file sr_mc lr_mc er_mc m_par_mc smoother_output
 # @set! e_set.estimate_model = false 
 
@@ -51,8 +51,8 @@ sr_full = call_prepare_linearization(ss_full, m_par)
 # COMPACT call of both of the above:
 # sr_full = compute_steadystate(m_par)
 
-jldsave("Saves/steadystate.jld2", true; sr_full) # true enables compression
-# @load "Saves/steadystate.jld2" sr_full
+jldsave("Output/Saves/steadystate.jld2", true; sr_full) # true enables compression
+# @load "Output/Saves/steadystate.jld2" sr_full
 
 #------------------------------------------------------------------------------
 # compute and display steady-state moments
@@ -76,14 +76,14 @@ println("Fraction of Borrower:", fr_borr)
 
 # linearize the full model
 lr_full = linearize_full_model(sr_full, m_par)
-jldsave("Saves/linearresults.jld2", true; lr_full)
-# @load "Saves/linearresults.jld2" lr_full
+jldsave("Output/Saves/linearresults.jld2", true; lr_full)
+# @load "Output/Saves/linearresults.jld2" lr_full
 
 # Find sparse state-space representation
 sr_reduc = model_reduction(sr_full, lr_full, m_par);
 lr_reduc = update_model(sr_reduc, lr_full, m_par)
-jldsave("Saves/reduction.jld2", true; sr_reduc, lr_reduc)
-# @load "Saves/reduction.jld2" sr_reduc lr_reduc
+jldsave("Output/Saves/reduction.jld2", true; sr_reduc, lr_reduc)
+# @load "Output/Saves/reduction.jld2" sr_reduc lr_reduc
 
 # model timing
 println("One model solution takes")
@@ -170,7 +170,7 @@ model_names[1] = "HANK Mode"
 model_names[2] = "HANK Posterior"
 
 # enter here the models, as tupel of tupels (sr, lr, e_set, m_par), to be compared
-models_tupel = ((sr_mode, lr_mode, e_set, m_par_mode), (sr_mc, lr_mc, e_set, m_par_mc))
+models_tupel = ((sr_full, lr_full, e_set, m_par), (sr_reduc, lr_reduc, e_set, m_par))
 
 timeline = collect(1954.75:0.25:2019.75)
 select_vd_horizons = [4 16 100] # horizons for variance decompositions
@@ -235,10 +235,11 @@ IRFs_plot = plot_irfs(
     model_names,
     4;
     savepdf = true,
+    disp = true
 )
 
 # export Variance Decompositions as DataFrames and Plot using VegaLite
-DF_V_Decomp = plot_vardecomp(
+DF_V_Decomp, DF_V_Decomp_bc = plot_vardecomp(
     VDs,
     VD_bc_s,
     select_vd_horizons,
@@ -248,6 +249,7 @@ DF_V_Decomp = plot_vardecomp(
     savepdf = true,
     suffix = "_nolegend",
     legend_switch = true,
+    disp = true
 )
 
 # produce historical contributions as Array and Data Frame and plot p

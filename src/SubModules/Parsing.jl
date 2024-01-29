@@ -47,13 +47,13 @@ include("../Model/input_aggregate_names.jl")
 ## Define Functions
 # ------------------------------------------------------------------------------
 include("../Model/Parameters.jl")
-include("parsing/Structs.jl")
+include("Parsing/Structs.jl")
 include("../Preprocessor/prior.jl")
 
 e_set = EstimationSettings(shock_names = shock_names)
 @make_struct IndexStruct
 @make_struct_aggr IndexStructAggr
-include("parsing/MacroUtils.jl")
+include("Parsing/MacroUtils.jl")
 
 
 @make_fn produce_indexes

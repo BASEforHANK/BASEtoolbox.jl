@@ -10,7 +10,7 @@ Estimation (BASE) of a heterogeneous-agent New-Keynesian (HANK) model. It accomp
 ## First steps
 The module runs with Julia 1.8.2. We recommend to use [Julia for VSCode IDE](https://www.julia-vscode.org) as a front-end to Julia. To get started with the toolbox, simply download or clone the folder, e.g. via `git clone`, `cd` to the project directory and call
 ```julia-repl
-(v1.8) pkg> activate .
+(v1.9) pkg> activate .
 
 (BASEtoolbox) pkg> instantiate
 ```
@@ -58,11 +58,11 @@ the steady-state distribution of income and assets. It also contains the margina
 !!! tip
     `sr_full` may be saved to the local file system by calling
     ```
-    @save "Saves/steadystate.jld2" sr_full
+    @save "Output/Saves/steadystate.jld2" sr_full
     ```
     and can be loaded for a future session with
     ```
-    @load "Saves/steadystate.jld2" sr_full
+    @load "Output/Saves/steadystate.jld2" sr_full
     ```
 More details can be found in the section "Steady State".
 

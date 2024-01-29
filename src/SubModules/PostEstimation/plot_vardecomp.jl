@@ -15,6 +15,7 @@ function plot_vardecomp(
     savepdf = false,
     suffix = "",
     legend_switch = true,
+    disp_switch = true
 )
     shock_color = [
         "#ff0000",
@@ -88,9 +89,11 @@ function plot_vardecomp(
             )
         ))
         if savepdf
-            save(string("PostEstimationOutput/Figures/CVD/CVD_of_", j, suffix, ".pdf"), p)
+            save(string("Output/Figures/CVD/CVD_of_", j, suffix, ".pdf"), p)
         end
-        display(p)
+        if disp_switch 
+            display(p)
+        end
     end
     for j in select_variables
         p = ((
@@ -116,12 +119,14 @@ function plot_vardecomp(
         ))
         if savepdf
             save(
-                string("PostEstimationOutput/Figures/CVD/CVD_at_bcf_of_", j, suffix, ".pdf"),
+                string("Output/Figures/CVD/CVD_at_bcf_of_", j, suffix, ".pdf"),
                 p,
             )
         end
-        display(p)
+        if disp_switch
+            display(p)
+        end
     end
 
-    return df
+    return df, df_bc
 end

@@ -18,6 +18,7 @@ function plot_irfs(
     model_names::Array{String},
     n_plotcol;
     savepdf = false,
+    disp_switch = true,
     suffix = "",
 )
     styles = [:solid :dash :dashdot :dashdotdot :dot :dash :solid]
@@ -102,10 +103,12 @@ function plot_irfs(
         for j in eachindex(SHOCKs)
             savefig(
                 pvec[j],
-                string("PostEstimationOutput/Figures/IRFs/IRFs_to_", SHOCKs[j], suffix, ".pdf"),
+                string("Output/Figures/IRFs/IRFs_to_", SHOCKs[j], suffix, ".pdf"),
             )
         end
     end
-    display.(pvec)
+    if disp_switch
+        display.(pvec)
+    end
     return pvec
 end
