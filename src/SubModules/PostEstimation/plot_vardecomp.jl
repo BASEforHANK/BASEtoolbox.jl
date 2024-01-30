@@ -1,10 +1,33 @@
-###############################################################################################
-# Compute IRFs and variance decomposition for set of models and variables passed to function
-###############################################################################################
+@doc raw"""
+    plot_vardecomp(VDs, VD_bc_s, select_vd_horizons, model_names, SHOCKs, select_variables; savepdf = false, suffix = "", legend_switch = true, disp_switch = true)
 
-###############################################################################################
-# Plot variance decomposition
-###############################################################################################
+This function is designed to plot variance decompositions. It takes as input the variance decompositions. 
+These are the variance decomposition based on the method proposed by Harald Uhlig (2001) as well as variance 
+decomposition at fixed horizons. It further expects as inputs model names, shocks as symbols, and the variables
+selected to be displayed. It generates a plot.
+
+# Arguments
+- `VDs`: The variance decompositions to be plotted. This should be a collection of variance decompositions at fixed horizons.
+- `VD_bc_s`: The variance decomposition based on the method proposed by Harald Uhlig (2001).
+- `select_vd_horizons`: The horizons of the variance decompositions to be displayed in the plot. This should be a collection of integers.
+- `model_names`: The names of the models for which the varaiance decompositions are provided. This should be an array of strings.
+- `SHOCKs`: The symbols of the shocks applied to the models.
+- `select_variables`: The variables to be displayed in the plot. This should be a collection of variable names.
+
+# Optional Arguments
+- `savepdf`: A boolean indicating whether to save the plot as a PDF. Default is false.
+- `suffix`: A string to be appended to the end of the file name when saving the plot as a PDF.
+- `legend_switch`: A boolean indicating whether to display the legend. Default is true.
+- `disp_switch`: A boolean indicating whether to display the switch. Default is true.
+
+# Returns
+- This function returns the plotted variance decompositions as data frames.
+
+# Examples
+```julia
+plot_vardecomp(VDs, VD_bc_s, select_vd_horizons, model_names, SHOCKs, select_variables)
+```
+"""
 function plot_vardecomp(
     VDs,
     VD_bc_s,

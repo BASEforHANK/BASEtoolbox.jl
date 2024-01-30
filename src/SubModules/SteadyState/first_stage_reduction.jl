@@ -1,4 +1,3 @@
-
 @doc raw"""
 first_stage_reduction(VkSS, VmSS, TransitionMat_aSS, TransitionMat_nSS, NSS, 
     m_a_starSS, k_a_starSS, m_n_starSS, price, n_par, m_par)

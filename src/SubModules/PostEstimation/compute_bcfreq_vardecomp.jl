@@ -1,3 +1,26 @@
+@doc raw"""
+    compute_bcfreq_vardecomp(sr, lr, e_set, m_par; passband = (6, 32), ngrid = 512)
+
+This function is designed to produce a variance decomposition at business cycle frequencies. 
+It produces a variance decomposition of the linearized solution. It returns the variance decomposition at business 
+cycle frequencies based on Uhlig (2001) and the unconditional variance.
+
+# Arguments
+- `sr`: Steady state.
+- `lr`: Linearized Solution.
+- `e_set`: Estimation parameters.
+- `m_par`: Model parameters.
+- `passband`: A tuple specifying the horizons associated with the business cycle. Default is (6, 32).
+- `ngrid`: The number of grid points for the computation of the band pass filter. Default is 512.
+
+# Returns
+- `var_decomp`: This function returns a variance decomposition.
+
+# Examples
+```julia
+var_decomp = compute_bcfreq_vardecomp(sr, lr, e_set, m_par)
+```
+"""
 function compute_bcfreq_vardecomp(sr, lr, e_set, m_par; passband = (6, 32), ngrid = 512)
     indexes_shocks = Vector{Int}(undef, length(e_set.shock_names))
     iter = 1

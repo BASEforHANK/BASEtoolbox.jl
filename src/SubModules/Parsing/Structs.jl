@@ -68,7 +68,7 @@ macro make_struct(struct_name)
         end
     end)
 end
-struct SteadyState
+struct SteadyStateStruct
     KSS::Any
     VmSS::Any
     VkSS::Any

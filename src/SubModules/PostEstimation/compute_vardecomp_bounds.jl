@@ -1,8 +1,24 @@
-###############################################################################################
-# Compute IRFs and variance decomposition for set of models and variables passed to function
-###############################################################################################
+@doc raw"""
+    compute_vardecomp_bounds(models, select_variables, model_names; n_replic = 1000, percentile_bounds = (0.05, 0.95))
 
+This function uses a Monte Carlo method to determine the credible bounds for the variance decomposition of the given 
+models for selected variables, based on the method proposed by Uhlig (2001). 
 
+# Arguments
+- `models`: The models for which the variance decomposition will be calculated. This should be a collection of models .
+- `select_variables`: The variables selected for the variance decomposition. This should be a collection of variable names.
+- `model_names`: The names of the models. This should be a collection of strings.
+- `n_replic`: The number of replications for the Monte Carlo method. Default is 1000.
+- `percentile_bounds`: A tuple specifying the lower and upper percentile bounds for the credible interval. Default is (0.05, 0.95).
+
+# Returns
+- `bounds`: This function returns the credible bounds for the variance decomposition of the models.
+
+# Examples
+```julia
+bounds = compute_vardecomp_bounds(models, select_variables, model_names)
+```
+"""
 function compute_vardecomp_bounds(
     models,
     select_variables,

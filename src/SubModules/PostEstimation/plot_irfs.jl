@@ -1,13 +1,32 @@
-###############################################################################################
-# Compute IRFs and variance decomposition for set of models and variables passed to function
-###############################################################################################
+@doc raw"""
+    plot_irfs(IRFs, SHOCKs, select_variables, nice_var_names, nice_s_names, horizon, model_names, n_plotcol; savepdf = false, disp_switch = true, suffix = "")
 
+This function is designed to plot impulse response functions (IRFs). 
+It takes as input the impulse responses, shocks, selected variables, nice variable names, nice shock names, horizon, model names, and number of plot columns, and generates a plot.
 
+# Arguments
+- `IRFs`: The impulse responses to be plotted. This should be a collection of impulse responses (an Array).
+- `SHOCKs`: The symbols of the shocks applied to the models.
+- `select_variables`: The variables to be displayed in the plot. This should be a collection of variable names, a collection of strings.
+- `nice_var_names`: The readable names of the variables to be displayed in the plot. This should be a collection of strings.
+- `nice_s_names`: The readable names of the shocks to be displayed in the plot. This should be a collection of strings.
+- `horizon`: The horizon over which to plot the impulse response functions.
+- `model_names`: The names of the models. This should be an array of strings.
+- `n_plotcol`: The number of plot columns.
 
+# Optional Arguments
+- `savepdf`: A boolean indicating whether to save the plot as a PDF. Default is false.
+- `disp_switch`: A boolean indicating whether to display the switch. Default is true.
+- `suffix`: A string to be appended to the end of the file name when saving the plot as a PDF.
 
-###############################################################################################
-# Plot IRFs
-###############################################################################################
+# Returns
+- This function returns a vector of plots.
+
+# Examples
+```julia
+plot_irfs(IRFs, SHOCKs, select_variables, nice_var_names, nice_s_names, horizon, model_names, n_plotcol)
+```
+"""
 function plot_irfs(
     IRFs,
     SHOCKs,

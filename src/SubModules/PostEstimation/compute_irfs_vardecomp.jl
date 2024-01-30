@@ -1,6 +1,25 @@
-###############################################################################################
-# Compute IRFs and variance decomposition for set of models and variables passed to function
-###############################################################################################
+@doc raw"""
+    compute_irfs_vardecomp(models, select_variables)
+
+This function calculates a variance decomposition of the given models for selected variables. 
+It returns four outputs: the impulse responses, the fixed horizon decompositions, 
+the list of shocks that drive the model, and finally the variance decomposition based on the 
+method proposed by Uhlig (2001).
+
+# Arguments
+- `models`: The models for which the variance decomposition will be calculated. This should be a collection of models.
+- `select_variables`: The variables selected for the variance decomposition. This should be a collection of variable names.
+
+# Returns
+- `IRFs`: The impulse responses of the models.
+- `VDs`: The fixed horizon decompositions of the models.
+- `SHOCKs`: The shocks applied to the models.
+- `VD_bc_s`: The variance decomposition based on the method proposed by Harald Uhlig (2001).
+
+# Examples
+```julia
+IRFs, VDs, SHOCKs, VD_bc_s = compute_irfs_vardecomp(models, select_variables)
+"""
 function compute_irfs_vardecomp(models, select_variables)
 
     max_horizon = 1000

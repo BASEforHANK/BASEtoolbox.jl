@@ -33,9 +33,9 @@ include("SubModules/IncomesETC.jl")
 # Submodules that define functions used by parent
 include("SubModules/Parsing.jl")
 using .Parsing
-include("SubModules/Steady.jl")
+include("SubModules/SteadyState.jl")
 using .SteadyState
-include("SubModules/Macro.jl")
+include("SubModules/PerturbationSolution.jl")
 using .PerturbationSolution
 include("SubModules/Estimation.jl")
 using .Estimation
@@ -88,16 +88,16 @@ include("Preprocessor/prior.jl")
 @doc raw"""
     call_findsteadystate()
 
-Computes the steady state and fills the SteadyState struct -- without further steps of preparing the linearization.
+Computes the steady state and fills the SteadyStateStruct struct -- without further steps of preparing the linearization.
 
 # Returns
-`struct` `SteadyResults`, containing returns of [`find_steadystate()`](@ref)
+`struct` `SteadyStateStruct`, containing returns of [`find_steadystate()`](@ref)
 """
 function call_find_steadystate(m_par)
     #Calculate steady state capital stock
     KSS, VmSS, VkSS, distrSS, n_par, m_par = find_steadystate(m_par)
 
-    return SteadyState(KSS, VmSS, VkSS, distrSS, n_par)
+    return SteadyStateStruct(KSS, VmSS, VkSS, distrSS, n_par)
 end
 
 @doc raw"""
@@ -106,7 +106,7 @@ end
 Runs the prepare linearization and fills the SteadyResults struct, sr.
 
 # Returns
-`struct` `SteadyResults`, containing returns of [`find_steadystate()`](@ref)
+`struct` `SteadyResults`, containing returns of [`prepare_linearization()`](@ref)
 """
 function call_prepare_linearization(ss, m_par)
 
@@ -160,7 +160,7 @@ end
 Compute steady state including the preparation for linearization
 
 # Returns
-`struct` `SteadyResults`, containing returns of [`find_steadystate()`](@ref)
+`struct` `SteadyResults`, containing returns of [`prepare_linearization()`](@ref)
 """
 function compute_steadystate(m_par)
     #Calculate steady state capital stock
@@ -181,7 +181,7 @@ using [`LinearSolution()`](@ref).
 
 # Returns
 `struct` `LinearResults`, containing
-- `A::Array{Float64,2}`,`B::Array{Float64,2}`: first derivatives of [`Fsys()`](@ref) with respect to arguments `X` [`B`]
+- `A::Array{Float64,2}`,`B::Array{Float64,2}`: first derivatives of [`PerturbationSolution.Fsys()`](@ref) with respect to arguments `X` [`B`]
     and `XPrime` [`A`]
 - `State2Control::Array{Float64,2}`: observation equation
 - `LOMstate::Array{Float64,2}`: state transition equation

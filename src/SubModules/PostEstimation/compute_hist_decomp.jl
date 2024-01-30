@@ -1,9 +1,33 @@
-###############################################################################################
-# Compute IRFs and variance decomposition for set of models and variables passed to function
-###############################################################################################
-###############################################################################################
-# Plot historical decomposition
-###############################################################################################
+@doc raw"""
+    compute_hist_decomp(sr, lr, e_set, m_par, smoother_output, select_variables, timeline; savepdf = false, prefix = "")
+
+This function is designed to compute historical decompositions. 
+It takes as input the steady state structures (sr), linearized solutions (lr), the estimation settings (e_set), 
+model parameters (m_par), smoother output, selected variables, and timeline.
+
+# Arguments
+- `sr`: The steady state of the model.
+- `lr`: The linearized solution of the model.
+- `e_set`: The estimation settings.
+- `m_par`: The parameters of the model.
+- `smoother_output`: The output of the smoother.
+- `select_variables`: The variables to be included in the historical decomposition. This should be a collection of variable names.
+- `timeline`: The timeline for the historical decomposition.
+
+# Optional Arguments
+- `savepdf`: A boolean indicating whether to save the output as a PDF. Default is false.
+- `prefix`: A string to be prepended to the file name when saving the output as a PDF.
+
+# Returns
+- `ShockContribution`: the series of shock contribution for each variable and each shock. 
+- `HistDecDF`: the historical decomposition as a data frame, 
+- `p`: and the plot as a vector of plots.
+
+# Examples
+```julia
+compute_hist_decomp(sr, lr, e_set, m_par, smoother_output, select_variables, timeline)
+```
+"""
 function compute_hist_decomp(
     sr,
     lr,
@@ -19,7 +43,7 @@ function compute_hist_decomp(
     n_shocks = length(SHOCKs)
     n_select_var = length(select_variables)
     T = size(smoother_output[6], 2)
-    IRFs = Array{Float64}(undef, n_select_var, T, n_shocks + 1)
+    ShockContribution = Array{Float64}(undef, n_select_var, T, n_shocks + 1)
 
     # select variables of interest from all variables
     selector = []
@@ -40,26 +64,26 @@ function compute_hist_decomp(
     MX = [I; lr.State2Control]
 
     # effect of initial condition
-    IRFs_aux = zeros(length(selector), T)
+    ShockContribution_aux = zeros(length(selector), T)
     x = smoother_output[3][:, 1]
     for t = 1:T
-        IRFs_aux[:, t] = MX[selector, :] * x
+        ShockContribution_aux[:, t] = MX[selector, :] * x
         x[:] = lr.LOMstate * x
     end
-    IRFs[:, :, n_shocks+1] = IRFs_aux
+    ShockContribution[:, :, n_shocks+1] = ShockContribution_aux
 
     # loop through shocks, calculate effect of each shock
     for j = 1:n_shocks
-        IRFs_aux = zeros(length(selector), T)
+        ShockContribution_aux = zeros(length(selector), T)
         x = zeros(size(lr.LOMstate, 1))
         i = SHOCKs[j]
         shock_index = getfield(sr.indexes_r, i)
         for t = 1:T
-            IRFs_aux[:, t] = MX[selector, :] * x
+            ShockContribution_aux[:, t] = MX[selector, :] * x
             x[:] = lr.LOMstate * x
             x[shock_index] += smoother_output[6][shock_index, t] # shock in "t" moves observables in "t+1" 
         end
-        IRFs[:, :, j] = IRFs_aux
+        ShockContribution[:, :, j] = ShockContribution_aux
     end
 
     SHOCKsPlus = push!(copy(SHOCKs), :initial)
@@ -72,7 +96,7 @@ function compute_hist_decomp(
             DataFrame(
                 Time = timeline[t],
                 Variable = select_variables[v],
-                Contribution = IRFs[v, t, s],
+                Contribution = ShockContribution[v, t, s],
                 Shock = SHOCKsPlus[s],
             ) for t = 1:T, v = 1:n_select_var, s = 1:n_shocks+1
         ]...,
@@ -158,5 +182,5 @@ function compute_hist_decomp(
         end
     end
     display(plot(p...))
-    return IRFs, HistDecDF, p
+    return ShockContribution, HistDecDF, p
 end

@@ -20,7 +20,7 @@ using   LinearAlgebra,
         Optim
 
 import Flatten: flattenable    
-import FieldMetadata: label
+#import FieldMetadata: label
 
 export  ModelParameters,
         NumericalParameters,
@@ -28,7 +28,7 @@ export  ModelParameters,
         SteadyResults,
         LinearResults,
         EstimResults,
-        SteadyState,
+        SteadyStateStruct,
         IndexStruct,
         IndexStructAggr,
         produce_indexes,
@@ -38,7 +38,9 @@ export  ModelParameters,
         e_set
 
  export @writeXSS,
-        @generate_equations
+        @generate_equations,
+        @make_fn,
+        @make_fnaggr
 
 include("../Model/input_aggregate_names.jl")
 # ------------------------------------------------------------------------------

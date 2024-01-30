@@ -73,7 +73,7 @@ After computing the steady state and saving it in the `SteadyResults`-struct nam
 ```
 lr_full = linearize_full_model(sr_full, m_par)
 ```
-computes the linear dynamics of the "full" model, i.e., using the first-stage model reduction, around the steady state (in the background, this calls [`BASEforHANK.LinearSolution_estim()`](@ref)) and saves a state-space representation in the instance `lr_full` of the `struct` `LinearResults` (see [`linearize_full_model()`](@ref)).
+computes the linear dynamics of the "full" model, i.e., using the first-stage model reduction, around the steady state (in the background, this calls [`BASEforHANK.PerturbationSolution.LinearSolution_estim()`](@ref)) and saves a state-space representation in the instance `lr_full` of the `struct` `LinearResults` (see [`linearize_full_model()`](@ref)).
 
 Linearization of the full model takes a few seconds. The resulting state space is, because the copula and the value functions are treated fully flexible in this first step, relatively large. As a result, also computing the first-order dynamics of this model takes a few seconds as well.
 
@@ -92,7 +92,7 @@ This smaller model (or any model after a parameter change that doesn't affect th
 ```
 lr_reduc    = update_model(sr_reduc, lr_full, m_par)
 ```
-In the background, this calls [`BASEforHANK.LinearSolution_estim()`](@ref), which only updates the Jacobian entries that regard the **aggregate** model. (Note that both [`BASEforHANK.LinearSolution()`](@ref) and [`BASEforHANK.LinearSolution_estim()`](@ref) call [`BASEforHANK.SolveDiffEq()`](@ref) to obtain a solution to the linearized difference equation.)
+In the background, this calls [`BASEforHANK.PerturbationSolution.LinearSolution_estim()`](@ref), which only updates the Jacobian entries that regard the **aggregate** model. (Note that both [`BASEforHANK.PerturbationSolution.LinearSolution()`](@ref) and [`BASEforHANK.PerturbationSolution.LinearSolution_estim()`](@ref) call [`BASEforHANK.PerturbationSolution.SolveDiffEq()`](@ref) to obtain a solution to the linearized difference equation.)
 
 This model update step takes about 200ms on a standard computer for a medium size resolution.
 
@@ -102,7 +102,7 @@ Having obtained `SteadyResults` `sr_reduc` and `LinearResults` `lr_reduc`, the c
 er_mode = find_mode(sr_reduc, lr_reduc, m_par)
 ```
 computes the mode of the likelihood, i.e., the parameter vector that maximizes the probability of observing the data given the model, and saves the results in `er_mode`, an instance of `struct` `EstimResults`
-(see [`BASEforHANK.mode_finding()`](@ref)). We use the Kalman filter to compute the likelihood, and the package `Optim` for optimization. Settings for the estimation can adjusted in the `struct` [`EstimationSettings`](@ref).
+(see [`BASEforHANK.Estimation.mode_finding()`](@ref)). We use the Kalman filter to compute the likelihood, and the package `Optim` for optimization. Settings for the estimation can adjusted in the `struct` [`EstimationSettings`](@ref).
 
 !!! warning
     By default, the flag `estimate_model` in the `struct` [`EstimationSettings`](@ref) is set to `false`. Depending on the computing power available, finding the mode of the likelihood can take several hours to run through. The mode finder might also seem frozen after finishing the optimization but the computation of the Hessian for the large model is involved and can take a long time for the large model. For instructional purposes, we therefore set `e_set.compute_hessian = false` by default and load the Hessian from a save file. For a proper estimation, this has to be set to true. We also save an intermediate step before computing the Hessian in case you are only interested in the mode itself.
@@ -121,5 +121,6 @@ in the `struct` `EstimationSettings` (instantiated in `e_set`).
     that all file paths specified in [`EstimationSettings`](@ref) are correct relative to your script's position.
 [^1]:
     If you use a different editor, make sure that the environment is correctly set, as otherwise the instantiated packages might not be found.
+
 [^BBL]:
-    See the paper [Shocks, Frictions, and Inequality in US Business Cycles](https://www.benjaminborn.de/publication/bbl_inequality_2020/)
+    For details, see the paper [Shocks, Frictions, and Inequality in US Business Cycles](https://www.benjaminborn.de/files/BBL_Inequality_Sep2023.pdf), *American Economic Review*, forthcoming.
