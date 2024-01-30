@@ -20,7 +20,7 @@ function uncompress(compressionIndexes, XC, DC, IDC)
     ny = size(DC[3], 1)
     # POTENTIAL FOR SPEEDUP BY SPLITTING INTO DUAL AND REAL PART AND USE BLAS
     θ1 = zeros(eltype(XC), nm, nk, ny)
-    for j = 1:length(XC)
+    for j = eachindex(XC)
         θ1[compressionIndexes[j]] = copy(XC[j])
     end
     @views for yy = 1:ny

@@ -8,4 +8,5 @@ BASEforHANK.Parsing.@make_fn
 BASEforHANK.Parsing.@make_fnaggr
 BASEforHANK.Parsing.@make_struct
 BASEforHANK.Parsing.@make_struct_aggr
+BASEforHANK.Parsing.@generate_equations
 ```

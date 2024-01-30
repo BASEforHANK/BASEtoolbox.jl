@@ -14,16 +14,17 @@ a linearized state transition equation ``k' = hx*k``, where ``k`` is a vector of
 *state* variables and ``d`` is a vector of the *control* variables (``X = \begin{bmatrix} k \\ d \end{bmatrix}``).
 
 In our code, ``F`` is implemented as [`BASEforHANK.PerturbationSolution.Fsys()`](@ref), while differentiating and
-solving for ``gx`` and ``hx`` is done in [`BASEforHANK.PerturbationSolution.LinearSolution()`](@ref), and [`linearize_full_model()`](@ref)
-returns the results as a `struct` `LinearResults`:
+solving for ``gx`` and ``hx`` is done in [`BASEforHANK.PerturbationSolution.LinearSolution()`](@ref), called by [`linearize_full_model()`](@ref) returns the results as a `struct` `LinearResults`:
+
+## `linearize_full_model()`
 ```@docs
 linearize_full_model
-```
-## Overview of `LinearSolution()`
-```@docs
 BASEforHANK.LinearSolution
 ```
-The function executes the following steps:
+The function `linearize_full_model()` calls `LinearSolution` and stores the results in a `LinearResults` `struct`.
+
+### `LinearSolution()` 
+The `LinearSolution` function executes the following steps:
 
 - generate devices to retrieve distribution and marginal value functions from
     compressed states/controls (`Γ` and `DC`,`IDC`)
@@ -35,7 +36,7 @@ The function executes the following steps:
 
 - compute linear observation and state transition equations using the [`BASEforHANK.PerturbationSolution.SolveDiffEq()`](@ref) function
 
-## Overview of `SolveDiffEq()'
+### `SolveDiffEq()`
 ```@docs
 BASEforHANK.PerturbationSolution.SolveDiffEq
 ```
@@ -45,7 +46,7 @@ BASEforHANK.PerturbationSolution.SolveDiffEq
     or contemporaneous states to future states [`hx`]
 
 
-## Overview of `Fsys()`
+### `Fsys()`
 ```@docs
 BASEforHANK.PerturbationSolution.Fsys
 ```
@@ -71,14 +72,20 @@ The function [`BASEforHANK.PerturbationSolution.Fsys()`](@ref) proceeds in the f
 
 Note that the copula is treated as the sum of two interpolants. An interpolant based on the steady-state distribution using the full steady-state marginals as a grid and a "deviations"-function that is defined on the copula grid generated in `prepare_linearization()`. The actual interpolation is carried out with [`BASEforHANK.Tools.myinterpolate3()`](@ref). Default setting is trilinear interpolation, the code also allows for 3d-Akima interpolation.
 
-### Called functions / macros
+## `model_reduction()`
 ```@docs
-BASEforHANK.Parsing.@generate_equations
-BASEforHANK.PerturbationSolution.Fsys_agg
-BASEforHANK.Tools.myinterpolate3
-BASEforHANK.model_reduction
-
+model_reduction
 ```
+The function [`model_reduction()`](@ref) derives the approximate factor representation from a first solution of the heterogeneous agent model.[^BBL] It then stores the matrices that allow to map the factors to the full set of state and control variables. For deriving the factor representation, the function calculates the long run variance-covariance matrix of all states of the model (given its first-stage reduction).
+
+
+## `update_model()`
+```@docs
+update_model
+BASEforHANK.PerturbationSolution.Fsys_agg
+```
+The function [`update_model()`](@ref) solves the aggregate model without updating the derivatives of the household/idiosyncratic part. For this purpose the derivatives of [`BASEforHANK.PerturbationSolution.Fsys_agg()`](@ref) are calculated instead of `Fsys()`. This substantially speeds up the solution after a parameter change that only affects aggregates.[^BBL] In particular, if the model is reduced to its approximate factor representation (see above), this generates significant speed gains.
+
 
 [^Klein]:
     See the paper [Using the generalized Schur form to solve a multivariate linear rational expectations model](https://www.sciencedirect.com/science/article/pii/S0165188999000457) by Paul Klein (JEDC 2000)
@@ -88,6 +95,9 @@ BASEforHANK.model_reduction
     its effect on other model variables is 0. Due to a rich enough set of prices, the future distribution
     directly only affects the Fokker-Planck equation. For details, see the paper
     [Solving heterogeneous agent models in discrete time with many idiosyncratic states by perturbation methods](https://doi.org/10.3982/QE1243), *Quantitative Economics*, Vol.11(4), November 2020, p. 1253-1288.
+
+[^BBL]:
+    For details, see the paper [Shocks, Frictions, and Inequality in US Business Cycles](https://www.benjaminborn.de/files/BBL_Inequality_Sep2023.pdf), *American Economic Review*, forthcoming.
 
 [^lit]:
     Invoking the Implicit Function Theorem, there exist functions ``g`` and ``h`` such that

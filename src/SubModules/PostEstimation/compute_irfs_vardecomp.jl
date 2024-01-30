@@ -19,6 +19,7 @@ method proposed by Uhlig (2001).
 # Examples
 ```julia
 IRFs, VDs, SHOCKs, VD_bc_s = compute_irfs_vardecomp(models, select_variables)
+```
 """
 function compute_irfs_vardecomp(models, select_variables)
 

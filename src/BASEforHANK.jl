@@ -314,7 +314,7 @@ function montecarlo(
             draws_raw[e_set.burnin+1:end, :],
             (size(draws_raw[e_set.burnin+1:end, :])..., 1),
         ),
-        [string(parnames_ascii[i]) for i = 1:length(parnames_ascii)],
+        [string(parnames_ascii[i]) for i = eachindex(parnames_ascii)],
     )
     chn_summary = summarize(chn)
     par_final = chn_summary[:, :mean]

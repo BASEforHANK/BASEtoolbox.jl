@@ -20,15 +20,13 @@ compute_irfs_vardecomp
 plot_irfs
 ```
 ### Variance Decomposition
-```
-@docs
+```@docs
 compute_bcfreq_vardecomp
 plot_vardecomp
 compute_vardecomp_bounds
 ```
 ### Historical Decomposition
-```
-@docs
+```@docs
 compute_hist_decomp
 ```
 

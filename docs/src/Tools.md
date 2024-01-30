@@ -5,4 +5,5 @@ The `Tools` submodule provides a set of numerical subroutines such as linear and
 ```@docs
 BASEforHANK.Tools.Tauchen
 BASEforHANK.Tools.distrSummaries
+BASEforHANK.Tools.myinterpolate3
 ```

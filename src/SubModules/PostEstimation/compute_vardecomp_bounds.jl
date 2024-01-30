@@ -111,7 +111,7 @@ function compute_vardecomp_bounds(
     VDup_vec = Vector{Float64}(undef, n_total_entries)
     count = 1
     for d0 = 1:n_models
-        for d1 = 1:length(select_variables)
+        for d1 = eachindex(select_variables)
             for d2 = 1:n_shocks
                 modelname_vec[count] = model_names[d0]
                 variablename_vec[count] = select_variables[d1]
