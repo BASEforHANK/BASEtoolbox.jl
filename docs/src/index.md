@@ -8,9 +8,9 @@ Estimation (BASE) of a heterogeneous-agent New-Keynesian (HANK) model. It accomp
     The toolbox is not a 1-for-1 replication package for the linked paper. In particular, the preset resolution is smaller.
 
 ## First steps
-The module runs with Julia 1.8.2. We recommend to use [Julia for VSCode IDE](https://www.julia-vscode.org) as a front-end to Julia. To get started with the toolbox, simply download or clone the folder, e.g. via `git clone`, `cd` to the project directory and call
+The module runs with Julia 1.10.0. We recommend to use [Julia for VSCode IDE](https://www.julia-vscode.org) as a front-end to Julia. To get started with the toolbox, simply download or clone the folder, e.g. via `git clone`, `cd` to the project directory and call
 ```julia-repl
-(v1.9) pkg> activate .
+(v1.10) pkg> activate .
 
 (BASEtoolbox) pkg> instantiate
 ```
@@ -20,7 +20,7 @@ This will install all needed packages. For more on Julia environments, see [`Pkg
     Before you activate the environment, make sure that you are in the main directory, in which the `Manifest.toml` and `Project.toml` files are located. In case you accidentally activated the environment in a subfolder, empty `.toml` files will be created that you need to delete before proceeding in the correct folder.
 
 
-For an introduction, it is easiest to use the Julia script `script.jl` in the `src` folder. Make sure that the folder is the present working directory and that the bottom bar in VSCode shows `Julia env: BASEtoolbox`.[^1] At the top of the script file, we pre-process some user input regarding the aggregate model and the steady state (see below) and write them them into the respective functions in the folder `5_LinearizationFunctions\generated_fcns`. This has to be done before the BASEforHANK module, defined in `BASEforHANK.jl`, is loaded via
+For an introduction, it is easiest to use the Julia script `script.jl` in the `src` folder. Make sure that the folder is the present working directory and that the bottom bar in VSCode shows `Julia env: BASEtoolbox`.[^1] At the top of the script file, we pre-process some user input regarding the aggregate model and the steady state (see below) and write them them into the respective functions in the folder `Preprocessor\generated_fcns`. This has to be done before the BASEforHANK module, defined in `BASEforHANK.jl`, is loaded via
 ```
 push!(LOAD_PATH, pwd())
 using BASEforHANK
@@ -44,6 +44,8 @@ To define the aggregate part of the model, include the aggregate model block in 
 The file `Parameters.jl` contains three structures to provide model parameters, numerical parameters, and estimation settings. In addition, it contains two macros that automatically create structures that contain the model variables.
 
 The model parameters for the steady state have to be calibrated. We set them in the `struct` [`ModelParameters`](@ref). It also contains all other parameters that are estimated, including the stochastic process-parameters for the aggregate shocks. Each model parameter has a line of code. It starts with the parameter name as it is used in the code and a default value. The next two entries are its ascii name and its name for LaTeX output. The fourth entry is the prior if the parameter is to be estimated. Please see the [Distributions.jl](https://github.com/JuliaStats/Distributions.jl)-package for available options. The fifth entry is a Boolean whether the parameter should be estimated (`true`) or not (`false`).
+
+The folder `Model` also contains the mapping of prices to household incomes (given the idiosyncratic state space). This can be found in the subfolder `IncomesETC`. Depending on the adjustments to the macroeconomic model, the user needs to adjust this mapping. Similarly, the subfolder contains definitions of utility functions, profit functions, employment demand etc. that are used in the calculation of the steady state equilibrium.
 
 
 ### Steady state and first dimensionality reduction

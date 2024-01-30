@@ -9,9 +9,9 @@ module Estimation
 # Sibling modules
 using ..Tools
 using ..Parsing
-using ..EconFunc
-using ..Steady
-using ..Macro
+using ..IncomesETC
+using ..SteadyState
+using ..PerturbationSolution
 
 # 3rd Party modules
 using   LinearAlgebra,

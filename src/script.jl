@@ -96,6 +96,12 @@ if e_set.estimate_model == true
     # warning: estimation might take a long time!
     er_mode, posterior_mode, smoother_mode, sr_mode, lr_mode, m_par_mode =
         find_mode(sr_reduc, lr_reduc, m_par)
+    
+    # Only relevant output for later plotting will be saved.
+    # If you require all smoother output including the variance estimates 
+    # over time, items 4 and 5, comment out the next line.  
+    # This increases the hard disk storage significantly.
+    smoother_mode = (0.0,0.0,smoother_mode[3],0.0,0.0, smoother_mode[6],0.0)
 
     # Stores mode finding results in file e_set.save_mode_file 
     jldsave(
@@ -122,7 +128,13 @@ if e_set.estimate_model == true
     par_final,
     hessian_sym,
     smoother_output = montecarlo(sr_mode, lr_mode, er_mode, m_par_mode)
-
+    
+    # Only relevant output for later plotting will be saved.
+    # If you want all smoother output including the variance estimates 
+    # over time, items 4 and 5, comment out the next line.  
+    # This increases the hard disk storage significantly.
+    smoother_output = (0.0,0.0,smoother_output[3],0.0,0.0, smoother_output[6],0.0)
+    
     # Stores mcmc results in file e_set.save_posterior_file 
     jldsave(
         BASEforHANK.e_set.save_posterior_file,

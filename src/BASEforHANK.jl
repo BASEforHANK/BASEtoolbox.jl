@@ -28,15 +28,15 @@ import  Flatten: flattenable
 import  FieldMetadata: label
 # Submodules only required by sibling modules
 include("SubModules/Tools.jl")
-include("SubModules/EconFunc.jl")
+include("SubModules/IncomesETC.jl")
 
 # Submodules that define functions used by parent
 include("SubModules/Parsing.jl")
 using .Parsing
 include("SubModules/Steady.jl")
-using .Steady
+using .SteadyState
 include("SubModules/Macro.jl")
-using .Macro
+using .PerturbationSolution
 include("SubModules/Estimation.jl")
 using .Estimation
 include("SubModules/PostEstimation.jl")

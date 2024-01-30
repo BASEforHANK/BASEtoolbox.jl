@@ -114,7 +114,7 @@ function plot_vardecomp(
                 background = :white,
                 order = "siteOrder:o",
                 width = 220,
-                height = 35
+                height = 55
             )
         ))
         if savepdf

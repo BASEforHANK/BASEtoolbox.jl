@@ -1,7 +1,7 @@
 function centraldiff(x)
     # calculate central difference of a vector
     if ndims(x) != 1
-        error("wrong number of dimesnions, only 1 allowed")
+        error("wrong number of dimensions, only 1 allowed")
     else
         a = similar(x)
         dx = diff(x) ./ 2.0

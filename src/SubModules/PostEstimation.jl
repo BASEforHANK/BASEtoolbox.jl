@@ -7,7 +7,7 @@
 module PostEstimation
 
     # Sibling modules
-    using ..Macro
+    using ..PerturbationSolution
 
     # 3rd Party modules
     using   Plots,

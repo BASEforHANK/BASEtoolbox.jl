@@ -1,12 +1,8 @@
 # __precompile__(false)
-# Code runs on Julia 1.9.3
+# Code runs on Julia 1.10.0
 # ------------------------------------------------------------------------------
 ## Package Calls
 # ------------------------------------------------------------------------------
-# Packages used: Plots Distributions BenchmarkTools JLD2 FileIO DataFrames ForwardDiff
-# SparseArrays LinearAlgebra Random LaTeXStrings MatrixEquations Roots KrylovKit JSON 
-# CodecZlib SpecialFunctions FFTW Parameters Setfield MCMCChains StatsPlots Optim CSV 
-# OrderedCollections Flatten FieldMetadata MKL
 
 module Tools
 
@@ -46,7 +42,9 @@ export  Brent,
         pdf_to_cdf,
         real_schur,
         dualpart,
-        realpart
+        realpart,
+        distrSummaries,
+        gini
 
 # ------------------------------------------------------------------------------
 ## Define Functions
@@ -62,6 +60,6 @@ include("Tools/MarkovChain.jl")
 include("Tools/Schur_and_DualUtils.jl")
 include("Tools/Pdf2cdf.jl")
 include("Tools/Broyden.jl")
-include("Tools/centralderivatives.jl")
-
+include("Tools/CentralDerivatives.jl")
+include("Tools/distrSummaries.jl")
 end # module Tools
