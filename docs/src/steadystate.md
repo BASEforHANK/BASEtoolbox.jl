@@ -15,7 +15,7 @@ over these idiosyncratic states. We do dimensionality reduction [^BL] by applyin
 the Discrete Cosine Transformation to the marginal value functions and approximating
 the joint distribution with a copula and state-dependent marginals.
 
-The main functions are [`BASEforHANK.SteadyState.find_steadystate()`](@ref) and [`BASEforHANK.PerturbationSolution.prepare_linearization()`](@ref):
+The main functions are [`call_find_steadystate()`](@ref) and [`call_prepare_linearization()`](@ref):
 
 ## `compute_steadystate`
 ```@docs
