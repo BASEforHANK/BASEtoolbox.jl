@@ -20,7 +20,7 @@ using   LinearAlgebra,
         Optim
 
 import Flatten: flattenable    
-#import FieldMetadata: label
+import FieldMetadata: label
 
 export  ModelParameters,
         NumericalParameters,
@@ -35,7 +35,8 @@ export  ModelParameters,
         produce_indexes_aggr,
         metaflatten,
         prior,
-        e_set
+        e_set,
+        label
 
  export @writeXSS,
         @generate_equations,

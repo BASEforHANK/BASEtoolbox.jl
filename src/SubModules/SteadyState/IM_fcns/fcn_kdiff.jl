@@ -1,16 +1,27 @@
 @doc raw"""
-    Kdiff(K_guess,n_par,m_par)
+    Kdiff(K_guess, 
+    n_par, 
+    m_par, 
+    initial = true, 
+    Vm_guess = zeros(1, 1, 1), 
+    Vk_guess = zeros(1, 1, 1), 
+    distr_guess = zeros(1, 1, 1))
 
 Calculate the difference between the capital stock that is assumed and the capital
 stock that prevails under that guessed capital stock's implied prices when
 households face idiosyncratic income risk (Aiyagari model).
 
-Requires global functions `employment(K,A,m_par)`, `interest(K,A,N,m_par)`,
-`wage(K,A,N,m_par)`, `output(K,TFP,N,m_par)`, and [`Ksupply()`](@ref).
+Requires global functions from the IncomesETC module `incomes()` and [`Ksupply()`](@ref).
 
 # Arguments
 - `K_guess::Float64`: capital stock guess
-- `n_par::NumericalParameters`, `m_par::ModelParameters`
+- `n_par::NumericalParameters`, 
+- `m_par::ModelParameters`
+- 5 optional arguments:
+    - `initial::Bool = true`: whether to use initial guess for marginal values
+    - `Vm_guess::AbstractArray = zeros(1, 1, 1)`: initial guess for marginal value of liquid assets
+    - `Vk_guess::AbstractArray = zeros(1, 1, 1)`: initial guess for marginal value of illiquid assets
+    - `distr_guess::AbstractArray = zeros(1, 1, 1)`: initial guess for stationary distribution
 """
 function Kdiff(
     K_guess::Float64,

@@ -98,7 +98,7 @@ shocks.
 ModelParameters
 ```
 The numerical parameters contain the grid (and the meshes) on which the
-stationary equilibrium is solved, discretization results of [`BASEforHANK.SteadyState.find_steadystate()`](@ref) 
+stationary equilibrium is solved, discretization results of [`call_find_steadystate()`](@ref) 
 like the transition matrix of income and the joint distribution, and other
 parameters that determine the numerical approximation or solution technique,
 like `reduc` or `sol_algo`.
