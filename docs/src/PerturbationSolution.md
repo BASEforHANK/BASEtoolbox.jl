@@ -11,7 +11,7 @@ in two successive periods. Applying the total differential yields
 to ``X'``,``X``. In the standard setting, we use the generalized Schur decomposition [^Klein]
 to transform this equation into a linearized observation equation ``d = gx*k`` and
 a linearized state transition equation ``k' = hx*k``, where ``k`` is a vector of the
-*state* variables and ``d`` is a vector of the *control* variables (``X = \begin{bmatrix} k \\ d \end{bmatrix}``).
+*state* variables and ``d`` is a vector of the *control* variables, ``X = \begin{bmatrix} k & d \end{bmatrix}'``.
 
 In our code, ``F`` is implemented as [`BASEforHANK.PerturbationSolution.Fsys()`](@ref), while differentiating and
 solving for ``gx`` and ``hx`` is done in [`BASEforHANK.PerturbationSolution.LinearSolution()`](@ref), called by [`linearize_full_model()`](@ref) returns the results as a `struct` `LinearResults`:

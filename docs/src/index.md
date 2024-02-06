@@ -45,7 +45,7 @@ The file `Parameters.jl` contains three structures to provide model parameters, 
 
 The model parameters for the steady state have to be calibrated. We set them in the `struct` [`ModelParameters`](@ref). It also contains all other parameters that are estimated, including the stochastic process-parameters for the aggregate shocks. Each model parameter has a line of code. It starts with the parameter name as it is used in the code and a default value. The next two entries are its ascii name and its name for LaTeX output. The fourth entry is the prior if the parameter is to be estimated. Please see the [Distributions.jl](https://github.com/JuliaStats/Distributions.jl)-package for available options. The fifth entry is a Boolean whether the parameter should be estimated (`true`) or not (`false`).
 
-The folder `Model` also contains the mapping of prices to household incomes (given the idiosyncratic state space). This can be found in the subfolder `IncomesETC`. Depending on the adjustments to the macroeconomic model, the user needs to adjust this mapping. Similarly, the subfolder contains definitions of utility functions, profit functions, employment demand etc. that are used in the calculation of the steady state equilibrium.
+The folder `Model` also contains the mapping of prices to household incomes (given the idiosyncratic state space). This can be found in the subfolder `IncomesETC`. Depending on the adjustments to the macroeconomic model, the user needs to adjust this mapping from prices to incomes. Similarly, the subfolder contains definitions of utility functions, profit functions, employment demand, etc. that are used in the calculation of the steady state equilibrium.
 
 
 ### Steady state and first dimensionality reduction
@@ -75,14 +75,14 @@ lr_full = linearize_full_model(sr_full, m_par)
 ```
 computes the linear dynamics of the "full" model, i.e., using the first-stage model reduction, around the steady state (in the background, this calls [`BASEforHANK.PerturbationSolution.LinearSolution()`](@ref)) and saves a state-space representation in the instance `lr_full` of the `struct` `LinearResults` (see [`linearize_full_model()`](@ref)).
 
-Linearization of the full model takes a few seconds. The resulting state space is, because the copula and the value functions are treated fully flexible in this first step, relatively large. As a result, also computing the first-order dynamics of this model takes a few seconds as well.
+Linearization of the full model takes a few seconds. The resulting state space is relatively large, because the copula and the value functions are treated fully flexible in this first step. As a result, also computing the first-order dynamics of this model takes a few seconds as well.
 
 ### Model reduction
 This large state-space representation can, however, be reduced substantially using an approximate factor representation. For this purpose, run  
 ```
 sr_reduc    = model_reduction(sr_full, lr_full, m_par)
 ```
-which calculates the unconditional covariance matrix of all state and control variables and rewrites the coefficients of the value functions and the copula as linear combinations of some underlying factors. Only those factors that have eigenvalues above the precision predefined in `sr_full.n_par.compress_critC` and `sr_full.n_par.compress_critS` are retained.
+which calculates the unconditional covariance matrix of all state and control variables and rewrites the coefficients of the value functions and the copula as linear combinations of some underlying factors. Only those factors that have eigenvalues above the precision predefined in `sr_full.n_par.compress_critC` (controls, i.e., marginal value functions) and `sr_full.n_par.compress_critS` (states, i.e., the copula) are retained.
 !!! warning
     After model reduction, `sr_reduc.indexes_r` contains the indexes that map correctly into the states/controls used in `LOMstate` and `State2Control`.
 
@@ -109,9 +109,9 @@ computes the mode of the likelihood, i.e., the parameter vector that maximizes t
 
 Lastly,
 ```
-montecarlo(sr_reduc, lr_reduc, er_mode, m_par)
+sample_posterior(sr_reduc, lr_reduc, er_mode, m_par)
 ```
-uses a Monte Carlo Markov Chain method to trace out the posterior probabilites of the estimated parameters.
+uses a Markov Chain Monte Carlo method to trace out the posterior probabilites of the estimated parameters.
 The final estimates (and further results) are saved in a file with the name given by the field `save_posterior_file`
 in the `struct` `EstimationSettings` (instantiated in `e_set`).
 
