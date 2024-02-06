@@ -207,9 +207,9 @@ weakdeps = ["JSON", "RecipesBase", "SentinelArrays", "StructTypes"]
 
 [[deps.ChainRulesCore]]
 deps = ["Compat", "LinearAlgebra"]
-git-tree-sha1 = "1287e3872d646eed95198457873249bd9f0caed2"
+git-tree-sha1 = "ad25e7d21ce10e01de973cdc68ad0f850a953c52"
 uuid = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
-version = "1.20.1"
+version = "1.21.1"
 weakdeps = ["SparseArrays"]
 
     [deps.ChainRulesCore.extensions]
