@@ -22,13 +22,13 @@ This will install all needed packages. For more on Julia environments, see [`Pkg
 
 For an introduction, it is easiest to use the Julia script `script.jl` in the `src` folder. Make sure that the folder is the present working directory and that the bottom bar in VSCode shows `Julia env: BASEtoolbox`.[^1] At the top of the script file, we pre-process some user input regarding the aggregate model and the steady state (see below) and write them them into the respective functions in the folder `Preprocessor\generated_fcns`. This has to be done before the BASEforHANK module, defined in `BASEforHANK.jl`, is loaded via
 ```
-push!(LOAD_PATH, pwd())
-using BASEforHANK
+include("BASEforHANK.jl")
+using .BASEforHANK
 ```
 ```@meta
 # !!! note
 #
-#    Instead of pushing the current directory to `LOAD_PATH` at runtime, one can also move the folder `BASEforHANK` to
+#    Instead of including the `BASEforHANK` package directly, you can also copy the folder to
 #    the place where packages are stored in the local Julia environment.
 ```
 `BASEforHANK.jl` is the key module file as it loads in the code base, sets up structures, and exports a number of functions and macros.
@@ -73,7 +73,7 @@ After computing the steady state and saving it in the `SteadyResults`-struct nam
 ```
 lr_full = linearize_full_model(sr_full, m_par)
 ```
-computes the linear dynamics of the "full" model, i.e., using the first-stage model reduction, around the steady state (in the background, this calls [`BASEforHANK.PerturbationSolution.LinearSolution_estim()`](@ref)) and saves a state-space representation in the instance `lr_full` of the `struct` `LinearResults` (see [`linearize_full_model()`](@ref)).
+computes the linear dynamics of the "full" model, i.e., using the first-stage model reduction, around the steady state (in the background, this calls [`BASEforHANK.PerturbationSolution.LinearSolution()`](@ref)) and saves a state-space representation in the instance `lr_full` of the `struct` `LinearResults` (see [`linearize_full_model()`](@ref)).
 
 Linearization of the full model takes a few seconds. The resulting state space is, because the copula and the value functions are treated fully flexible in this first step, relatively large. As a result, also computing the first-order dynamics of this model takes a few seconds as well.
 
@@ -94,7 +94,7 @@ lr_reduc    = update_model(sr_reduc, lr_full, m_par)
 ```
 In the background, this calls [`BASEforHANK.PerturbationSolution.LinearSolution_estim()`](@ref), which only updates the Jacobian entries that regard the **aggregate** model. (Note that both [`BASEforHANK.PerturbationSolution.LinearSolution()`](@ref) and [`BASEforHANK.PerturbationSolution.LinearSolution_estim()`](@ref) call [`BASEforHANK.PerturbationSolution.SolveDiffEq()`](@ref) to obtain a solution to the linearized difference equation.)
 
-This model update step takes about 200ms on a standard computer for a medium size resolution.
+This model update step takes about 100ms on a standard computer for the medium size resolution used as a default in the example code.
 
 ### Estimation of model parameters
 Having obtained `SteadyResults` `sr_reduc` and `LinearResults` `lr_reduc`, the command

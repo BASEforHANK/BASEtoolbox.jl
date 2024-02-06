@@ -4,13 +4,11 @@
 # ATTENTION: make sure that your present working directory pwd() is set to the folder
 # containing script.jl and BASEforHANK.jl. Otherwise adjust the load path.
 cd("./src")
-
+# push!(LOAD_PATH, pwd())
 # pre-process user inputs for model setup
-@time include("Preprocessor/PreprocessInputs.jl")
-
-push!(LOAD_PATH, pwd())
-@time include("BASEforHANK.jl")
-@time using .BASEforHANK
+include("Preprocessor/PreprocessInputs.jl")
+include("BASEforHANK.jl")
+using .BASEforHANK
 using BenchmarkTools
 # set BLAS threads to the number of Julia threads.
 # prevents BLAS from grabbing all threads on a machine
