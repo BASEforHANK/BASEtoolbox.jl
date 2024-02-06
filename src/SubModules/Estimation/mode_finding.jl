@@ -212,8 +212,7 @@ function mode_finding(sr, lr, m_par, e_set, par_start)
         if sr.n_par.verbose
             println("Computing Hessian. This might take a while...")
         end
-        func = TwiceDifferentiable(pp -> LL_final(pp), par_final)
-        hessian_final = Optim.hessian!(func, par_final)
+        hessian_final = FiniteDiff.finite_difference_hessian(LL, par_final, relstep = 0.001)
     else
         if sr.n_par.verbose
             println("Assuming Hessian is I...")

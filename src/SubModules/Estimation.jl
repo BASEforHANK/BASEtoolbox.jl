@@ -25,7 +25,8 @@ using   LinearAlgebra,
         DataFrames,
         CSV,
         FieldMetadata,
-        Parameters
+        Parameters,
+        FiniteDiff
     
 using   Parameters: @unpack
 using   MatrixEquations: lyapd

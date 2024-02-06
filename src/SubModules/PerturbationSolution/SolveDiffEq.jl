@@ -187,9 +187,13 @@ function SolveDiffEq(
     if n_par.sol_algo == :schur || lit_fail  # schur decomposition
         alarm_LinearSolution = false
         Schur_decomp, slt, nk, λ =  try
-                                        real_schur(A, -B) # first output is generalized Schur factorization
+                                        real_schur(A, -B) # first output is generalized Schur factorization   
                                     catch # in rare cases the schur decomposition fails numerically => treat as no solution
-                                        (0, 0, 0, 0) 
+                                        try
+                                            complex_schur(A, -B)
+                                        catch
+                                            (0, 0, 0, 0)
+                                        end 
                                     end
         # Check for determinacy and existence of solution
         if n_par.nstates_r != nk
