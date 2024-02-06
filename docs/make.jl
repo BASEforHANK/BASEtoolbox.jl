@@ -15,5 +15,5 @@ makedocs(sitename="Documentation for BASEforHANK module",
             ], format = Documenter.HTML(prettyurls = false))
 
  deploydocs(
-    repo = "github.com/BASEforHANK/BASEtoolbox.jl.git", versions = nothing,
+    repo = "github.com/BASEforHANK/BASEtoolbox.jl.git", versions = "v0.9",
     )
