@@ -1,5 +1,5 @@
 # __precompile__(false)
-# Code runs on Julia 1.7.1
+# Code runs on Julia 1.9.3
 # ------------------------------------------------------------------------------
 ## Package Calls
 # ------------------------------------------------------------------------------
@@ -14,117 +14,90 @@ if !Sys.isapple() # issues encountered when using mkl with macos + more than 1 t
     using MKL
 end
 
-using Plots,
-    VegaLite,
-    StatsPlots,
-    OrderedCollections,
-    JLD2,
-    FileIO,
-    DataFrames,
-    CSV,
-    LaTeXStrings,
-    JSON,
-    CodecZlib,
-    Parameters,
-    Setfield,
-    Flatten,
-    FieldMetadata,
-    FiniteDiff
+using   LinearAlgebra,
+        JLD2,
+        FileIO,
+        Setfield,
+        Flatten,
+        Distributions,
+        Random,
+        FieldMetadata,
+        MCMCChains
 
-using LinearAlgebra,
-    SparseArrays,
-    BlockDiagonals,
-    CategoricalArrays,
-    Random,
-    MCMCChains,
-    Distributions,
-    Roots,
-    ForwardDiff,
-    Optim,
-    BenchmarkTools
+import  Flatten: flattenable
 
-using Statistics, PrettyTables, Colors
+# Submodules only required by sibling modules
+include("SubModules/Tools.jl")
+include("SubModules/IncomesETC.jl")
 
-# using MatrixEquations, ProximalOperators,KrylovKit,SpecialFunctions,FFTW
-using MatrixEquations: lyapd
-using ProximalOperators: prox!, IndPSD
-using KrylovKit: eigsolve
-using SpecialFunctions: erf
-using FFTW: dct, ifft
+# Submodules that define functions used by parent
+include("SubModules/Parsing.jl")
+using .Parsing
+include("SubModules/SteadyState.jl")
+using .SteadyState
+include("SubModules/PerturbationSolution.jl")
+using .PerturbationSolution
+include("SubModules/Estimation.jl")
+using .Estimation
+include("SubModules/PostEstimation.jl")
+using .PostEstimation
 
-import Flatten: flattenable
-export ModelParameters,
-    NumericalParameters,
-    EstimationSettings,
-    SteadyResults,
-    LinearResults,
-    EstimResults,
-    SteadyState,
-    compute_steadystate,
-    call_find_steadystate,
-    call_prepare_linearization,
-    linearize_full_model,
-    model_reduction,
-    update_model,
-    find_mode,
-    montecarlo,
-    mode,
-    metaflatten,
-    prior,
-    compare_2_linearizations,
-    reduction_quality,
-    reduction_quality_seq,
-    compute_irfs_vardecomp,
-    plot_irfs,
-    compute_hist_decomp,
-    plot_vardecomp,
-    compute_bcfreq_vardecomp,
-    compute_vardecomp_bounds,
-    @set!,
-    jldsave,
-    @load,
-    @writeXSS,
-    @make_fn,
-    @make_fnaggr,
-    @make_struct,
-    @make_struct_aggr,
-    @generate_equations
 
-include("1_Model/input_aggregate_names.jl")
+# Structs to export
+export  ModelParameters,
+        NumericalParameters,
+        EstimationSettings,
+        SteadyResults,
+        LinearResults,
+        EstimResults,
+        SteadyState
 
+# Own Functions to export
+export  compute_steadystate,
+        call_find_steadystate,
+        call_prepare_linearization,
+        linearize_full_model,
+        model_reduction,
+        update_model,
+        find_mode,
+        sample_posterior,
+        compute_irfs_vardecomp,
+        plot_irfs,
+        compute_hist_decomp,
+        plot_vardecomp,
+        compute_bcfreq_vardecomp,
+        compute_vardecomp_bounds
+
+# Functions passed through from 3rd Party packages
+export  mode,
+        metaflatten,
+        prior,
+        label,
+        jldsave,
+        @set!,
+        @load
+
+include("Model/input_aggregate_names.jl")
+include("Preprocessor/prior.jl")
 # ------------------------------------------------------------------------------
 ## Define Functions
 # ------------------------------------------------------------------------------
-include("1_Model/Parameters.jl")
-include("3_NumericalBasics/Structs.jl")
-include("6_Estimation/prior.jl")
 
-e_set = EstimationSettings(shock_names = shock_names)
-@make_struct IndexStruct
-@make_struct_aggr IndexStructAggr
 
-include("2_includeLists/include_NumericalBasics.jl")
-include("2_includeLists/include_HetAgentsFcns.jl")
-include("2_includeLists/include_LinearizationFunctions.jl")
-include("2_includeLists/include_Estimation.jl")
-include("2_includeLists/include_PostEstimation.jl")
-
-@make_fn produce_indexes
-@make_fnaggr produce_indexes_aggr
 
 @doc raw"""
     call_findsteadystate()
 
-Computes the steady state and fills the SteadyState struct -- without further steps of preparing the linearization.
+Computes the steady state and fills the SteadyStateStruct struct -- without further steps of preparing the linearization.
 
 # Returns
-`struct` `SteadyResults`, containing returns of [`find_steadystate()`](@ref)
+`struct` `SteadyStateStruct`, containing returns of [`find_steadystate()`](@ref)
 """
 function call_find_steadystate(m_par)
     #Calculate steady state capital stock
     KSS, VmSS, VkSS, distrSS, n_par, m_par = find_steadystate(m_par)
 
-    return SteadyState(KSS, VmSS, VkSS, distrSS, n_par)
+    return SteadyStateStruct(KSS, VmSS, VkSS, distrSS, n_par)
 end
 
 @doc raw"""
@@ -133,7 +106,7 @@ end
 Runs the prepare linearization and fills the SteadyResults struct, sr.
 
 # Returns
-`struct` `SteadyResults`, containing returns of [`find_steadystate()`](@ref)
+`struct` `SteadyResults`, containing returns of [`prepare_linearization()`](@ref)
 """
 function call_prepare_linearization(ss, m_par)
 
@@ -187,7 +160,7 @@ end
 Compute steady state including the preparation for linearization
 
 # Returns
-`struct` `SteadyResults`, containing returns of [`find_steadystate()`](@ref)
+`struct` `SteadyResults`, containing returns of [`prepare_linearization()`](@ref)
 """
 function compute_steadystate(m_par)
     #Calculate steady state capital stock
@@ -208,7 +181,7 @@ using [`LinearSolution()`](@ref).
 
 # Returns
 `struct` `LinearResults`, containing
-- `A::Array{Float64,2}`,`B::Array{Float64,2}`: first derivatives of [`Fsys()`](@ref) with respect to arguments `X` [`B`]
+- `A::Array{Float64,2}`,`B::Array{Float64,2}`: first derivatives of [`PerturbationSolution.Fsys()`](@ref) with respect to arguments `X` [`B`]
     and `XPrime` [`A`]
 - `State2Control::Array{Float64,2}`: observation equation
 - `LOMstate::Array{Float64,2}`: state transition equation
@@ -224,80 +197,6 @@ function linearize_full_model(sr::SteadyResults, m_par::ModelParameters)
         LinearSolution(sr, m_par, A, B; estim = false)
 
     return LinearResults(State2Control, LOMstate, A, B, SolutionError, nk)
-end
-
-@doc raw"""
-    update_model()
-
-Updates the linearized model (around the steady state, after parameter changes in the aggregate model) and solves,
-using [`LinearSolution_estim()`](@ref). WARNING: The function is not threadsafe in the sense that calling it will alter the
-input(!) lr.A/B across threads, if lr is not local to the thread.
-
-# Returns
-`struct` `LinearResults`, containing
-- `A::Array{Float64,2}`,`B::Array{Float64,2}`: first derivatives of [`Fsys()`](@ref) with respect to arguments `X` [`B`]
-    and `XPrime` [`A`]
-- `State2Control::Array{Float64,2}`: observation equation
-- `LOMstate::Array{Float64,2}`: state transition equation
-"""
-function update_model(sr::SteadyResults, lr::LinearResults, m_par::ModelParameters)
-
-    if sr.n_par.verbose
-        println("Updating linearization")
-    end
-    State2Control, LOMstate, SolutionError, nk, A, B =
-        LinearSolution_estim(sr, m_par, lr.A, lr.B; estim = true)
-
-    return LinearResults(State2Control, LOMstate, A, B, SolutionError, nk)
-end
-
-@doc raw"""
-    model_reduction()
-
-Produce Model Reduction based on Variance Covariance Matrix of States and Controls.
-
-# Returns/ Updates
-`struct` `SteadyResults`, containing returns of [`find_steadystate()`](@ref)
-"""
-function model_reduction(sr, lr, m_par)
-    n_par = sr.n_par
-    # Reduce further based on importance in dynamics at initial guess 
-    if n_par.further_compress
-        println("Reduction Step")
-        indexes_r, n_par = compute_reduction(sr, lr, m_par, e_set.shock_names)
-
-        println("Number of reduced model factors for DCTs for Vm & Vk:")
-        println(length(indexes_r.Vm) + length(indexes_r.Vk))
-
-        println("Number of reduced model factors for copula DCTs:")
-        println(length(indexes_r.COP))
-    else
-        println("Further model reduction switched off --> reverting to full model")
-        @set! n_par.PRightAll = Diagonal(ones(n_par.ntotal))#float(I[1:n_par.ntotal, 1:n_par.ntotal])
-        @set! n_par.PRightStates = Diagonal(ones(n_par.nstates))# float(I[1:n_par.nstates, 1:n_par.nstates])
-        indexes_r = sr.indexes
-        @set! n_par.nstates_r = n_par.nstates
-        @set! n_par.ncontrols_r = n_par.ncontrols
-        @set! n_par.ntotal_r = n_par.ntotal
-    end
-
-    return SteadyResults(
-        sr.XSS,
-        sr.XSSaggr,
-        sr.indexes,
-        indexes_r,
-        sr.indexes_aggr,
-        sr.compressionIndexes,
-        n_par,
-        m_par,
-        sr.CDFSS,
-        sr.CDF_m,
-        sr.CDF_k,
-        sr.CDF_y,
-        sr.distrSS,
-        state_names,
-        control_names,
-    )
 end
 
 
@@ -366,7 +265,7 @@ end
 
 
 @doc raw"""
-    montecarlo(mr,er;file=e_set.save_posterior_file)
+    mcmc_estimation(mr,er;file=e_set.save_posterior_file)
 
 Sample posterior of parameter vector with [`rwmh()`](@ref), take sample mean as
 parameter estimate, and save all results in `file`.
@@ -376,7 +275,7 @@ parameter estimate, and save all results in `file`.
 - `mr::LinearResults`
 - `er::EstimResults`
 """
-function montecarlo(
+function sample_posterior(
     sr::SteadyResults,
     lr::LinearResults,
     er::EstimResults,
@@ -415,7 +314,7 @@ function montecarlo(
             draws_raw[e_set.burnin+1:end, :],
             (size(draws_raw[e_set.burnin+1:end, :])..., 1),
         ),
-        [string(parnames_ascii[i]) for i = 1:length(parnames_ascii)],
+        [string(parnames_ascii[i]) for i = eachindex(parnames_ascii)],
     )
     chn_summary = summarize(chn)
     par_final = chn_summary[:, :mean]

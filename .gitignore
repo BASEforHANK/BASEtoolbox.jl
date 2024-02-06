@@ -1,4 +1,3 @@
-
-src/.DS_Store
-
-src/5_LinearizationFunctions/.DS_Store
+.DS_Store
+src/Output/Figures/**
+src/Output/Tables/**

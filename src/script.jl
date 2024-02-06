@@ -4,13 +4,12 @@
 # ATTENTION: make sure that your present working directory pwd() is set to the folder
 # containing script.jl and BASEforHANK.jl. Otherwise adjust the load path.
 cd("./src")
-
+# push!(LOAD_PATH, pwd())
 # pre-process user inputs for model setup
-include("3_NumericalBasics/PreprocessInputs.jl")
-
-push!(LOAD_PATH, pwd())
-using BASEforHANK
-
+include("Preprocessor/PreprocessInputs.jl")
+include("BASEforHANK.jl")
+using .BASEforHANK
+using BenchmarkTools
 # set BLAS threads to the number of Julia threads.
 # prevents BLAS from grabbing all threads on a machine
 BASEforHANK.LinearAlgebra.BLAS.set_num_threads(Threads.nthreads())
@@ -21,6 +20,7 @@ BASEforHANK.LinearAlgebra.BLAS.set_num_threads(Threads.nthreads())
 #------------------------------------------------------------------------------
 m_par = ModelParameters()
 priors = collect(metaflatten(m_par, prior)) # model parameters
+
 par_prior = mode.(priors)
 m_par = BASEforHANK.Flatten.reconstruct(m_par, par_prior)
 e_set = BASEforHANK.e_set;
@@ -34,9 +34,9 @@ BASEforHANK.Random.seed!(e_set.seed)
 ################################################################################
 # Comment in the following block to be able to go straight to plotting (comment out lines 40-53)
 ################################################################################
-# @load "7_Saves/steadystate.jld2" sr_full
-# @load "7_Saves/linearresults.jld2" lr_full
-# @load "7_Saves/reduction.jld2" sr_reduc lr_reduc
+@load "Output/Saves/steadystate.jld2" sr_full
+@load "Output/Saves/linearresults.jld2" lr_full
+@load "Output/Saves/reduction.jld2" sr_reduc lr_reduc
 # @load BASEforHANK.e_set.save_posterior_file sr_mc lr_mc er_mc m_par_mc smoother_output
 # @set! e_set.estimate_model = false 
 
@@ -49,8 +49,8 @@ sr_full = call_prepare_linearization(ss_full, m_par)
 # COMPACT call of both of the above:
 # sr_full = compute_steadystate(m_par)
 
-jldsave("7_Saves/steadystate.jld2", true; sr_full) # true enables compression
-# @load "7_Saves/steadystate.jld2" sr_full
+jldsave("Output/Saves/steadystate.jld2", true; sr_full) # true enables compression
+# @load "Output/Saves/steadystate.jld2" sr_full
 
 #------------------------------------------------------------------------------
 # compute and display steady-state moments
@@ -74,19 +74,19 @@ println("Fraction of Borrower:", fr_borr)
 
 # linearize the full model
 lr_full = linearize_full_model(sr_full, m_par)
-jldsave("7_Saves/linearresults.jld2", true; lr_full)
-# @load "7_Saves/linearresults.jld2" lr_full
+jldsave("Output/Saves/linearresults.jld2", true; lr_full)
+# @load "Output/Saves/linearresults.jld2" lr_full
 
 # Find sparse state-space representation
 sr_reduc = model_reduction(sr_full, lr_full, m_par);
 lr_reduc = update_model(sr_reduc, lr_full, m_par)
-jldsave("7_Saves/reduction.jld2", true; sr_reduc, lr_reduc)
-# @load "7_Saves/reduction.jld2" sr_reduc lr_reduc
+jldsave("Output/Saves/reduction.jld2", true; sr_reduc, lr_reduc)
+# @load "Output/Saves/reduction.jld2" sr_reduc lr_reduc
 
 # model timing
 println("One model solution takes")
 @set! sr_reduc.n_par.verbose = false
-BASEforHANK.@btime lr_reduc = update_model(sr_reduc, lr_full, m_par)
+@btime lr_reduc = update_model(sr_reduc, lr_full, m_par)
 @set! sr_reduc.n_par.verbose = true;
 
 if e_set.estimate_model == true
@@ -94,6 +94,12 @@ if e_set.estimate_model == true
     # warning: estimation might take a long time!
     er_mode, posterior_mode, smoother_mode, sr_mode, lr_mode, m_par_mode =
         find_mode(sr_reduc, lr_reduc, m_par)
+    
+    # Only relevant output for later plotting will be saved.
+    # If you require all smoother output including the variance estimates 
+    # over time, items 4 and 5, comment out the next line.  
+    # This increases the hard disk storage significantly.
+    smoother_mode = (0.0,0.0,smoother_mode[3],0.0,0.0, smoother_mode[6],0.0)
 
     # Stores mode finding results in file e_set.save_mode_file 
     jldsave(
@@ -119,8 +125,14 @@ if e_set.estimate_model == true
     accept_rate,
     par_final,
     hessian_sym,
-    smoother_output = montecarlo(sr_mode, lr_mode, er_mode, m_par_mode)
-
+    smoother_output = sample_posterior(sr_mode, lr_mode, er_mode, m_par_mode)
+    
+    # Only relevant output for later plotting will be saved.
+    # If you want all smoother output including the variance estimates 
+    # over time, items 4 and 5, comment out the next line.  
+    # This increases the hard disk storage significantly.
+    smoother_output = (0.0,0.0,smoother_output[3],0.0,0.0, smoother_output[6],0.0)
+    
     # Stores mcmc results in file e_set.save_posterior_file 
     jldsave(
         BASEforHANK.e_set.save_posterior_file,
@@ -146,17 +158,6 @@ end
 ##############################################################################################
 # Graphical Model Output
 ###############################################################################################
-using Plots,
-    VegaLite,
-    DataFrames,
-    FileIO,
-    StatsPlots,
-    CategoricalArrays,
-    Flatten,
-    Statistics,
-    PrettyTables,
-    Colors
-
 # variables to be plotted
 select_variables = [
     :Ygrowth,
@@ -179,7 +180,7 @@ model_names[1] = "HANK Mode"
 model_names[2] = "HANK Posterior"
 
 # enter here the models, as tupel of tupels (sr, lr, e_set, m_par), to be compared
-models_tupel = ((sr_mode, lr_mode, e_set, m_par_mode), (sr_mc, lr_mc, e_set, m_par_mc))
+models_tupel = ((sr_mc, lr_mc, e_set, m_par_mc), (sr_mode, lr_mode, e_set, m_par_mode))
 
 timeline = collect(1954.75:0.25:2019.75)
 select_vd_horizons = [4 16 100] # horizons for variance decompositions
@@ -244,10 +245,11 @@ IRFs_plot = plot_irfs(
     model_names,
     4;
     savepdf = true,
+    disp_switch = true
 )
 
 # export Variance Decompositions as DataFrames and Plot using VegaLite
-DF_V_Decomp = plot_vardecomp(
+DF_V_Decomp, DF_V_Decomp_bc = plot_vardecomp(
     VDs,
     VD_bc_s,
     select_vd_horizons,
@@ -257,6 +259,7 @@ DF_V_Decomp = plot_vardecomp(
     savepdf = true,
     suffix = "_nolegend",
     legend_switch = true,
+    disp_switch = true
 )
 
 # produce historical contributions as Array and Data Frame and plot p
