@@ -1,4 +1,4 @@
-cd("docs")
+#cd("docs")
 using Documenter
 push!(LOAD_PATH,"../src/")
  #include("../src/BASEforHANK.jl")
