@@ -2,7 +2,7 @@
 
 julia_version = "1.10.0"
 manifest_format = "2.0"
-project_hash = "412c9238d63e5013deb00a58779ba35b65863db0"
+project_hash = "95d437c1bc65b0a6fdd338fbbb3b73e7f4b2dd25"
 
 [[deps.ANSIColoredPrinters]]
 git-tree-sha1 = "574baf8110975760d391c710b6341da1afa48d8c"
@@ -1023,12 +1023,6 @@ deps = ["AbstractFFTs", "DataAPI", "DataStructures", "Distributions", "LinearAlg
 git-tree-sha1 = "6ea46c36b86320593d2017da3c28c79165167ef4"
 uuid = "be115224-59cd-429b-ad48-344e309966f0"
 version = "0.3.8"
-
-[[deps.MKL]]
-deps = ["Artifacts", "Libdl", "LinearAlgebra", "MKL_jll"]
-git-tree-sha1 = "0e25aae49a4a43b3a03eb7ac7aba8473c60a87d2"
-uuid = "33e6dc65-8f57-5167-99aa-e5a354878fb2"
-version = "0.6.2"
 
 [[deps.MKL_jll]]
 deps = ["Artifacts", "IntelOpenMP_jll", "JLLWrappers", "LazyArtifacts", "Libdl", "Pkg"]
