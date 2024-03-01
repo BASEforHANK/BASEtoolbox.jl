@@ -30,18 +30,9 @@ function find_steadystate(m_par)
     rmin = 0.0
     rmax = (1.0 .- m_par.β) ./ m_par.β - 0.0025
 
-    capital_intensity(r) = ((r + m_par.δ_0) ./ m_par.α .* m_par.μ)^(1.0 ./ (m_par.α .- 1))
-    labor_supply(w) =
-        ((1.0 .- m_par.τ_prog) .* m_par.τ_lev)^(1.0 ./ (m_par.γ .+ m_par.τ_prog)) .*
-        w^((1.0 .- m_par.τ_prog) ./ (m_par.γ .+ m_par.τ_prog))
-
-    Kmax =
-        capital_intensity(rmin) .*
-        labor_supply(wage(capital_intensity(rmin), 1.0 ./ m_par.μ, 1.0, m_par) ./ m_par.μw)
-    Kmin =
-        capital_intensity(rmax) .*
-        labor_supply(wage(capital_intensity(rmax), 1.0 ./ m_par.μ, 1.0, m_par) ./ m_par.μw)
-
+    Kmax = CompMarketsCapital(rmin, m_par)
+    Kmin = CompMarketsCapital(rmax, m_par)
+  
     println("Kmin: ", Kmin)
     println("Kmax: ", Kmax)
 

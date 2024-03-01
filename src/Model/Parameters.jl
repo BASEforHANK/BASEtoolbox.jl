@@ -44,8 +44,8 @@ julia> priors = collect(metaflatten(m_par, prior))
 
     # Further steady-state parameters
     ψ::T = 0.1 | "psi" | L"\psi" | _ | false # steady-state bond to capital ratio
-    τ_lev::T = 0.8225 | "tau_lev" | L"\tau^L" | _ | false # steady-state income tax rate level
-    τ_prog::T = 0.1022 | "tau_pro" | L"\tau^P" | _ | false # steady-state income tax rate progressivity
+    τlev::T = 0.8225 | "tau_lev" | L"\tau^L" | _ | false # steady-state income tax rate level
+    τprog ::T = 0.1022 | "tau_pro" | L"\tau^P" | _ | false # steady-state income tax rate progressivity
 
     R::T = 1.01 | "R" | L"R" | _ | false # steady state rate of return capital (unused)
     K::T = 40.0 | "K" | L"K" | _ | false # steady state quantity of capital (unused)

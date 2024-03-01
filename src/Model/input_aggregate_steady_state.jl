@@ -4,8 +4,8 @@ ZSS = 1.0
 ZISS = 1.0
 μSS = m_par.μ
 μwSS = m_par.μw
-τprogSS = m_par.τ_prog
-τlevSS = m_par.τ_lev
+τprogSS = m_par.τprog 
+τlevSS = m_par.τlev
 
 σSS = 1.0
 τprog_obsSS = 1.0

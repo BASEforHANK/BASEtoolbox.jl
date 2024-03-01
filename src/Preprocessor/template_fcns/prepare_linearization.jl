@@ -39,14 +39,14 @@ function prepare_linearization(KSS, VmSS, VkSS, distrSS, n_par, m_par)
     profitsSS = profitsSS_fnc(YSS,m_par.RB,m_par)
     unionprofitsSS  = (1.0 .- 1.0/m_par.μw) .* wSS .* NSS
     LC              = 1.0./m_par.μw *wSS.*NSS  
-    taxrev          = ((n_par.grid_y/n_par.H).*LC)-m_par.τ_lev.*((n_par.grid_y/n_par.H).*LC).^(1.0-m_par.τ_prog)
-    taxrev[end]     =  n_par.grid_y[end].*profitsSS - m_par.τ_lev.*( n_par.grid_y[end].*profitsSS).^(1.0-m_par.τ_prog)
+    taxrev          = ((n_par.grid_y/n_par.H).*LC)-m_par.τlev.*((n_par.grid_y/n_par.H).*LC).^(1.0-m_par.τprog )
+    taxrev[end]     =  n_par.grid_y[end].*profitsSS - m_par.τlev.*( n_par.grid_y[end].*profitsSS).^(1.0-m_par.τprog )
     incgrossaux     = ((n_par.grid_y/n_par.H).*LC)
     incgrossaux[end]=  n_par.grid_y[end].*profitsSS
     av_tax_rateSS   = dot(distr_y, taxrev)./(dot(distr_y,incgrossaux))
     incgross, incnet, eff_int = 
             incomes(n_par, m_par, 1.0 ./ m_par.μw, 1.0, 1.0, 
-                    m_par.RB, m_par.τ_prog, m_par.τ_lev, n_par.H, 1.0, 1.0,rSS,wSS,NSS,profitsSS,unionprofitsSS, av_tax_rateSS)
+                    m_par.RB, m_par.τprog , m_par.τlev, n_par.H, 1.0, 1.0,rSS,wSS,NSS,profitsSS,unionprofitsSS, av_tax_rateSS)
     # obtain other steady state variables
     KSS, BSS, TransitionMatSS, TransitionMat_aSS, TransitionMat_nSS,
     c_a_starSS, m_a_starSS, k_a_starSS, c_n_starSS, m_n_starSS, VmSS, VkSS, distrSS =
@@ -65,7 +65,7 @@ function prepare_linearization(KSS, VmSS, VkSS, distrSS, n_par, m_par)
     # 2 a.) Selection of DCT coefficients for reduction of the marginal value functions
     # ------------------------------------------------------------------------------
     # Vector of all prices in the household problem (in SS)
-    price_vectorSS = [1.0/m_par.μw, 1.0, m_par.RB, m_par.τ_prog, m_par.τ_lev, 
+    price_vectorSS = [1.0/m_par.μw, 1.0, m_par.RB, m_par.τprog , m_par.τlev, 
                      rSS, wSS, profitsSS, unionprofitsSS, av_tax_rateSS, 1.0][:]
 
     indk, indm, _ = first_stage_reduction(VkSS, VmSS, TransitionMat_aSS, TransitionMat_nSS, 

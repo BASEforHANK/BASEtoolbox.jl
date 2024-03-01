@@ -73,7 +73,7 @@ MPKSS = exp(XSS[indexes.rSS]) - 1.0 + m_par.δ_0       # stationary equil. margi
 δ_2 = δ_1 .* m_par.δ_s                              # express second utilization coefficient in relative terms
 # Auxiliary variables
 Kserv = K * u                                         # Effective capital
-MPKserv = mc .* Z .* m_par.α .* (Kserv ./ N) .^ (m_par.α - 1.0)      # marginal product of Capital
+MPKserv = interest(Kserv, mc.*Z, N, m_par) .+ m_par.δ_0 # mc .* Z .* m_par.α .* (Kserv ./ N) .^ (m_par.α - 1.0)      # marginal product of Capital
 depr = m_par.δ_0 + δ_1 * (u - 1.0) + δ_2 / 2.0 * (u - 1.0)^2.0   # depreciation
 
 Wagesum = N * w                                         # Total wages in economy t
@@ -84,7 +84,7 @@ YREACTION = Ygrowth                                  # Policy reaction function 
 distr_y = sum(distrSS, dims = (1, 2))
 
 # tax progressivity variabels used to calculate e.g. total taxes
-tax_prog_scale = (m_par.γ + m_par.τ_prog) / ((m_par.γ + τprog))                        # scaling of labor disutility including tax progressivity
+tax_prog_scale = (m_par.γ + m_par.τprog ) / ((m_par.γ + τprog))                        # scaling of labor disutility including tax progressivity
 incgross = ((n_par.grid_y ./ n_par.H) .^ tax_prog_scale .* mcw .* w .* N ./ Ht)  # capital liquidation Income (q=1 in steady state)
 incgross[end] = (n_par.grid_y[end] .* profits)                         # gross profit income
 inc = τlev .* (incgross .^ (1.0 .- τprog))                                 # capital liquidation Income (q=1 in steady state)
@@ -95,7 +95,7 @@ IncAux = dot(distr_y, incgross)
 
 Htact = dot(
     distr_y[1:end-1],
-    (n_par.grid_y[1:end-1] / n_par.H) .^ ((m_par.γ + m_par.τ_prog) / (m_par.γ + τprog)),
+    (n_par.grid_y[1:end-1] / n_par.H) .^ ((m_par.γ + m_par.τprog ) / (m_par.γ + τprog)),
 )
 ############################################################################
 #           Error term calculations (i.e. model starts here)          #
@@ -232,13 +232,13 @@ F[indexes.LPXA] = log.(LPXA) - (log((qPrime + rPrime - 1.0) / q) - log(RBPrime /
 F[indexes.I] =
     KPrime .- K .* (1.0 .- depr) .-
     ZI .* I .* (1.0 .- m_par.ϕ ./ 2.0 .* (Igrowth - 1.0) .^ 2.0)           # Capital accumulation equation
-F[indexes.N] =
-    log.(N) -
-    log.(
-        ((1.0 - τprog) * τlev * (mcw .* w) .^ (1.0 - τprog)) .^ (1.0 / (m_par.γ + τprog)) .*
-        Ht
-    )   # labor supply
-F[indexes.Y] = log.(Y) - log.(Z .* N .^ (1.0 .- m_par.α) .* Kserv .^ m_par.α)                                          # production function
+
+F[indexes.N] = log.(N) - log.(labor_supply(w.*mcw, τlev, τprog, Ht, m_par))
+    # log.(
+    #     ((1.0 - τprog) * τlev * (mcw .* w) .^ (1.0 - τprog)) .^ (1.0 / (m_par.γ + τprog)) .*
+    #     Ht
+    # )   # labor supply
+F[indexes.Y] = log.(Y) - log.(output(Kserv, Z, N, m_par))    #log.(Z .* N .^ (1.0 .- m_par.α) .* Kserv .^ m_par.α) # Z .* N .^ (1.0 .- m_par.α) .* Kserv .^ m_par.α                                      # production function
 F[indexes.C] = log.(Y .- G .- I .- BD * m_par.Rbar .+ (A .- 1.0) .* RL .* B ./ π) .- log(C)                            # Resource constraint
 
 # Error Term on prices/aggregate summary vars (logarithmic, controls), here difference to SS value averages

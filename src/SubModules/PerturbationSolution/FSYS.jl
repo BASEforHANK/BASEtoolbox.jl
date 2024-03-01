@@ -155,7 +155,7 @@ function Fsys(
 
     # Average Human Capital =
     # average productivity (at the productivit grid, used to normalize to 0)
-    tax_prog_scale = (m_par.γ + m_par.τ_prog) / ((m_par.γ + τprog))
+    tax_prog_scale = (m_par.γ + m_par.τprog ) / ((m_par.γ + τprog))
     H = dot(distr_y[1:end-1], n_par.grid_y[1:end-1])
     KP = dot(n_par.grid_k, distr_k[:])
     Htact = dot(distr_y[1:end-1], (n_par.grid_y[1:end-1] / H) .^ (tax_prog_scale))
@@ -187,7 +187,7 @@ function Fsys(
     )
 
     # Calculate Taxes
-    tax_prog_scale = (m_par.γ + m_par.τ_prog) / ((m_par.γ + τprog))
+    tax_prog_scale = (m_par.γ + m_par.τprog ) / ((m_par.γ + τprog))
     LC = mcw * w .* N ./ Ht
     taxrev =
         ((n_par.grid_y / H) .^ tax_prog_scale .* LC) -
