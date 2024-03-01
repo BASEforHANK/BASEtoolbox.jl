@@ -125,7 +125,7 @@ if e_set.estimate_model == true
     accept_rate,
     par_final,
     hessian_sym,
-    smoother_output = montecarlo(sr_mode, lr_mode, er_mode, m_par_mode)
+    smoother_output = sample_posterior(sr_mode, lr_mode, er_mode, m_par_mode)
     
     # Only relevant output for later plotting will be saved.
     # If you want all smoother output including the variance estimates 

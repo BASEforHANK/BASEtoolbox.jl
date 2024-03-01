@@ -60,7 +60,7 @@ export  compute_steadystate,
         model_reduction,
         update_model,
         find_mode,
-        montecarlo,
+        sample_posterior,
         compute_irfs_vardecomp,
         plot_irfs,
         compute_hist_decomp,
@@ -265,7 +265,7 @@ end
 
 
 @doc raw"""
-    montecarlo(mr,er;file=e_set.save_posterior_file)
+    mcmc_estimation(mr,er;file=e_set.save_posterior_file)
 
 Sample posterior of parameter vector with [`rwmh()`](@ref), take sample mean as
 parameter estimate, and save all results in `file`.
@@ -275,7 +275,7 @@ parameter estimate, and save all results in `file`.
 - `mr::LinearResults`
 - `er::EstimResults`
 """
-function montecarlo(
+function sample_posterior(
     sr::SteadyResults,
     lr::LinearResults,
     er::EstimResults,

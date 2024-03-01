@@ -61,5 +61,5 @@ include("Tools/Schur_and_DualUtils.jl")
 include("Tools/Pdf2cdf.jl")
 include("Tools/Broyden.jl")
 include("Tools/CentralDerivatives.jl")
-include("Tools/distrSummaries.jl")
+include("Tools/DistrSummaries.jl")
 end # module Tools
