@@ -67,7 +67,7 @@ function incomes!(
     unionprofits,
     av_tax_rate,
 )
-    tax_prog_scale = (m_par.γ + m_par.τ_prog) / ((m_par.γ + τprog))
+    tax_prog_scale = (m_par.γ + m_par.τprog ) / ((m_par.γ + τprog))
     labor_inc = mcw .* w .* N ./ Ht .* (n_par.mesh_y / H) .^ tax_prog_scale
     net_labor_inc = τlev .* labor_inc .^ (1.0 - τprog)
     net_u_profits = unionprofits .* (1.0 .- av_tax_rate) .* n_par.HW

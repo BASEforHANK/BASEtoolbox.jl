@@ -52,10 +52,10 @@ function Kdiff(
     LC = 1.0 ./ m_par.μw * w .* N
     taxrev =
         ((n_par.grid_y / n_par.H) .* LC) -
-        m_par.τ_lev .* ((n_par.grid_y / n_par.H) .* LC) .^ (1.0 - m_par.τ_prog)
+        m_par.τlev .* ((n_par.grid_y / n_par.H) .* LC) .^ (1.0 - m_par.τprog )
     taxrev[end] =
         n_par.grid_y[end] .* profits -
-        m_par.τ_lev .* (n_par.grid_y[end] .* profits) .^ (1.0 - m_par.τ_prog)
+        m_par.τlev .* (n_par.grid_y[end] .* profits) .^ (1.0 - m_par.τprog )
     incgrossaux = ((n_par.grid_y / n_par.H) .* LC)
     incgrossaux[end] = n_par.grid_y[end] .* profits
     av_tax_rate = dot(distr_y, taxrev) ./ (dot(distr_y, incgrossaux))
@@ -67,8 +67,8 @@ function Kdiff(
         1.0,
         1.0,
         m_par.RB,
-        m_par.τ_prog,
-        m_par.τ_lev,
+        m_par.τprog ,
+        m_par.τlev,
         n_par.H,
         1.0,
         1.0,
