@@ -121,6 +121,7 @@ employment(K::Number, Z::Number, m_par) =
 # used for starting guesses in the steady state calculations
 # Optimal capital intensity under Cobb Douglas
 capital_intensity(r, m_par) = ((r + m_par.δ_0) ./ m_par.α .* m_par.μ)^(1.0 ./ (m_par.α .- 1))
+# root finding example: capital_intensity(r, m_par) = find_zero(k -> interest(k, 1.0 / m_par.μ, 1.0, m_par) - r, 1.0)
 
 # Capital used in production (in complete markets) at a given interest rate, taking labor supply into account
 CompMarketsCapital(r, m_par) = capital_intensity(r, m_par) .* 

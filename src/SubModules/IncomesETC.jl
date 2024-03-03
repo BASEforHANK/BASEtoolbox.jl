@@ -5,6 +5,7 @@
 module IncomesETC
 # 3rd Party modules
 using   LinearAlgebra,
+        Roots,
         ForwardDiff
 
 export  incomes!,
