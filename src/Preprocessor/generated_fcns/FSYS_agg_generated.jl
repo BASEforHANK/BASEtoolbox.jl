@@ -104,19 +104,19 @@ Htact = dot(
 #-------- States -----------#
 # Error Term on exogeneous States
 # Shock processes
-F[indexes.Gshock] = log.(GshockPrime) - m_par.ρ_Gshock * log.(Gshock)     # primary deficit shock
-F[indexes.Tprogshock] = log.(TprogshockPrime) - m_par.ρ_Pshock * log.(Tprogshock) # tax shock
+F[indexes.Gshock]       = log.(GshockPrime) - m_par.ρ_Gshock * log.(Gshock)     # primary deficit shock
+F[indexes.Tprogshock]   = log.(TprogshockPrime) - m_par.ρ_Pshock * log.(Tprogshock) # tax shock
 
-F[indexes.Rshock] = log.(RshockPrime) - m_par.ρ_Rshock * log.(Rshock)     # Taylor rule shock
-F[indexes.Sshock] = log.(SshockPrime) - m_par.ρ_Sshock * log.(Sshock)     # uncertainty shock
+F[indexes.Rshock]       = log.(RshockPrime) - m_par.ρ_Rshock * log.(Rshock)     # Taylor rule shock
+F[indexes.Sshock]       = log.(SshockPrime) - m_par.ρ_Sshock * log.(Sshock)     # uncertainty shock
 
 # Stochastic states that can be directly moved (no feedback)
-F[indexes.A] = log.(APrime) - m_par.ρ_A * log.(A)               # (unobserved) Private bond return fed-funds spread (produces goods out of nothing if negative)
-F[indexes.Z] = log.(ZPrime) - m_par.ρ_Z * log.(Z)               # TFP
-F[indexes.ZI] = log.(ZIPrime) - m_par.ρ_ZI * log.(ZI)             # Investment-good productivity
+F[indexes.A]            = log.(APrime) - m_par.ρ_A * log.(A)                # (unobserved) Private bond return fed-funds spread (produces goods out of nothing if negative)
+F[indexes.Z]            = log.(ZPrime) - m_par.ρ_Z * log.(Z)                # TFP
+F[indexes.ZI]           = log.(ZIPrime) - m_par.ρ_ZI * log.(ZI)             # Investment-good productivity
 
-F[indexes.μ] = log.(μPrime ./ m_par.μ) - m_par.ρ_μ * log.(μ ./ m_par.μ)      # Process for markup target
-F[indexes.μw] = log.(μwPrime ./ m_par.μw) - m_par.ρ_μw * log.(μw ./ m_par.μw)   # Process for w-markup target
+F[indexes.μ]            = log.(μPrime ./ m_par.μ) - m_par.ρ_μ * log.(μ ./ m_par.μ)      # Process for markup target
+F[indexes.μw]           = log.(μwPrime ./ m_par.μw) - m_par.ρ_μw * log.(μw ./ m_par.μw)   # Process for w-markup target
 
 # Endogeneous States (including Lags)
 F[indexes.σ] =
