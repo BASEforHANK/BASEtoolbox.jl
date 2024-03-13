@@ -43,7 +43,7 @@ open("Preprocessor/generated_fcns/FSYS_agg_generated.jl", "w") do h
                 line = replace(line, rsym => string(j)) 
                 println(h, line)
             end
-            if occursin("F\[indexes.", i)
+            if occursin("F[indexes.", i)
                 number_of_equations += repl-1
             end
         else
@@ -65,6 +65,8 @@ insert_index        = findall(x -> x == "    # aggregate steady state marker", S
 
 SS_input_file       = open("Model/input_aggregate_steady_state.jl")
 SS_input_text       = read(SS_input_file, String)
+SS_input_file       = open("Model/input_aggregate_steady_state.jl")
+SS_input_lines      = readlines(SS_input_file)
 
 open("Preprocessor/generated_fcns/prepare_linearization_generated.jl", "w") do h
     println(
@@ -94,7 +96,7 @@ open("Preprocessor/generated_fcns/prepare_linearization_generated.jl", "w") do h
         end
     end
     println(h, "\n")
-    for i = insert_index+1:length(lines)
+    for i = insert_index+1:length(SS_template_lines)
         println(h, SS_template_lines[i])
     end
 
