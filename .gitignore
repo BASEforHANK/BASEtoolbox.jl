@@ -1,4 +1,4 @@
 .DS_Store
 src/Output/Figures/**
 src/Output/Tables/**
-src/Preprocessor/genrated_fcns/**
+src/Preprocessor/generated_fcns/**
