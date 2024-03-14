@@ -94,20 +94,35 @@ dup_control_names = ["",
 
 state_names = setdiff(state_names,dup_state_names)
 for  j = 1:n_rep # Create names of duplicated state variables (e.g. across countries or industries)
-    append!(state_names,dup_state_names.*string(j))
+    if j==1
+        aux = ""
+    else
+        aux = string(j)
+    end
+    append!(state_names,dup_state_names.*aux)
 end
 
 shock_states = string.(shock_names)
 dup_shock_states = intersect(string.(shock_names), dup_state_names)
 shock_states = setdiff(shock_states,dup_shock_states)
 for  j = 1:n_rep # Create names of duplicated shock variables (e.g. across countries or industries)
-    append!(shock_states ,dup_shock_states .*string(j))
+    if j==1
+        aux = ""
+    else
+        aux = string(j)
+    end
+    append!(shock_states ,dup_shock_states .*aux)
 end
 shock_names = Symbol.(shock_states)
 
 control_names= setdiff(control_names,dup_control_names)
 for j = 1:n_rep # Create names of duplicated control variables (e.g. across countries or industries)
-    append!(control_names,dup_control_names.*string(j))
+    if j==1
+        aux = ""
+    else
+        aux = string(j)
+    end
+    append!(control_names,dup_control_names.*aux)
 end
 
 # All controls in one array

@@ -47,7 +47,6 @@ function Fsys(
     ############################################################################
     #            I. Read out argument values                                   #
     ############################################################################
-    # rougly 10% of computing time, more if uncompress is actually called
 
     ############################################################################
     # I.1. Generate code that reads aggregate states/controls
@@ -58,7 +57,6 @@ function Fsys(
 
     # @generate_equations(aggr_names)
     @generate_equations()
-
 
     ############################################################################
     # I.2. Read out  perturbed distributions
@@ -155,12 +153,12 @@ function Fsys(
 
     # Average Human Capital =
     # average productivity (at the productivit grid, used to normalize to 0)
-    tax_prog_scale = (m_par.γ + m_par.τprog ) / ((m_par.γ + τprog))
-    H = dot(distr_y[1:end-1], n_par.grid_y[1:end-1])
-    KP = dot(n_par.grid_k, distr_k[:])
-    Htact = dot(distr_y[1:end-1], (n_par.grid_y[1:end-1] / H) .^ (tax_prog_scale))
-    BP = dot(n_par.grid_m, distr_m[:])
-    BDact = -sum(distr_m .* (n_par.grid_m .< 0) .* n_par.grid_m)
+    tax_prog_scale  = (m_par.γ + m_par.τprog ) / ((m_par.γ + τprog))
+    H               = dot(distr_y[1:end-1], n_par.grid_y[1:end-1])
+    KP              = dot(n_par.grid_k, distr_k[:])
+    Htact           = dot(distr_y[1:end-1], (n_par.grid_y[1:end-1] / H) .^ (tax_prog_scale))
+    BP              = dot(n_par.grid_m, distr_m[:])
+    BDact           = -sum(distr_m .* (n_par.grid_m .< 0) .* n_par.grid_m)
 
     ############################################################################
     #               III. 2. Heterogeneous Agent Part                           #
@@ -187,19 +185,17 @@ function Fsys(
     )
 
     # Calculate Taxes
-    tax_prog_scale = (m_par.γ + m_par.τprog ) / ((m_par.γ + τprog))
-    LC = mcw * w .* N ./ Ht
+    tax_prog_scale  = (m_par.γ + m_par.τprog ) / ((m_par.γ + τprog))
+    LC              = mcw * w .* N ./ Ht
     taxrev =
         ((n_par.grid_y / H) .^ tax_prog_scale .* LC) -
         τlev .* ((n_par.grid_y / H) .^ tax_prog_scale .* LC) .^ (1.0 - τprog)
     taxrev[end] =
         n_par.grid_y[end] .* profits -
         τlev .* (n_par.grid_y[end] .* profits) .^ (1.0 - τprog)
-    incgrossaux = ((n_par.grid_y / H) .^ tax_prog_scale .* LC)
+    incgrossaux      = ((n_par.grid_y / H) .^ tax_prog_scale .* LC)
     incgrossaux[end] = n_par.grid_y[end] .* profits
-    av_tax_rate_up = dot(distr_y, taxrev) ./ (dot(distr_y, incgrossaux))
-
-
+    av_tax_rate_up   = dot(distr_y, taxrev) ./ (dot(distr_y, incgrossaux))
 
     # Calculate optimal policies
     # expected margginal values
@@ -279,13 +275,12 @@ function Fsys(
         distrSummaries(PDF_joint, q, c_a_star, c_n_star, n_par, inc, incgross, m_par)
 
     # Error Term on prices/aggregate summary vars (logarithmic, controls)
-    F[indexes.τlev] = av_tax_rate - av_tax_rate_up
-    F[indexes.T] = log(T) - log(dot(distr_y, taxrev) + av_tax_rate * (unionprofits))
-
-    F[indexes.K] = log.(K) - log.(KP)
-    F[indexes.B] = log.(B) - log.(BP)
+    F[indexes.K]  = log.(K) - log.(KP)
+    F[indexes.B]  = log.(B) - log.(BP)
     F[indexes.BD] = log.(BD) - log.(BDact)
     F[indexes.Ht] = log.(Ht) - log.(Htact)
+    F[indexes.τlev] = av_tax_rate - av_tax_rate_up
+    F[indexes.T]  = log(T) - log(dot(distr_y, taxrev) + av_tax_rate * (unionprofits))
 
     # Error Terms on  distribution summaries
     F[indexes.GiniW] = log.(GiniW) - log.(GiniWT)

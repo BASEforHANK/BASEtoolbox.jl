@@ -1,72 +1,73 @@
+@R$1 #no replication 
 # Set aggregate steady state variabel values
-ASS = 1.0
-ZSS = 1.0
-ZISS = 1.0
-μSS = m_par.μ
-μwSS = m_par.μw
-τprogSS = m_par.τprog 
-τlevSS = m_par.τlev
+A$SS = 1.0
+Z$SS = 1.0
+ZI$SS = 1.0
+μ$SS = m_par.μ
+μw$SS = m_par.μw
+τprog$SS = m_par.τprog 
+τlev$SS = m_par.τlev
 
-σSS = 1.0
-τprog_obsSS = 1.0
-GshockSS = 1.0
-RshockSS = 1.0
-TprogshockSS = 1.0
+σ$SS = 1.0
+τprog_obs$SS = 1.0
+Gshock$SS = 1.0
+Rshock$SS = 1.0
+Tprogshock$SS = 1.0
 
-SshockSS = 1.0
-RBSS = m_par.RB
-LPSS = 1 + rSS - RBSS
-LPXASS = 1 + rSS - RBSS
-ISS = m_par.δ_0 * KSS
+Sshock$SS = 1.0
+RB$SS = m_par.RB
+LP$SS = 1 + rSS - RBSS
+LPX$ASS = 1 + rSS - RBSS
+I$SS = m_par.δ_0 * KSS
 
-πSS = 1.0
-πwSS = 1.0
+π$SS = 1.0
+πw$SS = 1.0
 
 BDSS = -sum(distr_mSS .* (n_par.grid_m .< 0) .* n_par.grid_m)
 # Calculate taxes and government expenditures
-TSS = dot(distr_ySS, taxrev) + av_tax_rateSS * ((1.0 .- 1.0 ./ m_par.μw) .* wSS .* NSS)
+T$SS = dot(distr_y$SS, taxrev) + av_tax_rate$SS * ((1.0 .- 1.0 ./ m_par.μw) .* w$SS .* N$SS)
 
-BgovSS = BSS .- qΠSS_fnc(YSS, m_par.RB, m_par) .+ 1.0
-GSS = TSS - (m_par.RB ./ m_par.π - 1.0) * BgovSS
-mcSS = 1.0 ./ m_par.μ
-firm_profitsSS = (1.0 - mcSS) .* YSS
-qΠSS = qΠSS_fnc(YSS, RBSS, m_par)
-qΠlagSS = qΠSS
-RLSS = m_par.RB
+Bgov$SS = B$SS .- qΠSS_fnc(Y$SS, m_par.RB, m_par) .+ 1.0
+G$SS = T$SS - (m_par.RB ./ m_par.π - 1.0) * Bgov$SS
+mc$SS = 1.0 ./ m_par.μ
+firm_profits$SS = (1.0 - mc$SS) .* Y$SS
+qΠ$SS = qΠSS_fnc(Y$SS, RB$SS, m_par)
+qΠlag$SS = qΠ$SS
+RL$SS = m_par.RB
 
-CSS = (YSS - m_par.δ_0 * KSS - GSS - m_par.Rbar * BDSS)
+C$SS = (Y$SS - m_par.δ_0 * K$SS - G$SS - m_par.Rbar * BD$SS)
 
-qSS = 1.0
-mcwSS = 1.0 ./ m_par.μw
-mcwwSS = wSS * mcwSS
-uSS = 1.0
-unionprofitsSS = (1.0 - mcwSS) .* wSS .* NSS
+q$SS = 1.0
+mcw$SS = 1.0 ./ m_par.μw
+mcww$SS = w$SS * mcw$SS
+u$SS = 1.0
+unionprofits$SS = (1.0 - mcw$SS) .* w$SS .* N$SS
 
-BYSS = BSS / YSS
-TYSS = TSS / YSS
-TlagSS = TSS
+BY$SS = B$SS / Y$SS
+TY$SS = T$SS / Y$SS
+Tlag$SS = T$SS
 
-YlagSS = YSS
-BgovlagSS = BgovSS
-GlagSS = GSS
-IlagSS = ISS
-wlagSS = wSS
-qlagSS = qSS
-ClagSS = CSS
-av_tax_ratelagSS = av_tax_rateSS
-τproglagSS = τprogSS
+Ylag$SS = Y$SS
+Bgovlag$SS = Bgov$SS
+Glag$SS = G$SS
+Ilag$SS = I$SS
+wlag$SS = w$SS
+qlag$SS = q$SS
+Clag$SS = C$SS
+av_tax_ratelag$SS = av_tax_rate$SS
+τproglag$SS = τprog$SS
 
-YgrowthSS = 1.0
-BgovgrowthSS = 1.0
-IgrowthSS = 1.0
-wgrowthSS = 1.0
-CgrowthSS = 1.0
-TgrowthSS = 1.0
-HtSS = 1.0
+Ygrowth$SS = 1.0
+Bgovgrowth$SS = 1.0
+Igrowth$SS = 1.0
+wgrowth$SS = 1.0
+Cgrowth$SS = 1.0
+Tgrowth$SS = 1.0
+Ht$SS = 1.0
 
 # calculate and display aggregate moments
-println("BSS/YSS: ", BSS / YSS)
-println("StockshareSS: ", (qΠSS_fnc(YSS, m_par.RB, m_par) .- 1.0) / BSS)
-println("BgovSS/YSS: ", BgovSS / YSS)
-println("GSS/YSS: ", GSS / YSS)
-println("firm_profitsSS: ", firm_profitsSS)
+println("B$SS/Y$SS: ", B$SS / Y$SS)
+println("Stockshare$SS: ", (qΠSS_fnc(Y$SS, m_par.RB, m_par) .- 1.0) / B$SS)
+println("Bgov$SS/Y$SS: ", Bgov$SS / Y$SS)
+println("G$SS/Y$SS: ", G$SS / Y$SS)
+println("firm_profits$SS: ", firm_profits$SS)
