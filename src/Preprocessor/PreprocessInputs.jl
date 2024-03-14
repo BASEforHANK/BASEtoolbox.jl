@@ -12,13 +12,8 @@ insert_index = findall(x -> x == "    # aggregate model marker", model_template_
 
 model_input_file = open("Model/input_aggregate_model.jl")
 model_input_text = read(model_input_file, String)
-model_input_file = open("Model/input_aggregate_model.jl")
-model_input_lines = readlines(model_input_file)
 
 deblank(S::String) = filter(x -> !isspace(x), S)
-number_of_equations =
-    length(collect(eachmatch(r"F\[indexes.", deblank(model_input_text)))) -
-    length(collect(eachmatch(r"\#F\[indexes.", deblank(model_input_text))))
 
 open("Preprocessor/generated_fcns/FSYS_agg_generated.jl", "w") do h
     println(
@@ -31,24 +26,32 @@ open("Preprocessor/generated_fcns/FSYS_agg_generated.jl", "w") do h
     for i = 1:insert_index-1
         println(h, model_template_lines[i])
     end
+    
     println(h, "\n")
-    for i in model_input_lines  # input the model text
-        if occursin("@R", i)    # if there is a repetition marker create replications
-            n1      = findfirst("@R", i)
-            rsym    = i[n1[end]+1]
-            n2      = findfirst(" ", i[n1[end]+1:end])
-            repl    = parse(Int,i[n1[end]+2:n1[end]+n2[end]])
-            for j = 1:repl
-                line = i[n1[end]+n2[end]+1:end]
-                line = replace(line, rsym => string(j)) 
-                println(h, line)
+    # produce replications according to magic comment
+    if occursin("@R",model_input_text)
+        n1      = findfirst("@R", model_input_text)
+        rsym    = model_input_text[n1[end]+1]
+        n2      = findfirst(r"[^\d]", model_input_text[n1[end]+2:end])
+        n_rep   = parse(Int,model_input_text[n1[end]+2:n1[end]+n2[end]+1])
+        for j = 1:n_rep
+            if j==1
+                aux = ""
+                write(h, model_input_text[1:n1[1]-1])
+                text = model_input_text[n1[end]+n2[end]+1:end]
+            else
+                aux = string(j)
+                text = "\n#------------------------------------------------------------------------------\n"*
+                       "# Economy/Sector " * string(j) * " starts here" *
+                       "\n#------------------------------------------------------------------------------\n"*  
+                       model_input_text[n1[end]+n2[end]+1:end]
             end
-            if occursin("F[indexes.", i)
-                number_of_equations += repl-1
-            end
-        else
-            println(h, i)
+            
+            text = replace(text, rsym => aux) 
+            write(h, text)
         end
+    else
+        write(h, model_input_text)
     end
     println(h, "\n")
     for i = insert_index+1:length(model_template_lines)
@@ -58,6 +61,15 @@ end
 close(model_template_file)
 close(model_input_file)
 
+# Check number of equations
+Fsys_agg_file = open("Preprocessor/generated_fcns/FSYS_agg_generated.jl")
+Fsys_agg_lines= readlines(Fsys_agg_file)
+Fsys_agg_lines_unique = unique(Fsys_agg_lines)
+number_of_equations =
+    count(occursin.("F[indexes.", deblank.(Fsys_agg_lines_unique))) -
+    count(occursin.("#F[indexes.", deblank.(Fsys_agg_lines_unique)))
+
+
 # aggregate steady state
 SS_template_file    = open("Preprocessor/template_fcns/prepare_linearization.jl")
 SS_template_lines   = readlines(SS_template_file)
@@ -65,8 +77,6 @@ insert_index        = findall(x -> x == "    # aggregate steady state marker", S
 
 SS_input_file       = open("Model/input_aggregate_steady_state.jl")
 SS_input_text       = read(SS_input_file, String)
-SS_input_file       = open("Model/input_aggregate_steady_state.jl")
-SS_input_lines      = readlines(SS_input_file)
 
 open("Preprocessor/generated_fcns/prepare_linearization_generated.jl", "w") do h
     println(
@@ -80,20 +90,27 @@ open("Preprocessor/generated_fcns/prepare_linearization_generated.jl", "w") do h
     end
     println(h, "\n")
     println(h, "@set! n_par.n_agg_eqn = $number_of_equations")
-    for i in SS_input_lines  # input the model text
-        if occursin("@R", i)    # if there is a repetition marker create replications
-            n1      = findfirst("@R", i)
-            rsym    = i[n1[end]+1]
-            n2      = findfirst(" ", i[n1[end]+1:end])
-            repl    = parse(Int,i[n1[end]+2:n1[end]+n2[end]])
-            for j = 1:repl
-                line = i[n1[end]+n2[end]+1:end]
-                line = replace(line, rsym => string(j)) 
-                println(h, line)
+    if occursin("@R",SS_input_text)
+        n1      = findfirst("@R", SS_input_text)
+        rsym    = SS_input_text[n1[end]+1]
+        n2      = findfirst(r"[^\d]", SS_input_text[n1[end]+2:end])
+        n_rep   = parse(Int,SS_input_text[n1[end]+2:n1[end]+n2[end]+1])
+        for j = 1:n_rep
+            if j==1
+                aux = ""
+                text = SS_input_text[1:n1[1]-1]*SS_input_text[n1[end]+n2[end]+1:end]
+            else
+                aux = string(j)
+                text = "\n#------------------------------------------------------------------------------\n"*
+                       "# Economy/Sector " * string(j) * " starts here" *
+                       "\n#------------------------------------------------------------------------------\n"*  
+                       SS_input_text[n1[end]+n2[end]+1:end]
             end
-        else
-            println(h, i)
+            text = replace(text, rsym => aux) 
+            write(h, text)
         end
+    else
+        write(h, SS_input_text)
     end
     println(h, "\n")
     for i = insert_index+1:length(SS_template_lines)
