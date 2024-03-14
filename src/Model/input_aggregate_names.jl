@@ -4,7 +4,7 @@
 # contained in the aggregate model code as they are parameter free but change whenever the 
 # distribution changes and do not show up in any aggregate model equation.
 
-n_rep = 0 # Number of n_rep of some model equations (e.g. countries, industries)
+n_rep = 1 # Number of n_rep of some model equations (e.g. countries, industries)
 
 # List of aggregate shocks, without duplication (e.g. across countries or industries)
 shock_names = [:Z, :ZI, :μ, :μw, :A, :Rshock, :Gshock, :Tprogshock, :Sshock]
