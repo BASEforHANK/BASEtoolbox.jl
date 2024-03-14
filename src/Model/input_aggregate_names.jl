@@ -36,9 +36,9 @@ state_names = [
 ]
 
 # List of (the subset) of aggregate states, that need to be duplicated (e.g. across countries or industries)
-dup_state_names = ["",
+dup_state_names = Vector{String}(undef,0)#["",
 #     "A",
-]
+#]
 
 # List cross-sectional controls / distributional summary variables (no equations in aggregate model expected)
 # if these need to be duplicated, do by hand !
@@ -86,9 +86,9 @@ control_names = [
 ]
 
 # List of (the subset) of aggregate states, that need to be duplicated (e.g. across countries or industries)
-dup_control_names = ["",
+dup_control_names = Vector{String}(undef,0) #["",
 #     "LP",
-]
+#]
 
 # Delete duplicated state and shock names and create duplicated variable names of state and control names 
 
