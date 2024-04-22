@@ -54,10 +54,17 @@ function Fsys_agg(
 # OR CONTROLS.
 #------------------------------------------------------------------------------
 
+# Magic comment for number (n_rep=2) of code repetitions to cover multiple economies/sectors. 
+# $ is the symbol to be repolaced by the number of the economy
+# HANK economy is economy 1, rep agent economy is economy 2
+# economy 1 does not get a number, economy 2 gets a 2, etc
+# entire code gets copied n_rep times with placeholder ($) replaced by the number of the economy
 
 #------------------------------------------------------------------------------
 # AUXILIARY VARIABLES ARE DEFINED FIRST
 #------------------------------------------------------------------------------
+# Remaining auxiliary variables
+
 ιΠ = (1.0 ./ 40.0 - 1.0 ./ 800.0) .* m_par.shiftΠ .+ 1.0 ./ 800.0
 ωΠ = ιΠ ./ m_par.ιΠ .* m_par.ωΠ
 
@@ -84,6 +91,7 @@ YREACTION = Ygrowth                                  # Policy reaction function 
 distr_y = sum(distrSS, dims = (1, 2))
 
 # tax progressivity variabels used to calculate e.g. total taxes
+# het agent country
 tax_prog_scale = (m_par.γ + m_par.τprog ) / ((m_par.γ + τprog))                        # scaling of labor disutility including tax progressivity
 incgross = ((n_par.grid_y ./ n_par.H) .^ tax_prog_scale .* mcw .* w .* N ./ Ht)  # capital liquidation Income (q=1 in steady state)
 incgross[end] = (n_par.grid_y[end] .* profits)                         # gross profit income
@@ -92,6 +100,10 @@ taxrev = incgross .- inc                                                 # tax r
 
 TaxAux = dot(distr_y, taxrev)
 IncAux = dot(distr_y, incgross)
+
+# rep agent country
+IncAux2 = mcw2*w2*N2 + profits2
+TaxAux2 = (mcw2*w2*N2 + profits2) - τlev2 * (w2*N2 + profits2) .^ (1.0 - τprog2)
 
 Htact = dot(
     distr_y[1:end-1],
@@ -104,6 +116,7 @@ Htact = dot(
 #-------- States -----------#
 # Error Term on exogeneous States
 # Shock processes
+
 F[indexes.Gshock]       = log.(GshockPrime) - m_par.ρ_Gshock * log.(Gshock)     # primary deficit shock
 F[indexes.Tprogshock]   = log.(TprogshockPrime) - m_par.ρ_Pshock * log.(Tprogshock) # tax shock
 
@@ -119,7 +132,7 @@ F[indexes.μ]            = log.(μPrime ./ m_par.μ) - m_par.ρ_μ * log.(μ ./ 
 F[indexes.μw]           = log.(μwPrime ./ m_par.μw) - m_par.ρ_μw * log.(μw ./ m_par.μw)   # Process for w-markup target
 
 # Endogeneous States (including Lags)
-F[indexes.σ] =
+F[indexes.σ] =                                      # only in the het agent economy
     log.(σPrime) -
     (m_par.ρ_s * log.(σ) + (1.0 - m_par.ρ_s) * m_par.Σ_n * log(Ygrowth) + log(Sshock))                     # Idiosyncratic income risk (contemporaneous reaction to business cycle)
 
@@ -133,6 +146,7 @@ F[indexes.Clag] = log(ClagPrime) - log(C)
 F[indexes.av_tax_ratelag] = log(av_tax_ratelagPrime) - log(av_tax_rate)
 F[indexes.τproglag] = log(τproglagPrime) - log(τprog)
 F[indexes.qΠlag] = log(qΠlagPrime) - log(qΠ)
+F[indexes.plag] = log(plagPrime) - log(p)
 
 # Growth rates
 F[indexes.Ygrowth] = log(Ygrowth) - log(Y / Ylag)
@@ -142,7 +156,7 @@ F[indexes.Igrowth] = log(Igrowth) - log(I / Ilag)
 F[indexes.wgrowth] = log(wgrowth) - log(w / wlag)
 F[indexes.Cgrowth] = log(Cgrowth) - log(C / Clag)
 
-#  Taylor rule and interest rates
+#  Taylor rule (PPI based) and interest rates
 F[indexes.RB] =
     log(RBPrime) - XSS[indexes.RBSS] - ((1 - m_par.ρ_R) * m_par.θ_π) .* log(π) -
     ((1 - m_par.ρ_R) * m_par.θ_Y) .* log(YREACTION) -
@@ -171,7 +185,7 @@ F[indexes.π] =
     log(BgovgrowthPrime) + m_par.γ_B * (log(Bgov) - XSS[indexes.BgovSS]) -
     m_par.γ_Y * log(YREACTION) - m_par.γ_π * log(π) - log(Gshock)
 
-F[indexes.G] = log(G) - log(BgovPrime + T - RB / π * Bgov)             # Government Budget Constraint
+F[indexes.G] = log(p*G) - log(BgovPrime + T - RB / πCPI * Bgov)             # Government Budget Constraint, perfect home bias of G
 
 # Phillips Curve to determine equilibrium markup, output, factor incomes 
 F[indexes.mc] =
@@ -187,7 +201,7 @@ F[indexes.mcw] =
 # worker's wage = mcw * firm's wage
 
 # Wage Dynamics
-F[indexes.πw] = log.(w ./ wlag) - log.(πw ./ π)                   # Definition of real wage inflation
+F[indexes.πw] = log.(w ./ wlag) - log.(πw ./ πCPI)                   # Definition of real wage inflation
 
 # Capital utilisation
 F[indexes.u] = MPKserv - q * (δ_1 + δ_2 * (u - 1.0))           # Optimality condition for utilization
@@ -203,56 +217,630 @@ F[indexes.unionprofits] = log.(unionprofits) - log.(w .* N .* (1.0 - mcw))  # pr
 
 # firm_profits: price setting profits + investment profits. The latter are zero and do not show up up to first order (K'-(1-δ)K = I).
 F[indexes.firm_profits] =
-    log.(firm_profits) - log.(Y .* (1.0 - mc) .+ q .* (KPrime .- (1.0 .- depr) .* K) .- I)
+    log.(firm_profits) - log.(Y .* (p - mc) .+ q .* (KPrime .- (1.0 .- depr) .* K) .- I)
 F[indexes.profits] = log.(profits) - log.((1.0 .- ωΠ) .* firm_profits .+ ιΠ .* (qΠ .- 1.0)) # distributed profits to entrepreneurs
 F[indexes.qΠ] =
-    log.(RBPrime ./ πPrime) .-
+    log.(RBPrime ./ πCPIPrime) .-
     log.(((qΠPrime .- 1.0) .* (1 - ιΠ) .+ ωΠ .* firm_profitsPrime) ./ (qΠ .- 1.0))
 
-F[indexes.RL] =
-    log.(RL) -
-    log.((RB .* Bgov .+ π .* ((qΠ .- 1.0) .* (1 - ιΠ) .+ ωΠ .* firm_profits)) ./ B)
+F[indexes.RL] = log.(RL) - log.((RB .* Bgov .+ 
+                    πCPI .* ((qΠ .- 1.0) .* (1 - ιΠ) .+ ωΠ .* firm_profits) .+
+                    B12./rer .* RB2 .* πCPI ./ πCPI2) ./ B)
 
-F[indexes.Bgov] = log.(B) - log.(Bgov + (qΠlag .- 1.0))                                 # total liquidity demand
+F[indexes.RL2] = log.(RL2) - log.((RB2 .* Bgov2 .+ 
+                    πCPI2 .* ((qΠ2 .- 1.0) .* (1 - ιΠ) .+ ωΠ .* firm_profits2) .-
+                    RB2 .* B12 .* (m_par.α_S / (1.0 - m_par.α_S))) ./ B2)
 
+F[indexes.Bgov] = log.(B) - log.(Bgov + (qΠlag .- 1.0) + B12./rerlag)                                 # total liquidity demand
+F[indexes.Bgov2] = log.(B2) - log.(Bgov2 + (qΠlag2 .- 1.0) - B12 .* (m_par.α_S / (1.0 - m_par.α_S)))  
 
 F[indexes.q] =
-    1.0 -
-    ZI *
-    q *
+    1.0 - ZI * q *
     (1.0 - m_par.ϕ / 2.0 * (Igrowth - 1.0)^2.0 - # price of capital investment adjustment costs
      m_par.ϕ * (Igrowth - 1.0) * Igrowth) -
     m_par.β * ZIPrime * qPrime * m_par.ϕ * (IgrowthPrime - 1.0) * (IgrowthPrime)^2.0
 
 # Asset market premia
-F[indexes.LP] = log.(LP) - (log((q + r - 1.0) / qlag) - log(RB / π))                   # Ex-post liquidity premium           
-F[indexes.LPXA] = log.(LPXA) - (log((qPrime + rPrime - 1.0) / q) - log(RBPrime / πPrime))  # ex-ante liquidity premium
+F[indexes.LP] = log.(LP) - (log((q + r - 1.0) / qlag) - log(RL / πCPI))                   # Ex-post liquidity premium           
+F[indexes.LPXA] = log.(LPXA) - (log((qPrime + rPrime - 1.0) / q) - log(RLPrime / πCPIPrime))  # ex-ante liquidity premium
 
 # Aggregate Quantities
 F[indexes.I] =
     KPrime .- K .* (1.0 .- depr) .-
     ZI .* I .* (1.0 .- m_par.ϕ ./ 2.0 .* (Igrowth - 1.0) .^ 2.0)           # Capital accumulation equation
 
-F[indexes.N] = log.(N) - log.(labor_supply(w.*mcw, τlev, τprog, Ht, m_par))
-    # log.(
-    #     ((1.0 - τprog) * τlev * (mcw .* w) .^ (1.0 - τprog)) .^ (1.0 / (m_par.γ + τprog)) .*
-    #     Ht
-    # )   # labor supply
-F[indexes.Y] = log.(Y) - log.(output(Kserv, Z, N, m_par))    #log.(Z .* N .^ (1.0 .- m_par.α) .* Kserv .^ m_par.α) # Z .* N .^ (1.0 .- m_par.α) .* Kserv .^ m_par.α                                      # production function
-F[indexes.C] = log.(Y .- G .- I .- BD * m_par.Rbar .+ (A .- 1.0) .* RL .* B ./ π) .- log(C)                            # Resource constraint
+F[indexes.N] = log.(N) - log.(labor_supply(w.*mcw, τlev, τprog, Ht, m_par)) # Labor supply equation
+
+F[indexes.Y] = log.(Y) - log.(output(Kserv, Z, N, m_par))            # Output equation
 
 # Error Term on prices/aggregate summary vars (logarithmic, controls), here difference to SS value averages
 F[indexes.BY] = log.(BY) - log.(B / Y)                                                               # Bond to Output ratio
 F[indexes.TY] = log.(TY) - log.(T / Y)                                                               # Tax to output ratio
 
+# Open Economy equations
+
+## International prices
+
+F[indexes.p12]      = log(p2)  - log(p12 * rer) 
+F[indexes.p21]      = log(p21) - log(p * rer) 
+
+# Dynamic LOOP
+F[indexes.rer]   =  log(rer/der)  - log(πCPI2 / πCPI *  p12lag/ p2lag) 
+    
+F[indexes.der]   =  log(RBPrime/RB2Prime) - log(derPrime) #der: delta exchange rate
+#'CPI index'
+F[indexes.p]   = log(1.0)       - log(((1.0 - (1.0 - m_par.α_S) * m_par.ω) * p^(1.0 - m_par.ϵ_e) + (1.0 - m_par.α_S) * m_par.ω * p12^(1 - m_par.ϵ_e))^(1.0/(1.0 - m_par.ϵ_e)))
+F[indexes.p2]   = log(1.0)       - log((m_par.α_S * m_par.ω * p21^(1.0 - m_par.ϵ_e) + (1.0 - m_par.α_S * m_par.ω) * p2^(1.0 - m_par.ϵ_e))^(1.0/(1.0 - m_par.ϵ_e)))
+
+#'PPI Inflation Definition
+F[indexes.πCPI]  =  log(p/plag)      - log((π/πCPI))               
+
+
+#'Home net exports'
+F[indexes.nx]          =  p * (Y - G - nx)  - (C + I + m_par.Rbar*BD - (A - 1.0) * (RL * B / πCPI))
+F[indexes.C]           =  log(Y)   - log(p^(-m_par.ϵ_e) * ((1 - (1 - m_par.α_S) * m_par.ω) * 
+                                            (C + I + BD*m_par.Rbar - (A - 1.0) * (RL * B / πCPI)) + 
+                                            (1 - m_par.α_S) * m_par.ω * rer^(-m_par.ϵ_e) * (C2 + I2 + BD2*m_par.Rbar - 
+                                            (A2 - 1.0) * (RL2 / πCPI2 * B2 ))) + 
+                                            G)
+F[indexes.C2]            =  log(Y2)   - log(p2^(-m_par.ϵ_e) * (m_par.α_S * m_par.ω * rer^(m_par.ϵ_e) * 
+                                            (C + I+ BD*m_par.Rbar - (A - 1.0) * (RL * B / πCPI)) +
+                                            (1 - m_par.α_S * m_par.ω) * (C2 + I2 + BD2*m_par.Rbar - 
+                                            (A2 - 1.0) * (RL2 / πCPI2 * B2))) + 
+                                            G2)
+
+
 # Distribution summary statistics used in this file (using the steady state distrubtion in case). 
 # Lines here generate a unit derivative (distributional summaries do not change with other aggregate vars).
-F[indexes.K] = log.(K) - XSS[indexes.KSS]                                                        # Capital market clearing
-F[indexes.BD] = log.(BD) - XSS[indexes.BDSS]                                                       # IOUs            
-F[indexes.B] = log.(B) - XSS[indexes.BSS]                                                        # Bond market clearing
+
+# Heterogeneous agent economy
+F[indexes.K]  = log.(K) - XSS[indexes.KSS]                                                       # Capital market clearing           
+F[indexes.B]  = log.(B) - XSS[indexes.BSS]                                                       # Bond market clearing
+F[indexes.BD] = log.(BD) - XSS[indexes.BDSS]                                                     # IOUs
+
+F[indexes.Ht] = log.(Ht) - log.(Htact)
+F[indexes.τlev] = av_tax_rate - TaxAux ./ IncAux
+F[indexes.T] = log(T) - log(TaxAux + av_tax_rate * unionprofits)
+
+# Representative agent economy (economy 2 ...)
+F[indexes.K2] = log(LP2) - log(m_par.LP2)                                                       # fixed spread on capital returns and bond returns in 2
+F[indexes.B2] = log((C2 - 1.0./(1+m_par.γ)*N2.^(1.0 .+ m_par.γ)).^(-m_par.ξ)) -                 # consumption Euler equation for country 2
+                m_par.β.*RLPrime2/πCPI2Prime.*log((C2Prime - 1.0./(1+m_par.γ)*N2Prime.^(1.0 .+ m_par.γ)).^(-m_par.ξ))
+
+F[indexes.B12] = log((1.0 - av_tax_rate) * (w*N + profits) + #all household incomes are consumed or saved, B12 savings odf homae abroad (in liquid assets)
+                     (p* Y - w*N - profits) + Tr + A * B * RL/πCPI)    - 
+                 log(C + I + BD * m_par.Rbar  + BgovPrime + (qΠ .- 1.0) + B12Prime/rer) 
 
 # Add distributional summary stats that do change with other aggregate controls/prices and with estimated parameters
+F[indexes.Ht2] = log.(Ht2) - log.(1.0)
+F[indexes.T2]  = log(T2) - log(TaxAux2 + av_tax_rate2 * unionprofits2)
+F[indexes.τlev2] = av_tax_rate2 - TaxAux2 ./ IncAux2
+
+# other distributional statistics not used in other aggregate equations and not changing with parameters, 
+# but potentially with other aggregate variables are NOT included here. They are found in FSYS.
+
+#------------------------------------------------------------------------------
+# Economy/Sector 2 starts here
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+# AUXILIARY VARIABLES ARE DEFINED FIRST
+#------------------------------------------------------------------------------
+# Remaining auxiliary variables
+
+ιΠ = (1.0 ./ 40.0 - 1.0 ./ 800.0) .* m_par.shiftΠ .+ 1.0 ./ 800.0
+ωΠ = ιΠ ./ m_par.ιΠ .* m_par.ωΠ
+
+# Elasticities and steepness from target markups for Phillips Curves
+η2 = μ2 / (μ2 - 1.0)                                 # demand elasticity
+κ2 = η2 * (m_par.κ / m_par.μ) * (m_par.μ - 1.0)     # implied steepness of phillips curve
+ηw2 = μw2 / (μw2 - 1.0)                               # demand elasticity wages
+κw2 = ηw2 * (m_par.κw / m_par.μw) * (m_par.μw - 1.0) # implied steepness of wage phillips curve
+
+# Capital Utilization
+MPKSS = exp(XSS[indexes.rSS]) - 1.0 + m_par.δ_0       # stationary equil. marginal productivity of capital
+δ_1 = MPKSS                                        # normailzation of utilization to 1 in stationary equilibrium
+δ_2 = δ_1 .* m_par.δ_s                              # express second utilization coefficient in relative terms
+# Auxiliary variables
+Kserv2 = K2 * u2                                         # Effective capital
+MPKserv2 = interest(Kserv2, mc2.*Z2, N2, m_par) .+ m_par.δ_0 # mc .* Z .* m_par.α .* (Kserv ./ N) .^ (m_par.α - 1.0)      # marginal product of Capital
+depr2 = m_par.δ_0 + δ_1 * (u2 - 1.0) + δ_2 / 2.0 * (u2 - 1.0)^2.0   # depreciation
+
+Wagesum2 = N2 * w2                                         # Total wages in economy t
+Wagesum2Prime = N2Prime * w2Prime                               # Total wages in economy t+1
+
+YREACTION2 = Ygrowth2                                  # Policy reaction function to Y
+
+distr_y = sum(distrSS, dims = (1, 2))
+
+# tax progressivity variabels used to calculate e.g. total taxes
+# het agent country
+tax_prog_scale = (m_par.γ + m_par.τprog ) / ((m_par.γ + τprog))                        # scaling of labor disutility including tax progressivity
+incgross = ((n_par.grid_y ./ n_par.H) .^ tax_prog_scale .* mcw .* w .* N ./ Ht)  # capital liquidation Income (q=1 in steady state)
+incgross[end] = (n_par.grid_y[end] .* profits)                         # gross profit income
+inc = τlev .* (incgross .^ (1.0 .- τprog))                                 # capital liquidation Income (q=1 in steady state)
+taxrev = incgross .- inc                                                 # tax revenues
+
+TaxAux = dot(distr_y, taxrev)
+IncAux = dot(distr_y, incgross)
+
+# rep agent country
+IncAux2 = mcw2*w2*N2 + profits2
+TaxAux2 = (mcw2*w2*N2 + profits2) - τlev2 * (w2*N2 + profits2) .^ (1.0 - τprog2)
+
+Htact = dot(
+    distr_y[1:end-1],
+    (n_par.grid_y[1:end-1] / n_par.H) .^ ((m_par.γ + m_par.τprog ) / (m_par.γ + τprog)),
+)
+############################################################################
+#           Error term calculations (i.e. model starts here)          #
+############################################################################
+
+#-------- States -----------#
+# Error Term on exogeneous States
+# Shock processes
+
+F[indexes.Gshock2]       = log.(Gshock2Prime) - m_par.ρ_Gshock * log.(Gshock2)     # primary deficit shock
+F[indexes.Tprogshock2]   = log.(Tprogshock2Prime) - m_par.ρ_Pshock * log.(Tprogshock2) # tax shock
+
+F[indexes.Rshock2]       = log.(Rshock2Prime) - m_par.ρ_Rshock * log.(Rshock2)     # Taylor rule shock
+F[indexes.Sshock2]       = log.(Sshock2Prime) - m_par.ρ_Sshock * log.(Sshock2)     # uncertainty shock
+
+# Stochastic states that can be directly moved (no feedback)
+F[indexes.A2]            = log.(A2Prime) - m_par.ρ_A * log.(A2)                # (unobserved) Private bond return fed-funds spread (produces goods out of nothing if negative)
+F[indexes.Z2]            = log.(Z2Prime) - m_par.ρ_Z * log.(Z2)                # TFP
+F[indexes.ZI2]           = log.(ZI2Prime) - m_par.ρ_ZI * log.(ZI2)             # Investment-good productivity
+
+F[indexes.μ2]            = log.(μ2Prime ./ m_par.μ) - m_par.ρ_μ * log.(μ2 ./ m_par.μ)      # Process for markup target
+F[indexes.μw2]           = log.(μw2Prime ./ m_par.μw) - m_par.ρ_μw * log.(μw2 ./ m_par.μw)   # Process for w-markup target
+
+# Endogeneous States (including Lags)
+F[indexes.σ] =                                      # only in the het agent economy
+    log.(σPrime) -
+    (m_par.ρ_s * log.(σ) + (1.0 - m_par.ρ_s) * m_par.Σ_n * log(Ygrowth) + log(Sshock))                     # Idiosyncratic income risk (contemporaneous reaction to business cycle)
+
+F[indexes.Ylag2] = log(Ylag2Prime) - log(Y2)
+F[indexes.Bgovlag2] = log(Bgovlag2Prime) - log(Bgov2)
+F[indexes.Ilag2] = log(Ilag2Prime) - log(I2)
+F[indexes.wlag2] = log(wlag2Prime) - log(w2)
+F[indexes.Tlag2] = log(Tlag2Prime) - log(T2)
+F[indexes.qlag2] = log(qlag2Prime) - log(q2)
+F[indexes.Clag2] = log(Clag2Prime) - log(C2)
+F[indexes.av_tax_ratelag2] = log(av_tax_ratelag2Prime) - log(av_tax_rate2)
+F[indexes.τproglag2] = log(τproglag2Prime) - log(τprog2)
+F[indexes.qΠlag2] = log(qΠlag2Prime) - log(qΠ2)
+F[indexes.plag2] = log(plag2Prime) - log(p2)
+
+# Growth rates
+F[indexes.Ygrowth2] = log(Ygrowth2) - log(Y2 / Ylag2)
+F[indexes.Tgrowth2] = log(Tgrowth2) - log(T2 / Tlag2)
+F[indexes.Bgovgrowth2] = log(Bgovgrowth2) - log(Bgov2 / Bgovlag2)
+F[indexes.Igrowth2] = log(Igrowth2) - log(I2 / Ilag2)
+F[indexes.wgrowth2] = log(wgrowth2) - log(w2 / wlag2)
+F[indexes.Cgrowth2] = log(Cgrowth2) - log(C2 / Clag2)
+
+#  Taylor rule (PPI based) and interest rates
+F[indexes.RB2] =
+    log(RB2Prime) - XSS[indexes.RB2SS] - ((1 - m_par.ρ_R) * m_par.θ_π) .* log(π2) -
+    ((1 - m_par.ρ_R) * m_par.θ_Y) .* log(YREACTION2) -
+    m_par.ρ_R * (log.(RB2) - XSS[indexes.RB2SS]) - log(Rshock2)
+
+# Tax rule
+F[indexes.τprog2] =
+    log(τprog2) - m_par.ρ_P * log(τproglag2) - (1.0 - m_par.ρ_P) * (XSS[indexes.τprog2SS]) -
+    (1.0 - m_par.ρ_P) * m_par.γ_YP * log(YREACTION2) -
+    (1.0 - m_par.ρ_P) * m_par.γ_BP * (log(Bgov2) - XSS[indexes.Bgov2SS]) - log(Tprogshock2)
+
+
+F[indexes.τlev2] = av_tax_rate2 - TaxAux2 ./ IncAux2  # Union profits are taxed at average tax rate
+F[indexes.T2] = log(T2) - log(TaxAux2 + av_tax_rate2 * unionprofits2)
+
+
+F[indexes.av_tax_rate2] =
+    log(av_tax_rate2) - m_par.ρ_τ * log(av_tax_ratelag2) -
+    (1.0 - m_par.ρ_τ) * XSS[indexes.av_tax_rate2SS] -
+    (1.0 - m_par.ρ_τ) * m_par.γ_Yτ * log(YREACTION2) -
+    (1.0 - m_par.ρ_τ) * m_par.γ_Bτ * (log(Bgov2) - log(Bgovlag2))#XSS[indexes.BgovSS])
+
+# --------- Controls ------------
+# Deficit rule
+F[indexes.π2] =
+    log(Bgovgrowth2Prime) + m_par.γ_B * (log(Bgov2) - XSS[indexes.Bgov2SS]) -
+    m_par.γ_Y * log(YREACTION2) - m_par.γ_π * log(π2) - log(Gshock2)
+
+F[indexes.G2] = log(p2*G2) - log(Bgov2Prime + T2 - RB2 / πCPI2 * Bgov2)             # Government Budget Constraint, perfect home bias of G
+
+# Phillips Curve to determine equilibrium markup, output, factor incomes 
+F[indexes.mc2] =
+    (log.(π2) - XSS[indexes.π2SS]) - κ2 * (mc2 - 1 ./ μ2) -
+    m_par.β * ((log.(π2Prime) - XSS[indexes.π2SS]) .* Y2Prime ./ Y2)
+
+# Wage Phillips Curve 
+F[indexes.mcw2] =
+    (log.(πw2) - XSS[indexes.πw2SS]) - (
+        κw2 * (mcw2 - 1 ./ μw2) +
+        m_par.β * ((log.(πw2Prime) - XSS[indexes.πw2SS]) .* Wagesum2Prime ./ Wagesum2)
+    )
+# worker's wage = mcw * firm's wage
+
+# Wage Dynamics
+F[indexes.πw2] = log.(w2 ./ wlag2) - log.(πw2 ./ πCPI2)                   # Definition of real wage inflation
+
+# Capital utilisation
+F[indexes.u2] = MPKserv2 - q2 * (δ_1 + δ_2 * (u2 - 1.0))           # Optimality condition for utilization
+
+# Prices
+F[indexes.r2] = log.(r2) - log.(1 + MPKserv2 * u2 - q2 * depr2)       # rate of return on capital
+
+F[indexes.mcww2] = log.(mcww2) - log.(mcw2 * w2)                        # wages that workers receive
+
+F[indexes.w2] = log.(w2) - log.(wage(Kserv2, Z2 * mc2, N2, m_par))     # wages that firms pay
+
+F[indexes.unionprofits2] = log.(unionprofits2) - log.(w2 .* N2 .* (1.0 - mcw2))  # profits of the monopolistic unions
+
+# firm_profits: price setting profits + investment profits. The latter are zero and do not show up up to first order (K'-(1-δ)K = I).
+F[indexes.firm_profits2] =
+    log.(firm_profits2) - log.(Y2 .* (p2 - mc2) .+ q2 .* (K2Prime .- (1.0 .- depr2) .* K2) .- I2)
+F[indexes.profits2] = log.(profits2) - log.((1.0 .- ωΠ) .* firm_profits2 .+ ιΠ .* (qΠ2 .- 1.0)) # distributed profits to entrepreneurs
+F[indexes.qΠ2] =
+    log.(RB2Prime ./ πCPI2Prime) .-
+    log.(((qΠ2Prime .- 1.0) .* (1 - ιΠ) .+ ωΠ .* firm_profits2Prime) ./ (qΠ2 .- 1.0))
+
+F[indexes.RL] = log.(RL) - log.((RB .* Bgov .+ 
+                    πCPI .* ((qΠ .- 1.0) .* (1 - ιΠ) .+ ωΠ .* firm_profits) .+
+                    B12./rer .* RB2 .* πCPI ./ πCPI2) ./ B)
+
+F[indexes.RL2] = log.(RL2) - log.((RB2 .* Bgov2 .+ 
+                    πCPI2 .* ((qΠ2 .- 1.0) .* (1 - ιΠ) .+ ωΠ .* firm_profits2) .-
+                    RB2 .* B12 .* (m_par.α_S / (1.0 - m_par.α_S))) ./ B2)
+
+F[indexes.Bgov] = log.(B) - log.(Bgov + (qΠlag .- 1.0) + B12./rerlag)                                 # total liquidity demand
+F[indexes.Bgov2] = log.(B2) - log.(Bgov2 + (qΠlag2 .- 1.0) - B12 .* (m_par.α_S / (1.0 - m_par.α_S)))  
+
+F[indexes.q2] =
+    1.0 - ZI2 * q2 *
+    (1.0 - m_par.ϕ / 2.0 * (Igrowth2 - 1.0)^2.0 - # price of capital investment adjustment costs
+     m_par.ϕ * (Igrowth2 - 1.0) * Igrowth2) -
+    m_par.β * ZI2Prime * q2Prime * m_par.ϕ * (Igrowth2Prime - 1.0) * (Igrowth2Prime)^2.0
+
+# Asset market premia
+F[indexes.LP2] = log.(LP2) - (log((q2 + r2 - 1.0) / qlag2) - log(RL2 / πCPI2))                   # Ex-post liquidity premium           
+F[indexes.LPXA2] = log.(LPXA2) - (log((q2Prime + r2Prime - 1.0) / q2) - log(RL2Prime / πCPI2Prime))  # ex-ante liquidity premium
+
+# Aggregate Quantities
+F[indexes.I2] =
+    K2Prime .- K2 .* (1.0 .- depr2) .-
+    ZI2 .* I2 .* (1.0 .- m_par.ϕ ./ 2.0 .* (Igrowth2 - 1.0) .^ 2.0)           # Capital accumulation equation
+
+F[indexes.N2] = log.(N2) - log.(labor_supply(w2.*mcw2, τlev2, τprog2, Ht2, m_par)) # Labor supply equation
+
+F[indexes.Y2] = log.(Y2) - log.(output(Kserv2, Z2, N2, m_par))            # Output equation
+
+# Error Term on prices/aggregate summary vars (logarithmic, controls), here difference to SS value averages
+F[indexes.BY2] = log.(BY2) - log.(B2 / Y2)                                                               # Bond to Output ratio
+F[indexes.TY2] = log.(TY2) - log.(T2 / Y2)                                                               # Tax to output ratio
+
+# Open Economy equations
+
+## International prices
+
+F[indexes.p12]      = log(p2)  - log(p12 * rer) 
+F[indexes.p21]      = log(p21) - log(p * rer) 
+
+# Dynamic LOOP
+F[indexes.rer]   =  log(rer/der)  - log(πCPI2 / πCPI *  p12lag/ p2lag) 
+    
+F[indexes.der]   =  log(RBPrime/RB2Prime) - log(derPrime) #der: delta exchange rate
+#'CPI index'
+F[indexes.p]   = log(1.0)       - log(((1.0 - (1.0 - m_par.α_S) * m_par.ω) * p^(1.0 - m_par.ϵ_e) + (1.0 - m_par.α_S) * m_par.ω * p12^(1 - m_par.ϵ_e))^(1.0/(1.0 - m_par.ϵ_e)))
+F[indexes.p2]   = log(1.0)       - log((m_par.α_S * m_par.ω * p21^(1.0 - m_par.ϵ_e) + (1.0 - m_par.α_S * m_par.ω) * p2^(1.0 - m_par.ϵ_e))^(1.0/(1.0 - m_par.ϵ_e)))
+
+#'PPI Inflation Definition
+F[indexes.πCPI2]  =  log(p2/plag2)      - log((π2/πCPI2))               
+
+
+#'Home net exports'
+F[indexes.nx]          =  p * (Y - G - nx)  - (C + I + m_par.Rbar*BD - (A - 1.0) * (RL * B / πCPI))
+F[indexes.C]           =  log(Y)   - log(p^(-m_par.ϵ_e) * ((1 - (1 - m_par.α_S) * m_par.ω) * 
+                                            (C + I + BD*m_par.Rbar - (A - 1.0) * (RL * B / πCPI)) + 
+                                            (1 - m_par.α_S) * m_par.ω * rer^(-m_par.ϵ_e) * (C2 + I2 + BD2*m_par.Rbar - 
+                                            (A2 - 1.0) * (RL2 / πCPI2 * B2 ))) + 
+                                            G)
+F[indexes.C2]            =  log(Y2)   - log(p2^(-m_par.ϵ_e) * (m_par.α_S * m_par.ω * rer^(m_par.ϵ_e) * 
+                                            (C + I+ BD*m_par.Rbar - (A - 1.0) * (RL * B / πCPI)) +
+                                            (1 - m_par.α_S * m_par.ω) * (C2 + I2 + BD2*m_par.Rbar - 
+                                            (A2 - 1.0) * (RL2 / πCPI2 * B2))) + 
+                                            G2)
+
+
+# Distribution summary statistics used in this file (using the steady state distrubtion in case). 
+# Lines here generate a unit derivative (distributional summaries do not change with other aggregate vars).
+
+# Heterogeneous agent economy
+F[indexes.K]  = log.(K) - XSS[indexes.KSS]                                                       # Capital market clearing           
+F[indexes.B]  = log.(B) - XSS[indexes.BSS]                                                       # Bond market clearing
+F[indexes.BD] = log.(BD) - XSS[indexes.BDSS]                                                     # IOUs
+
 F[indexes.Ht] = log.(Ht) - log.(Htact)
+F[indexes.τlev] = av_tax_rate - TaxAux ./ IncAux
+F[indexes.T] = log(T) - log(TaxAux + av_tax_rate * unionprofits)
+
+# Representative agent economy (economy 2 ...)
+F[indexes.K2] = log(LP2) - log(m_par.LP2)                                                       # fixed spread on capital returns and bond returns in 2
+F[indexes.B2] = log((C2 - 1.0./(1+m_par.γ)*N2.^(1.0 .+ m_par.γ)).^(-m_par.ξ)) -                 # consumption Euler equation for country 2
+                m_par.β.*RLPrime2/πCPI2Prime.*log((C2Prime - 1.0./(1+m_par.γ)*N2Prime.^(1.0 .+ m_par.γ)).^(-m_par.ξ))
+
+F[indexes.B12] = log((1.0 - av_tax_rate) * (w*N + profits) + #all household incomes are consumed or saved, B12 savings odf homae abroad (in liquid assets)
+                     (p* Y - w*N - profits) + Tr + A * B * RL/πCPI)    - 
+                 log(C + I + BD * m_par.Rbar  + BgovPrime + (qΠ .- 1.0) + B12Prime/rer) 
+
+# Add distributional summary stats that do change with other aggregate controls/prices and with estimated parameters
+F[indexes.Ht2] = log.(Ht2) - log.(1.0)
+F[indexes.T2]  = log(T2) - log(TaxAux2 + av_tax_rate2 * unionprofits2)
+F[indexes.τlev2] = av_tax_rate2 - TaxAux2 ./ IncAux2
+
+# other distributional statistics not used in other aggregate equations and not changing with parameters, 
+# but potentially with other aggregate variables are NOT included here. They are found in FSYS.
+
+#------------------------------------------------------------------------------
+# Economy/Sector 3 starts here
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+# AUXILIARY VARIABLES ARE DEFINED FIRST
+#------------------------------------------------------------------------------
+# Remaining auxiliary variables
+
+ιΠ = (1.0 ./ 40.0 - 1.0 ./ 800.0) .* m_par.shiftΠ .+ 1.0 ./ 800.0
+ωΠ = ιΠ ./ m_par.ιΠ .* m_par.ωΠ
+
+# Elasticities and steepness from target markups for Phillips Curves
+η3 = μ3 / (μ3 - 1.0)                                 # demand elasticity
+κ3 = η3 * (m_par.κ / m_par.μ) * (m_par.μ - 1.0)     # implied steepness of phillips curve
+ηw3 = μw3 / (μw3 - 1.0)                               # demand elasticity wages
+κw3 = ηw3 * (m_par.κw / m_par.μw) * (m_par.μw - 1.0) # implied steepness of wage phillips curve
+
+# Capital Utilization
+MPKSS = exp(XSS[indexes.rSS]) - 1.0 + m_par.δ_0       # stationary equil. marginal productivity of capital
+δ_1 = MPKSS                                        # normailzation of utilization to 1 in stationary equilibrium
+δ_2 = δ_1 .* m_par.δ_s                              # express second utilization coefficient in relative terms
+# Auxiliary variables
+Kserv3 = K3 * u3                                         # Effective capital
+MPKserv3 = interest(Kserv3, mc3.*Z3, N3, m_par) .+ m_par.δ_0 # mc .* Z .* m_par.α .* (Kserv ./ N) .^ (m_par.α - 1.0)      # marginal product of Capital
+depr3 = m_par.δ_0 + δ_1 * (u3 - 1.0) + δ_2 / 2.0 * (u3 - 1.0)^2.0   # depreciation
+
+Wagesum3 = N3 * w3                                         # Total wages in economy t
+Wagesum3Prime = N3Prime * w3Prime                               # Total wages in economy t+1
+
+YREACTION3 = Ygrowth3                                  # Policy reaction function to Y
+
+distr_y = sum(distrSS, dims = (1, 2))
+
+# tax progressivity variabels used to calculate e.g. total taxes
+# het agent country
+tax_prog_scale = (m_par.γ + m_par.τprog ) / ((m_par.γ + τprog))                        # scaling of labor disutility including tax progressivity
+incgross = ((n_par.grid_y ./ n_par.H) .^ tax_prog_scale .* mcw .* w .* N ./ Ht)  # capital liquidation Income (q=1 in steady state)
+incgross[end] = (n_par.grid_y[end] .* profits)                         # gross profit income
+inc = τlev .* (incgross .^ (1.0 .- τprog))                                 # capital liquidation Income (q=1 in steady state)
+taxrev = incgross .- inc                                                 # tax revenues
+
+TaxAux = dot(distr_y, taxrev)
+IncAux = dot(distr_y, incgross)
+
+# rep agent country
+IncAux2 = mcw2*w2*N2 + profits2
+TaxAux2 = (mcw2*w2*N2 + profits2) - τlev2 * (w2*N2 + profits2) .^ (1.0 - τprog2)
+
+Htact = dot(
+    distr_y[1:end-1],
+    (n_par.grid_y[1:end-1] / n_par.H) .^ ((m_par.γ + m_par.τprog ) / (m_par.γ + τprog)),
+)
+############################################################################
+#           Error term calculations (i.e. model starts here)          #
+############################################################################
+
+#-------- States -----------#
+# Error Term on exogeneous States
+# Shock processes
+
+F[indexes.Gshock3]       = log.(Gshock3Prime) - m_par.ρ_Gshock * log.(Gshock3)     # primary deficit shock
+F[indexes.Tprogshock3]   = log.(Tprogshock3Prime) - m_par.ρ_Pshock * log.(Tprogshock3) # tax shock
+
+F[indexes.Rshock3]       = log.(Rshock3Prime) - m_par.ρ_Rshock * log.(Rshock3)     # Taylor rule shock
+F[indexes.Sshock3]       = log.(Sshock3Prime) - m_par.ρ_Sshock * log.(Sshock3)     # uncertainty shock
+
+# Stochastic states that can be directly moved (no feedback)
+F[indexes.A3]            = log.(A3Prime) - m_par.ρ_A * log.(A3)                # (unobserved) Private bond return fed-funds spread (produces goods out of nothing if negative)
+F[indexes.Z3]            = log.(Z3Prime) - m_par.ρ_Z * log.(Z3)                # TFP
+F[indexes.ZI3]           = log.(ZI3Prime) - m_par.ρ_ZI * log.(ZI3)             # Investment-good productivity
+
+F[indexes.μ3]            = log.(μ3Prime ./ m_par.μ) - m_par.ρ_μ * log.(μ3 ./ m_par.μ)      # Process for markup target
+F[indexes.μw3]           = log.(μw3Prime ./ m_par.μw) - m_par.ρ_μw * log.(μw3 ./ m_par.μw)   # Process for w-markup target
+
+# Endogeneous States (including Lags)
+F[indexes.σ] =                                      # only in the het agent economy
+    log.(σPrime) -
+    (m_par.ρ_s * log.(σ) + (1.0 - m_par.ρ_s) * m_par.Σ_n * log(Ygrowth) + log(Sshock))                     # Idiosyncratic income risk (contemporaneous reaction to business cycle)
+
+F[indexes.Ylag3] = log(Ylag3Prime) - log(Y3)
+F[indexes.Bgovlag3] = log(Bgovlag3Prime) - log(Bgov3)
+F[indexes.Ilag3] = log(Ilag3Prime) - log(I3)
+F[indexes.wlag3] = log(wlag3Prime) - log(w3)
+F[indexes.Tlag3] = log(Tlag3Prime) - log(T3)
+F[indexes.qlag3] = log(qlag3Prime) - log(q3)
+F[indexes.Clag3] = log(Clag3Prime) - log(C3)
+F[indexes.av_tax_ratelag3] = log(av_tax_ratelag3Prime) - log(av_tax_rate3)
+F[indexes.τproglag3] = log(τproglag3Prime) - log(τprog3)
+F[indexes.qΠlag3] = log(qΠlag3Prime) - log(qΠ3)
+F[indexes.plag3] = log(plag3Prime) - log(p3)
+
+# Growth rates
+F[indexes.Ygrowth3] = log(Ygrowth3) - log(Y3 / Ylag3)
+F[indexes.Tgrowth3] = log(Tgrowth3) - log(T3 / Tlag3)
+F[indexes.Bgovgrowth3] = log(Bgovgrowth3) - log(Bgov3 / Bgovlag3)
+F[indexes.Igrowth3] = log(Igrowth3) - log(I3 / Ilag3)
+F[indexes.wgrowth3] = log(wgrowth3) - log(w3 / wlag3)
+F[indexes.Cgrowth3] = log(Cgrowth3) - log(C3 / Clag3)
+
+#  Taylor rule (PPI based) and interest rates
+F[indexes.RB3] =
+    log(RB3Prime) - XSS[indexes.RB3SS] - ((1 - m_par.ρ_R) * m_par.θ_π) .* log(π3) -
+    ((1 - m_par.ρ_R) * m_par.θ_Y) .* log(YREACTION3) -
+    m_par.ρ_R * (log.(RB3) - XSS[indexes.RB3SS]) - log(Rshock3)
+
+# Tax rule
+F[indexes.τprog3] =
+    log(τprog3) - m_par.ρ_P * log(τproglag3) - (1.0 - m_par.ρ_P) * (XSS[indexes.τprog3SS]) -
+    (1.0 - m_par.ρ_P) * m_par.γ_YP * log(YREACTION3) -
+    (1.0 - m_par.ρ_P) * m_par.γ_BP * (log(Bgov3) - XSS[indexes.Bgov3SS]) - log(Tprogshock3)
+
+
+F[indexes.τlev3] = av_tax_rate3 - TaxAux3 ./ IncAux3  # Union profits are taxed at average tax rate
+F[indexes.T3] = log(T3) - log(TaxAux3 + av_tax_rate3 * unionprofits3)
+
+
+F[indexes.av_tax_rate3] =
+    log(av_tax_rate3) - m_par.ρ_τ * log(av_tax_ratelag3) -
+    (1.0 - m_par.ρ_τ) * XSS[indexes.av_tax_rate3SS] -
+    (1.0 - m_par.ρ_τ) * m_par.γ_Yτ * log(YREACTION3) -
+    (1.0 - m_par.ρ_τ) * m_par.γ_Bτ * (log(Bgov3) - log(Bgovlag3))#XSS[indexes.BgovSS])
+
+# --------- Controls ------------
+# Deficit rule
+F[indexes.π3] =
+    log(Bgovgrowth3Prime) + m_par.γ_B * (log(Bgov3) - XSS[indexes.Bgov3SS]) -
+    m_par.γ_Y * log(YREACTION3) - m_par.γ_π * log(π3) - log(Gshock3)
+
+F[indexes.G3] = log(p3*G3) - log(Bgov3Prime + T3 - RB3 / πCPI3 * Bgov3)             # Government Budget Constraint, perfect home bias of G
+
+# Phillips Curve to determine equilibrium markup, output, factor incomes 
+F[indexes.mc3] =
+    (log.(π3) - XSS[indexes.π3SS]) - κ3 * (mc3 - 1 ./ μ3) -
+    m_par.β * ((log.(π3Prime) - XSS[indexes.π3SS]) .* Y3Prime ./ Y3)
+
+# Wage Phillips Curve 
+F[indexes.mcw3] =
+    (log.(πw3) - XSS[indexes.πw3SS]) - (
+        κw3 * (mcw3 - 1 ./ μw3) +
+        m_par.β * ((log.(πw3Prime) - XSS[indexes.πw3SS]) .* Wagesum3Prime ./ Wagesum3)
+    )
+# worker's wage = mcw * firm's wage
+
+# Wage Dynamics
+F[indexes.πw3] = log.(w3 ./ wlag3) - log.(πw3 ./ πCPI3)                   # Definition of real wage inflation
+
+# Capital utilisation
+F[indexes.u3] = MPKserv3 - q3 * (δ_1 + δ_2 * (u3 - 1.0))           # Optimality condition for utilization
+
+# Prices
+F[indexes.r3] = log.(r3) - log.(1 + MPKserv3 * u3 - q3 * depr3)       # rate of return on capital
+
+F[indexes.mcww3] = log.(mcww3) - log.(mcw3 * w3)                        # wages that workers receive
+
+F[indexes.w3] = log.(w3) - log.(wage(Kserv3, Z3 * mc3, N3, m_par))     # wages that firms pay
+
+F[indexes.unionprofits3] = log.(unionprofits3) - log.(w3 .* N3 .* (1.0 - mcw3))  # profits of the monopolistic unions
+
+# firm_profits: price setting profits + investment profits. The latter are zero and do not show up up to first order (K'-(1-δ)K = I).
+F[indexes.firm_profits3] =
+    log.(firm_profits3) - log.(Y3 .* (p3 - mc3) .+ q3 .* (K3Prime .- (1.0 .- depr3) .* K3) .- I3)
+F[indexes.profits3] = log.(profits3) - log.((1.0 .- ωΠ) .* firm_profits3 .+ ιΠ .* (qΠ3 .- 1.0)) # distributed profits to entrepreneurs
+F[indexes.qΠ3] =
+    log.(RB3Prime ./ πCPI3Prime) .-
+    log.(((qΠ3Prime .- 1.0) .* (1 - ιΠ) .+ ωΠ .* firm_profits3Prime) ./ (qΠ3 .- 1.0))
+
+F[indexes.RL] = log.(RL) - log.((RB .* Bgov .+ 
+                    πCPI .* ((qΠ .- 1.0) .* (1 - ιΠ) .+ ωΠ .* firm_profits) .+
+                    B12./rer .* RB2 .* πCPI ./ πCPI2) ./ B)
+
+F[indexes.RL2] = log.(RL2) - log.((RB2 .* Bgov2 .+ 
+                    πCPI2 .* ((qΠ2 .- 1.0) .* (1 - ιΠ) .+ ωΠ .* firm_profits2) .-
+                    RB2 .* B12 .* (m_par.α_S / (1.0 - m_par.α_S))) ./ B2)
+
+F[indexes.Bgov] = log.(B) - log.(Bgov + (qΠlag .- 1.0) + B12./rerlag)                                 # total liquidity demand
+F[indexes.Bgov2] = log.(B2) - log.(Bgov2 + (qΠlag2 .- 1.0) - B12 .* (m_par.α_S / (1.0 - m_par.α_S)))  
+
+F[indexes.q3] =
+    1.0 - ZI3 * q3 *
+    (1.0 - m_par.ϕ / 2.0 * (Igrowth3 - 1.0)^2.0 - # price of capital investment adjustment costs
+     m_par.ϕ * (Igrowth3 - 1.0) * Igrowth3) -
+    m_par.β * ZI3Prime * q3Prime * m_par.ϕ * (Igrowth3Prime - 1.0) * (Igrowth3Prime)^2.0
+
+# Asset market premia
+F[indexes.LP3] = log.(LP3) - (log((q3 + r3 - 1.0) / qlag3) - log(RL3 / πCPI3))                   # Ex-post liquidity premium           
+F[indexes.LPXA3] = log.(LPXA3) - (log((q3Prime + r3Prime - 1.0) / q3) - log(RL3Prime / πCPI3Prime))  # ex-ante liquidity premium
+
+# Aggregate Quantities
+F[indexes.I3] =
+    K3Prime .- K3 .* (1.0 .- depr3) .-
+    ZI3 .* I3 .* (1.0 .- m_par.ϕ ./ 2.0 .* (Igrowth3 - 1.0) .^ 2.0)           # Capital accumulation equation
+
+F[indexes.N3] = log.(N3) - log.(labor_supply(w3.*mcw3, τlev3, τprog3, Ht3, m_par)) # Labor supply equation
+
+F[indexes.Y3] = log.(Y3) - log.(output(Kserv3, Z3, N3, m_par))            # Output equation
+
+# Error Term on prices/aggregate summary vars (logarithmic, controls), here difference to SS value averages
+F[indexes.BY3] = log.(BY3) - log.(B3 / Y3)                                                               # Bond to Output ratio
+F[indexes.TY3] = log.(TY3) - log.(T3 / Y3)                                                               # Tax to output ratio
+
+# Open Economy equations
+
+## International prices
+
+F[indexes.p12]      = log(p2)  - log(p12 * rer) 
+F[indexes.p21]      = log(p21) - log(p * rer) 
+
+# Dynamic LOOP
+F[indexes.rer]   =  log(rer/der)  - log(πCPI2 / πCPI *  p12lag/ p2lag) 
+    
+F[indexes.der]   =  log(RBPrime/RB2Prime) - log(derPrime) #der: delta exchange rate
+#'CPI index'
+F[indexes.p]   = log(1.0)       - log(((1.0 - (1.0 - m_par.α_S) * m_par.ω) * p^(1.0 - m_par.ϵ_e) + (1.0 - m_par.α_S) * m_par.ω * p12^(1 - m_par.ϵ_e))^(1.0/(1.0 - m_par.ϵ_e)))
+F[indexes.p2]   = log(1.0)       - log((m_par.α_S * m_par.ω * p21^(1.0 - m_par.ϵ_e) + (1.0 - m_par.α_S * m_par.ω) * p2^(1.0 - m_par.ϵ_e))^(1.0/(1.0 - m_par.ϵ_e)))
+
+#'PPI Inflation Definition
+F[indexes.πCPI3]  =  log(p3/plag3)      - log((π3/πCPI3))               
+
+
+#'Home net exports'
+F[indexes.nx]          =  p * (Y - G - nx)  - (C + I + m_par.Rbar*BD - (A - 1.0) * (RL * B / πCPI))
+F[indexes.C]           =  log(Y)   - log(p^(-m_par.ϵ_e) * ((1 - (1 - m_par.α_S) * m_par.ω) * 
+                                            (C + I + BD*m_par.Rbar - (A - 1.0) * (RL * B / πCPI)) + 
+                                            (1 - m_par.α_S) * m_par.ω * rer^(-m_par.ϵ_e) * (C2 + I2 + BD2*m_par.Rbar - 
+                                            (A2 - 1.0) * (RL2 / πCPI2 * B2 ))) + 
+                                            G)
+F[indexes.C2]            =  log(Y2)   - log(p2^(-m_par.ϵ_e) * (m_par.α_S * m_par.ω * rer^(m_par.ϵ_e) * 
+                                            (C + I+ BD*m_par.Rbar - (A - 1.0) * (RL * B / πCPI)) +
+                                            (1 - m_par.α_S * m_par.ω) * (C2 + I2 + BD2*m_par.Rbar - 
+                                            (A2 - 1.0) * (RL2 / πCPI2 * B2))) + 
+                                            G2)
+
+
+# Distribution summary statistics used in this file (using the steady state distrubtion in case). 
+# Lines here generate a unit derivative (distributional summaries do not change with other aggregate vars).
+
+# Heterogeneous agent economy
+F[indexes.K]  = log.(K) - XSS[indexes.KSS]                                                       # Capital market clearing           
+F[indexes.B]  = log.(B) - XSS[indexes.BSS]                                                       # Bond market clearing
+F[indexes.BD] = log.(BD) - XSS[indexes.BDSS]                                                     # IOUs
+
+F[indexes.Ht] = log.(Ht) - log.(Htact)
+F[indexes.τlev] = av_tax_rate - TaxAux ./ IncAux
+F[indexes.T] = log(T) - log(TaxAux + av_tax_rate * unionprofits)
+
+# Representative agent economy (economy 2 ...)
+F[indexes.K2] = log(LP2) - log(m_par.LP2)                                                       # fixed spread on capital returns and bond returns in 2
+F[indexes.B2] = log((C2 - 1.0./(1+m_par.γ)*N2.^(1.0 .+ m_par.γ)).^(-m_par.ξ)) -                 # consumption Euler equation for country 2
+                m_par.β.*RLPrime2/πCPI2Prime.*log((C2Prime - 1.0./(1+m_par.γ)*N2Prime.^(1.0 .+ m_par.γ)).^(-m_par.ξ))
+
+F[indexes.B12] = log((1.0 - av_tax_rate) * (w*N + profits) + #all household incomes are consumed or saved, B12 savings odf homae abroad (in liquid assets)
+                     (p* Y - w*N - profits) + Tr + A * B * RL/πCPI)    - 
+                 log(C + I + BD * m_par.Rbar  + BgovPrime + (qΠ .- 1.0) + B12Prime/rer) 
+
+# Add distributional summary stats that do change with other aggregate controls/prices and with estimated parameters
+F[indexes.Ht2] = log.(Ht2) - log.(1.0)
+F[indexes.T2]  = log(T2) - log(TaxAux2 + av_tax_rate2 * unionprofits2)
+F[indexes.τlev2] = av_tax_rate2 - TaxAux2 ./ IncAux2
 
 # other distributional statistics not used in other aggregate equations and not changing with parameters, 
 # but potentially with other aggregate variables are NOT included here. They are found in FSYS.

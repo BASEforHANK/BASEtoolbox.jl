@@ -118,7 +118,8 @@ function prepare_linearization(KSS, VmSS, VkSS, distrSS, n_par, m_par)
     # DO NOT DELETE OR EDIT NEXT LINE! This is needed for parser.
 
 
-@set! n_par.n_agg_eqn = 59
+@set! n_par.n_agg_eqn = 184
+ #no replication 
 # Set aggregate steady state variabel values
 ASS = 1.0
 ZSS = 1.0

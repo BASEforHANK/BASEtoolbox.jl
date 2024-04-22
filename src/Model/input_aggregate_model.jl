@@ -37,7 +37,7 @@ MPKSS = exp(XSS[indexes.rSS]) - 1.0 + m_par.δ_0       # stationary equil. margi
 δ_2 = δ_1 .* m_par.δ_s                              # express second utilization coefficient in relative terms
 # Auxiliary variables
 Kserv$ = K$ * u$                                         # Effective capital
-MPKserv$ = interest(Kserv$, p$.*mc$.*Z$, N$, m_par) .+ m_par.δ_0 # mc .* Z .* m_par.α .* (Kserv ./ N) .^ (m_par.α - 1.0)      # marginal product of Capital
+MPKserv$ = interest(Kserv$, mc$.*Z$, N$, m_par) .+ m_par.δ_0 # mc .* Z .* m_par.α .* (Kserv ./ N) .^ (m_par.α - 1.0)      # marginal product of Capital
 depr$ = m_par.δ_0 + δ_1 * (u$ - 1.0) + δ_2 / 2.0 * (u$ - 1.0)^2.0   # depreciation
 
 Wagesum$ = N$ * w$                                         # Total wages in economy t
@@ -168,7 +168,7 @@ F[indexes.r$] = log.(r$) - log.(1 + MPKserv$ * u$ - q$ * depr$)       # rate of 
 
 F[indexes.mcww$] = log.(mcww$) - log.(mcw$ * w$)                        # wages that workers receive
 
-F[indexes.w$] = log.(w$) - log.(wage(Kserv$, p$.*Z$ * mc$, N$, m_par))     # wages that firms pay
+F[indexes.w$] = log.(w$) - log.(wage(Kserv$, Z$ * mc$, N$, m_par))     # wages that firms pay
 
 F[indexes.unionprofits$] = log.(unionprofits$) - log.(w$ .* N$ .* (1.0 - mcw$))  # profits of the monopolistic unions
 
@@ -224,7 +224,7 @@ F[indexes.p21]      = log(p21) - log(p * rer)
 # Dynamic LOOP
 F[indexes.rer]   =  log(rer/der)  - log(πCPI2 / πCPI *  p12lag/ p2lag) 
     
-F[indexes.der]   =  log(RBPrime/RB2Prime) - log(derPrime)
+F[indexes.der]   =  log(RBPrime/RB2Prime) - log(derPrime) #der: delta exchange rate
 #'CPI index'
 F[indexes.p]   = log(1.0)       - log(((1.0 - (1.0 - m_par.α_S) * m_par.ω) * p^(1.0 - m_par.ϵ_e) + (1.0 - m_par.α_S) * m_par.ω * p12^(1 - m_par.ϵ_e))^(1.0/(1.0 - m_par.ϵ_e)))
 F[indexes.p2]   = log(1.0)       - log((m_par.α_S * m_par.ω * p21^(1.0 - m_par.ϵ_e) + (1.0 - m_par.α_S * m_par.ω) * p2^(1.0 - m_par.ϵ_e))^(1.0/(1.0 - m_par.ϵ_e)))
