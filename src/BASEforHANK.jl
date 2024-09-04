@@ -10,7 +10,7 @@
 
 module BASEforHANK
 
-if !Sys.isapple() # issues encountered when using mkl with macos + more than 1 thread
+if !Sys.iswindows() && !Sys.isapple() # issues encountered when using mkl with macos + more than 1 thread
     using MKL
 end
 
