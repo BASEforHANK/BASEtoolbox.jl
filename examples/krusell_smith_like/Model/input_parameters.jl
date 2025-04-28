@@ -126,7 +126,7 @@ Collect parameters for the numerical solution of the model in a `struct`.
     kmin::Float64 = typeof(model) == TwoAsset ? 0.0 : 0.0
     kmax::Float64 = typeof(model) == TwoAsset ? 4500.0 : 0.0
     bmin::Float64 = typeof(model) == CompleteMarkets ? 0.0 : -6.0
-    bmax::Float64 = typeof(model) == CompleteMarkets ? 0.0 : 3500.0
+    bmax::Float64 = typeof(model) == CompleteMarkets ? 0.0 : 4500.0
 
     # precision of solution
     ϵ::Float64 = 1e-13

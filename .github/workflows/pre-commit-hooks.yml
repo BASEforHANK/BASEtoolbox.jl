@@ -1,0 +1,49 @@
+name: Pre-commit Checks
+
+on:
+  push:
+    branches:
+      - main
+    tags: '*'
+  pull_request:
+
+jobs:
+  build:
+    permissions:
+      actions: write
+      contents: write
+      pull-requests: read
+      statuses: write
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Julia
+        uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.10'
+
+      - name: Cache Julia packages
+        uses: julia-actions/cache@v2
+
+      - name: Install Julia dependencies
+        run: julia --project=. -e 'using Pkg; Pkg.add("JuliaFormatter"); Pkg.instantiate()'
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Cache pre-commit hooks
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ runner.os }}-precommit-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: Install pre-commit
+        run: pip install pre-commit
+
+      - name: Run pre-commit hooks
+        run: pre-commit run --all-files
