@@ -20,4 +20,4 @@ makedocs(;
     ),
 )
 
-deploydocs(; repo = "github.com/hildebrandecon/BASEtoolbox.jl.git", versions = nothing)
+deploydocs(; repo = "github.com/baseforhank/BASEtoolbox.jl.git", versions = nothing)
