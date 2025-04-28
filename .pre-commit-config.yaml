@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.5.4
+    rev: v1.5.5
     hooks:
       - id: forbid-crlf
       - id: remove-crlf
@@ -8,7 +8,7 @@ repos:
       - id: remove-tabs
         args: [--whitespaces-count, '4']
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v5.0.0
     hooks:
       - id: check-added-large-files
         args: ['--maxkb=5120']  # 5MB
@@ -28,3 +28,4 @@ repos:
     hooks:
     - id: julia-format
       args: [--project=.]
+      exclude: 'Manifest\.toml'
