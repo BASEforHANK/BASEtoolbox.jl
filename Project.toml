@@ -1,6 +1,6 @@
 name = "BASEforHANK"
 uuid = "a6a833e2-3941-4826-86de-de10a33cebf7"
-version = "0.2.0"
+version = "1.0.0"
 
 [deps]
 AlgebraOfGraphics = "cbdf2221-f076-402e-a563-3d30da359d67"
