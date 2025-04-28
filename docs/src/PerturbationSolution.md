@@ -23,7 +23,7 @@ BASEforHANK.LinearSolution
 ```
 The function `linearize_full_model()` calls `LinearSolution` and stores the results in a `LinearResults` `struct`.
 
-### `LinearSolution()` 
+### `LinearSolution()`
 The `LinearSolution` function executes the following steps:
 
 - generate devices to retrieve distribution and marginal value functions from
@@ -103,5 +103,3 @@ The function [`update_model()`](@ref) solves the aggregate model without updatin
     Invoking the Implicit Function Theorem, there exist functions ``g`` and ``h`` such that
     ``F\left(\begin{pmatrix} k \\ g(k) \end{pmatrix},\begin{pmatrix} h(k) \\ g(h(k)) \end{pmatrix}\right)=0``.
     Totally differentiating by ``k`` yields ``B \begin{pmatrix}\mathbb{I}\\ Dg \end{pmatrix}+A \begin{pmatrix}\mathbb{I}\\ Dg \end{pmatrix} Dh = 0``. The `:lit`-algorithm solves this equation for ``Dg`` and ``Dh`` iteratively.
-
-    

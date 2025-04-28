@@ -22,7 +22,6 @@ function rwmh(
     m_par,
     e_set,
 )
-
     NormDist = MvNormal(zeros(length(xhat)), Σ)
     accept = 0
     accept_rate = 0.0
@@ -32,8 +31,8 @@ function rwmh(
     old_posterior, alarm = likeli(xhat, sr, lr, er, m_par, e_set)[3:4]
     posterior[1] = copy(old_posterior)
     proposal_draws = e_set.mhscale .* rand(NormDist, e_set.ndraws + e_set.burnin)
-    for i = 2:e_set.ndraws+e_set.burnin
-        xhatstar = draws[i-1, :] .+ proposal_draws[:, i]
+    for i = 2:(e_set.ndraws + e_set.burnin)
+        xhatstar = draws[i - 1, :] .+ proposal_draws[:, i]
         new_posterior, alarm = likeli(xhatstar, sr, lr, er, m_par, e_set)[3:4]
 
         accprob = min(exp(new_posterior - old_posterior), 1.0)
@@ -43,21 +42,26 @@ function rwmh(
             old_posterior = new_posterior
             accept += 1
         else
-            draws[i, :] = draws[i-1, :]
-            posterior[i] = posterior[i-1]
+            draws[i, :] = draws[i - 1, :]
+            posterior[i] = posterior[i - 1]
         end
         if mod(i, 200) == 0 || i == e_set.ndraws + e_set.burnin
-            print("-----------------------\n")
-            print("Acceptance Rate: ", accept / i, "\n")
-            print("Number of draws:", i, "\n")
-            print("Parameters\n")
-            print(draws[i, :], "\n")
-            print("Posterior Likelihood:", old_posterior, "\n")
-            print("-----------------------\n")
+            @printf("-----------------------\n")
+            @printf "\n"
+            pretty_table(
+                [
+                    "Number of draws" i
+                    "Acceptance Rate" @sprintf("%.4f", accept / i)
+                    "Posterior Likelihood" @sprintf("%.4f", old_posterior)
+                ];
+                header = ["Metric", "Value"],
+                title = "Simulation status",
+            )
+            @printf("Parameters\n")
+            @printf("%s\n", string(draws[i, :]))
+            @printf("-----------------------\n")
             accept_rate::Float64 = accept / i
-
         end
-
     end
 
     return draws, posterior, accept_rate
@@ -81,7 +85,6 @@ function multi_chain_init(
     m_par,
     e_set,
 )
-
     init_scale = 2 * e_set.mhscale # overdispersed initial values
     NormDist = MvNormal(zeros(length(xhat)), Σ)
     init_draw = Vector{Float64}(undef, length(xhat))
@@ -110,11 +113,10 @@ Estimate the marginal likelihood via Modified Harmonic Mean Estimator (Geweke, 1
 - `marg_likeli`: marginal likelihood
 """
 function marginal_likeli(draws, posterior)
-
     ndraws, npars = size(draws)
     posterior_mode = maximum(posterior)
     d = Chisq(npars)
-    θ_hat = mean(draws, dims = 1)[:]
+    θ_hat = mean(draws; dims = 1)[:]
     V_hat = cov(draws)
     inv_V_hat = inv(V_hat)
 

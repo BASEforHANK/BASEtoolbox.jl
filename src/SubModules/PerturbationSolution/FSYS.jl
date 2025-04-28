@@ -1,29 +1,23 @@
-@doc raw"""
-    Fsys(X, XPrime, XSS, m_par, n_par, indexes, Γ, compressionIndexes, DC, IDC, DCD, IDCD)
+"""
+    Fsys(X, XPrime, XSS, m_par, n_par, indexes, Γ, compressionIndexes, DC, IDC, DCD, IDCD; only_F = true)
 
 Equilibrium error function: returns deviations from equilibrium around steady state.
 
-Split computation into *Aggregate Part*, handled by [`Fsys_agg()`](@ref),
-and *Heterogeneous Agent Part*.
+Split computation into *Aggregate Part*, handled by [`Fsys_agg()`](@ref) and *Heterogeneous
+Agent Part*.
 
 # Arguments
-- `X`,`XPrime`: deviations from steady state in periods t [`X`] and t+1 [`XPrime`]
-- `XSS`: states and controls in steady state
-- `Γ`, `DC`, `IDC`, `DCD`,`IDCD`: transformation matrices to retrieve marginal distributions [`Γ`],
-    marginal value functions [`DC`,`IDC`], and the (linear) interpolant of the copula [`DCD`,`IDCD`] from deviations
-- `indexes`,`compressionIndexes`: access `XSS` by variable names
-    (DCT coefficients of compressed ``V_m`` and ``V_k`` in case of `compressionIndexes`)
 
-# Example
-```jldoctest
-julia> # Solve for steady state, construct Γ,DC,IDC as in LinearSolution()
-julia> Fsys(zeros(ntotal),zeros(ntotal),XSS,m_par,n_par,indexes,Γ,compressionIndexes,DC,IDC)
-*ntotal*-element Array{Float64,1}:
- 0.0
- 0.0
- ...
- 0.0
-```
+  - `X`,`XPrime`: deviations from steady state in periods t [`X`] and t+1 [`XPrime`]
+
+  - `XSS`: states and controls in steady state
+  - `Γ`, `DC`, `IDC`, `DCD`,`IDCD`: transformation matrices to retrieve:
+
+      + marginal distributions [`Γ`],
+      + marginal value functions [`DC`,`IDC`], and
+      + the (linear) interpolant of the copula [`DCD`,`IDCD`] from deviations
+  - `indexes`,`compressionIndexes`: access `XSS` by variable names (DCT coefficients of
+    compressed ``V_m`` and ``V_k`` in case of `compressionIndexes`)
 """
 function Fsys(
     X::AbstractArray,
@@ -40,247 +34,247 @@ function Fsys(
     IDCD::Array{Adjoint{Float64,Array{Float64,2}},1};
     only_F = true,
 )
-    # The function call with Duals takes
-    # Reserve space for error terms
+
+    ## ------------------------------------------------------------------------------------
+    ## Preamble
+    ## ------------------------------------------------------------------------------------
+
+    # Initialize the output vector, use the same type as the input
     F = zeros(eltype(X), size(X))
 
-    ############################################################################
-    #            I. Read out argument values                                   #
-    ############################################################################
+    ## Unpack aggregate variables -------------------------------------------------------
 
-    ############################################################################
-    # I.1. Generate code that reads aggregate states/controls
-    #      from steady state deviations. Equations take the form of:
-    # r       = exp.(XSS[indexes.rSS] .+ X[indexes.r])
-    # rPrime  = exp.(XSS[indexes.rSS] .+ XPrime[indexes.r])
-    ############################################################################
-
-    # @generate_equations(aggr_names)
+    # Unpack X, XPrime, and XSS into variables
     @generate_equations()
 
-    ############################################################################
-    # I.2. Read out  perturbed distributions
-    ############################################################################
+    ## Unpack perturbed distributions -----------------------------------------------------
 
-    # Copula parameters (deviations from steads state)
+    # Copula parameters (deviations from steady state)
     θD = uncompress(compressionIndexes[3], X[indexes.COP], DCD, IDCD)
-    COP_Dev = reshape(copy(θD[:]), (n_par.nm_copula, n_par.nk_copula, n_par.ny_copula))
+    COP_Dev = reshape(copy(θD[:]), (n_par.nb_copula, n_par.nk_copula, n_par.nh_copula))
     COP_Dev = pdf_to_cdf(COP_Dev)
 
     θDPrime = uncompress(compressionIndexes[3], XPrime[indexes.COP], DCD, IDCD)
     COP_DevPrime =
-        reshape(copy(θDPrime), (n_par.nm_copula, n_par.nk_copula, n_par.ny_copula))
+        reshape(copy(θDPrime), (n_par.nb_copula, n_par.nk_copula, n_par.nh_copula))
     COP_DevPrime = pdf_to_cdf(COP_DevPrime)
 
     # marginal distributions (pdfs, including steady state)
-    distr_m = XSS[indexes.distr_mSS] .+ Γ[1] * X[indexes.distr_m]
+    distr_b = XSS[indexes.distr_bSS] .+ Γ[1] * X[indexes.distr_b]
     distr_k = XSS[indexes.distr_kSS] .+ Γ[2] * X[indexes.distr_k]
-    distr_y = XSS[indexes.distr_ySS] .+ Γ[3] * X[indexes.distr_y]
+    distr_h = XSS[indexes.distr_hSS] .+ Γ[3] * X[indexes.distr_h]
 
-    distr_m_Prime = XSS[indexes.distr_mSS] .+ Γ[1] * XPrime[indexes.distr_m]
+    distr_b_Prime = XSS[indexes.distr_bSS] .+ Γ[1] * XPrime[indexes.distr_b]
     distr_k_Prime = XSS[indexes.distr_kSS] .+ Γ[2] * XPrime[indexes.distr_k]
-    distr_y_Prime = XSS[indexes.distr_ySS] .+ Γ[3] * XPrime[indexes.distr_y]
+    distr_h_Prime = XSS[indexes.distr_hSS] .+ Γ[3] * XPrime[indexes.distr_h]
 
-    # marginal distributions (cdfs) 
-    CDF_m = cumsum(distr_m[:])
+    # marginal distributions (cdfs)
+    CDF_b = cumsum(distr_b[:])
     CDF_k = cumsum(distr_k[:])
-    CDF_y = cumsum(distr_y[:])
+    CDF_h = cumsum(distr_h[:])
 
-    ############################################################################
-    # I.3. Read out steady state distributions
-    ############################################################################
+    ## Unpack steady state distributions --------------------------------------------------
 
     # steads state cdfs (on value grid)
-    CDF_mSS = cumsum(XSS[indexes.distr_mSS]) .+ zeros(eltype(θD), n_par.nm)
+    CDF_bSS = cumsum(XSS[indexes.distr_bSS]) .+ zeros(eltype(θD), n_par.nb)
     CDF_kSS = cumsum(XSS[indexes.distr_kSS]) .+ zeros(eltype(θD), n_par.nk)
-    CDF_ySS = cumsum(XSS[indexes.distr_ySS]) .+ zeros(eltype(θD), n_par.ny)
+    CDF_hSS = cumsum(XSS[indexes.distr_hSS]) .+ zeros(eltype(θD), n_par.nh)
 
     # steady state copula (on copula grid)
     COPSS =
-        reshape(XSS[indexes.COPSS] .+ zeros(eltype(θD), 1), (n_par.nm, n_par.nk, n_par.ny))
+        reshape(XSS[indexes.COPSS] .+ zeros(eltype(θD), 1), (n_par.nb, n_par.nk, n_par.nh))
     COPSS = pdf_to_cdf(COPSS)
 
-    # steady state copula marginals (cdfs) 
-    s_m_m = n_par.copula_marginal_m .+ zeros(eltype(θD), 1)
+    # steady state copula marginals (cdfs)
+    s_m_b = n_par.copula_marginal_b .+ zeros(eltype(θD), 1)
     s_m_k = n_par.copula_marginal_k .+ zeros(eltype(θD), 1)
-    s_m_y = n_par.copula_marginal_y .+ zeros(eltype(θD), 1)
+    s_m_h = n_par.copula_marginal_h .+ zeros(eltype(θD), 1)
 
-    ############################################################################
-    # I.4. Produce perturbed joint distribution using the copula
-    ############################################################################
-    # Copula(x::AbstractVector,y::AbstractVector,z::AbstractVector) = 
-    # myAkimaInterp3(CDF_mSS, CDF_kSS, CDF_ySS, COPSS, x, y, z) .+
-    # myAkimaInterp3(s_m_m, s_m_k, s_m_y, COP_Dev, x, y, z)
-
+    ## Joint distribution -----------------------------------------------------------------
     Copula(x::Vector, y::Vector, z::Vector) =
-        myinterpolate3(CDF_mSS, CDF_kSS, CDF_ySS, COPSS, x, y, z) .+
-        myinterpolate3(s_m_m, s_m_k, s_m_y, COP_Dev, x, y, z)
+        myinterpolate3(CDF_bSS, CDF_kSS, CDF_hSS, COPSS, n_par.model, x, y, z) .+
+        myinterpolate3(s_m_b, s_m_k, s_m_h, COP_Dev, n_par.model, x, y, z)
 
-    CDF_joint = Copula(CDF_m[:], CDF_k[:], CDF_y[:]) # roughly 5% of time
+    CDF_joint = Copula(CDF_b[:], CDF_k[:], CDF_h[:])
     PDF_joint = cdf_to_pdf(CDF_joint)
 
-    ############################################################################
-    # I.5 uncompressing policies/value functions
-    ###########################################################################
-    VmSS = XSS[indexes.VmSS]
-    VkSS = XSS[indexes.VkSS]
-    VmPrime = mutil(
-        exp.(VmSS .+ uncompress(compressionIndexes[1], XPrime[indexes.Vm], DC, IDC)),
+    ## Unpack value functions -------------------------------------------------------------
+
+    WbSS = XSS[indexes.WbSS]
+    WkSS = XSS[indexes.WkSS]
+    WbPrime = mutil(
+        exp.(WbSS .+ uncompress(compressionIndexes[1], XPrime[indexes.Wb], DC, IDC)),
         m_par,
     )
-    VkPrime = mutil(
-        exp.(VkSS .+ uncompress(compressionIndexes[2], XPrime[indexes.Vk], DC, IDC)),
+    WkPrime = mutil(
+        exp.(WkSS .+ uncompress(compressionIndexes[2], XPrime[indexes.Wk], DC, IDC)),
         m_par,
     )
 
-    ############################################################################
-    #           II. Auxiliary Variables                                        #
-    ############################################################################
-    # Transition Matrix Productivity
+    ## Unpack transition matrix -----------------------------------------------------------
 
     Π = n_par.Π .+ zeros(eltype(X), 1)[1]
-    PP = ExTransition(m_par.ρ_h, n_par.bounds_y, sqrt(σ))
-    Π[1:end-1, 1:end-1] = PP .* (1.0 - m_par.ζ)
+    if typeof(n_par.model) == OneAsset || typeof(n_par.model) == TwoAsset
+        PP = ExTransition(m_par.ρ_h, n_par.bounds_h, sqrt(σ))
+        Π[1:(end - 1), 1:(end - 1)] = PP .* (1.0 - m_par.ζ)
+    end
 
-    ############################################################################
-    #           III. Error term calculations (i.e. model starts here)          #
-    ############################################################################
+    ## ------------------------------------------------------------------------------------
+    ## Equilibrium conditions (aggregate)
+    ## ------------------------------------------------------------------------------------
 
-    ############################################################################
-    #           III. 1. Aggregate Part #
-    ############################################################################
+    ## Aggregate equations ----------------------------------------------------------------
+    # Load aggregate equations as specified in the model file (and precompiled)
     F = Fsys_agg(X, XPrime, XSS, PDF_joint, m_par, n_par, indexes)
 
-    # Average Human Capital =
-    # average productivity (at the productivit grid, used to normalize to 0)
-    tax_prog_scale  = (m_par.γ + m_par.τprog ) / ((m_par.γ + τprog))
-    H               = dot(distr_y[1:end-1], n_par.grid_y[1:end-1])
-    KP              = dot(n_par.grid_k, distr_k[:])
-    Htact           = dot(distr_y[1:end-1], (n_par.grid_y[1:end-1] / H) .^ (tax_prog_scale))
-    BP              = dot(n_par.grid_m, distr_m[:])
-    BDact           = -sum(distr_m .* (n_par.grid_m .< 0) .* n_par.grid_m)
+    ## Update distributional statistics ---------------------------------------------------
+    # These are also in Fsys_agg, but we need to update them here, see documentation
 
-    ############################################################################
-    #               III. 2. Heterogeneous Agent Part                           #
-    ############################################################################
-    # Incomes
-    incgross, inc, eff_int = incomes(
-        n_par,
-        m_par,
-        mcw,
-        A,
-        q,
-        RL,
-        τprog,
-        τlev,
-        H,
-        Ht,
-        π,
-        r,
-        w,
-        N,
-        profits,
-        unionprofits,
-        av_tax_rate,
-    )
+    # Scaling factor for individual productivity
+    F[indexes.Htilde] =
+        (log(Htilde)) - (log(dot(distr_h[1:(end - 1)], n_par.grid_h[1:(end - 1)])))
 
-    # Calculate Taxes
-    tax_prog_scale  = (m_par.γ + m_par.τprog ) / ((m_par.γ + τprog))
-    LC              = mcw * w .* N ./ Ht
-    taxrev =
-        ((n_par.grid_y / H) .^ tax_prog_scale .* LC) -
-        τlev .* ((n_par.grid_y / H) .^ tax_prog_scale .* LC) .^ (1.0 - τprog)
-    taxrev[end] =
-        n_par.grid_y[end] .* profits -
-        τlev .* (n_par.grid_y[end] .* profits) .^ (1.0 - τprog)
-    incgrossaux      = ((n_par.grid_y / H) .^ tax_prog_scale .* LC)
-    incgrossaux[end] = n_par.grid_y[end] .* profits
-    av_tax_rate_up   = dot(distr_y, taxrev) ./ (dot(distr_y, incgrossaux))
+    if typeof(n_par.model) == OneAsset
 
-    # Calculate optimal policies
-    # expected margginal values
-    EVkPrime = reshape(VkPrime, (n_par.nm, n_par.nk, n_par.ny))
-    EVmPrime = reshape(VmPrime, (n_par.nm, n_par.nk, n_par.ny))
+        # Total assets
+        F[indexes.TotalAssets] = (log(TotalAssets)) - log(dot(n_par.grid_b, distr_b[:]))
 
+        # IOUs
+        F[indexes.BD] =
+            (log(BD)) - (log(-sum(distr_b .* (n_par.grid_b .< 0) .* n_par.grid_b)))
+
+    elseif typeof(n_par.model) == TwoAsset
+
+        # Capital market clearing
+        F[indexes.K] = (log(K)) - (log(dot(n_par.grid_k, distr_k[:])))
+
+        # Bond market clearing
+        F[indexes.B] = (log(B)) - (log(dot(n_par.grid_b, distr_b[:])))
+
+        # IOUs
+        F[indexes.BD] =
+            (log(BD)) - (log(-sum(distr_b .* (n_par.grid_b .< 0) .* n_par.grid_b)))
+
+    elseif typeof(n_par.model) == CompleteMarkets
+
+        # Do nothing, everything defined in the aggregate model
+
+    end
+
+    ## ------------------------------------------------------------------------------------
+    ## Equilibrium conditions (idiosyncratic)
+    ## ------------------------------------------------------------------------------------
+
+    ## Incomes ----------------------------------------------------------------------------
+    # Calculate incomes based on the model-specific income functions
+
+    @write_args_hh_prob()
+
+    # Calculate net income and effective interest rate
+    net_income, gross_income, eff_int = incomes(n_par, m_par, args_hh_prob)
+
+    ## Policy and value functions ---------------------------------------------------------
+
+    # Calculate expected marginal value functions
+    EWkPrime = reshape(WkPrime, (n_par.nb, n_par.nk, n_par.nh))
+    EWbPrime = reshape(WbPrime, (n_par.nb, n_par.nk, n_par.nh))
     @views @inbounds begin
-        for mm = 1:n_par.nm
-            EVkPrime[mm, :, :] .= EVkPrime[mm, :, :] * Π'
-            EVmPrime[mm, :, :] .= (EVmPrime[mm, :, :] * Π')
+        for bb = 1:(n_par.nb)
+            EWkPrime[bb, :, :] .= (EWkPrime[bb, :, :] * Π')
+            EWbPrime[bb, :, :] .= (EWbPrime[bb, :, :] * Π')
         end
     end
-    c_a_star, m_a_star, k_a_star, c_n_star, m_n_star =
-        EGM_policyupdate(EVmPrime, EVkPrime, q, π, RL .* A, 1.0, inc, n_par, m_par, false) # policy iteration
+
+    # Calculate policy functions (policy iteration)
+    x_a_star, b_a_star, k_a_star, x_n_star, b_n_star = EGM_policyupdate(
+        EWbPrime,
+        EWkPrime,
+        args_hh_prob,
+        net_income,
+        n_par,
+        m_par,
+        false,
+        n_par.model,
+    )
 
     # Update marginal values
-    Vk_err, Vm_err =
-        updateV(EVkPrime, c_a_star, c_n_star, m_n_star, r - 1.0, q, m_par, n_par) # update expected marginal values time t
-    Vm_err .*= eff_int
+    Wk_err, Wb_err = updateW(
+        EWkPrime,
+        x_a_star,
+        x_n_star,
+        b_n_star,
+        args_hh_prob,
+        m_par,
+        n_par,
+        n_par.model,
+    )
+
+    Wb_err .*= eff_int
     if !only_F
-        Vm_new = copy(Vm_err)
-        Vk_new = copy(Vk_err)
+        Wb_new = copy(Wb_err)
+        Wk_new = copy(Wk_err)
     end
+
     # Update distribution
-    dist_aux = DirectTransition(m_a_star, m_n_star, k_a_star, PDF_joint, m_par.λ, Π, n_par)
-    PDF_jointPrime = reshape(dist_aux, n_par.nm, n_par.nk, n_par.ny)
+    dist_aux = DirectTransition(b_a_star, b_n_star, k_a_star, PDF_joint, m_par.λ, Π, n_par)
+    PDF_jointPrime = reshape(dist_aux, n_par.nb, n_par.nk, n_par.nh)
 
-    #----------------------------------------------------------------------------------------
-    # Calculate Error Terms
-    #----------------------------------------------------------------------------------------
+    ## Set up the error terms for idiosyncratic part --------------------------------------
+
     # Error terms on marginal values (controls)
-    invmutil!(Vm_err, Vm_err, m_par)
-    invmutil!(Vk_err, Vk_err, m_par)
-    Vm_err .= log.(Vm_err) .- reshape(VmSS, (n_par.nm, n_par.nk, n_par.ny))
-    Vm_thet = compress(compressionIndexes[1], Vm_err, DC, IDC)
-    F[indexes.Vm] = X[indexes.Vm] .- Vm_thet
-
-    Vk_err .= log.(Vk_err) .- reshape(VkSS, (n_par.nm, n_par.nk, n_par.ny))
-    Vk_thet = compress(compressionIndexes[2], Vk_err, DC, IDC)
-    F[indexes.Vk] = X[indexes.Vk] .- Vk_thet
+    invmutil!(Wb_err, Wb_err, m_par)
+    invmutil!(Wk_err, Wk_err, m_par)
+    Wb_err .= log.(Wb_err) .- reshape(WbSS, (n_par.nb, n_par.nk, n_par.nh))
+    Wk_err .= log.(Wk_err) .- reshape(WkSS, (n_par.nb, n_par.nk, n_par.nh))
+    Wb_thet = compress(compressionIndexes[1], Wb_err, DC, IDC)
+    Wk_thet = compress(compressionIndexes[2], Wk_err, DC, IDC)
+    F[indexes.Wb] = X[indexes.Wb] .- Wb_thet
+    F[indexes.Wk] = X[indexes.Wk] .- Wk_thet
 
     # Error Terms on marginal distribution (in levels, states)
-    distr_mPrimeUpdate = dropdims(sum(PDF_jointPrime, dims = (2, 3)), dims = (2, 3))
-    distr_kPrimeUpdate = dropdims(sum(PDF_jointPrime, dims = (1, 3)), dims = (1, 3))
-    distr_yPrimeUpdate = (distr_y'*Π)[:]
-    F[indexes.distr_m] = (distr_mPrimeUpdate.-distr_m_Prime)[1:end-1]
-    F[indexes.distr_k] = (distr_kPrimeUpdate.-distr_k_Prime)[1:end-1]
-    F[indexes.distr_y] = (distr_yPrimeUpdate.-distr_y_Prime[:])[1:end-1]
+    distr_bPrimeUpdate = dropdims(sum(PDF_jointPrime; dims = (2, 3)); dims = (2, 3))
+    distr_kPrimeUpdate = dropdims(sum(PDF_jointPrime; dims = (1, 3)); dims = (1, 3))
+    distr_hPrimeUpdate = (distr_h' * Π)[:]
+    F[indexes.distr_b] = (distr_bPrimeUpdate .- distr_b_Prime)[1:(end - 1)]
+    F[indexes.distr_k] = (distr_kPrimeUpdate .- distr_k_Prime)[1:(end - 1)]
+    F[indexes.distr_h] = (distr_hPrimeUpdate .- distr_h_Prime[:])[1:(end - 1)]
 
-    # Error Terms on Copula (states)
-    # Deviation of iterated copula from fixed copula
-    # CopulaDevPrime(x::AbstractVector,y::AbstractVector,z::AbstractVector) = 
-    # myAkimaInterp3(CDF_m_PrimeUp, CDF_k_PrimeUp, CDF_y_PrimeUp, pdf_to_cdf(PDF_jointPrime), x, y, z) .-
-    # myAkimaInterp3(CDF_mSS, CDF_kSS, CDF_ySS, COPSS, x, y, z)
-    CDF_m_PrimeUp = cumsum(distr_mPrimeUpdate)
+    # Error Terms on copula (states): deviation of iterated copula from fixed copula
+    CDF_b_PrimeUp = cumsum(distr_bPrimeUpdate)
     CDF_k_PrimeUp = cumsum(distr_kPrimeUpdate)
-    CDF_y_PrimeUp = cumsum(distr_yPrimeUpdate)
+    CDF_h_PrimeUp = cumsum(distr_hPrimeUpdate)
     CopulaDevPrime(x::Vector, y::Vector, z::Vector) =
         myinterpolate3(
-            CDF_m_PrimeUp,
+            CDF_b_PrimeUp,
             CDF_k_PrimeUp,
-            CDF_y_PrimeUp,
+            CDF_h_PrimeUp,
             pdf_to_cdf(PDF_jointPrime),
+            n_par.model,
             x,
             y,
             z,
-        ) .- myinterpolate3(CDF_mSS, CDF_kSS, CDF_ySS, COPSS, x, y, z)
-
-    CDF_Dev = CopulaDevPrime(s_m_m, s_m_k, s_m_y) # interpolate deviations on copula grid
+        ) .- myinterpolate3(CDF_bSS, CDF_kSS, CDF_hSS, COPSS, n_par.model, x, y, z)
+    CDF_Dev = CopulaDevPrime(s_m_b, s_m_k, s_m_h)
     COP_thet =
-        compress(compressionIndexes[3], cdf_to_pdf(CDF_Dev - COP_DevPrime), DCD, IDCD) # calculate DCT of deviations
-
+        compress(compressionIndexes[3], cdf_to_pdf(CDF_Dev - COP_DevPrime), DCD, IDCD)
     F[indexes.COP] = COP_thet
+
+    ## ------------------------------------------------------------------------------------
+    ## Equilibrium conditions (auxiliary statistics)
+    ## ------------------------------------------------------------------------------------
 
     # Calculate distribution statistics (generalized moments)
     _, _, _, TOP10WshareT, TOP10IshareT, TOP10InetshareT, GiniWT, GiniCT, sdlogyT =
-        distrSummaries(PDF_joint, q, c_a_star, c_n_star, n_par, inc, incgross, m_par)
-
-    # Error Term on prices/aggregate summary vars (logarithmic, controls)
-    F[indexes.K]  = log.(K) - log.(KP)
-    F[indexes.B]  = log.(B) - log.(BP)
-    F[indexes.BD] = log.(BD) - log.(BDact)
-    F[indexes.Ht] = log.(Ht) - log.(Htact)
-    F[indexes.τlev] = av_tax_rate - av_tax_rate_up
-    F[indexes.T]  = log(T) - log(dot(distr_y, taxrev) + av_tax_rate * (unionprofits))
+        distrSummaries(
+            PDF_joint,
+            q,
+            x_a_star,
+            x_n_star,
+            n_par,
+            net_income,
+            gross_income,
+            m_par,
+        )
 
     # Error Terms on  distribution summaries
     F[indexes.GiniW] = log.(GiniW) - log.(GiniWT)
@@ -290,10 +284,21 @@ function Fsys(
     F[indexes.GiniC] = log.(GiniC) - log.(GiniCT)
     F[indexes.sdlogy] = log.(sdlogy) - log.(sdlogyT)
 
+    ## ------------------------------------------------------------------------------------
+    ## Return
+    ## ------------------------------------------------------------------------------------
 
     if only_F
         return F
     else
-        return F, c_a_star, m_a_star, k_a_star, c_n_star, m_n_star, Vk_new, Vm_new, taxrev
+        return F,
+        x_a_star,
+        b_a_star,
+        k_a_star,
+        x_n_star,
+        b_n_star,
+        Wk_new,
+        Wb_new,
+        ((Tbar .- 1.0) * (wH * N) + (Tbar .- 1.0) * Π_E)
     end
 end

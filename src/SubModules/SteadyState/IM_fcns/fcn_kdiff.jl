@@ -1,111 +1,123 @@
 @doc raw"""
-    Kdiff(K_guess, 
-    n_par, 
-    m_par, 
-    initial = true, 
-    Vm_guess = zeros(1, 1, 1), 
-    Vk_guess = zeros(1, 1, 1), 
-    distr_guess = zeros(1, 1, 1))
-
-Calculate the difference between the capital stock that is assumed and the capital
-stock that prevails under that guessed capital stock's implied prices when
-households face idiosyncratic income risk (Aiyagari model).
-
-Requires global functions from the IncomesETC module `incomes()` and [`Ksupply()`](@ref).
-
-# Arguments
-- `K_guess::Float64`: capital stock guess
-- `n_par::NumericalParameters`, 
-- `m_par::ModelParameters`
-- 5 optional arguments:
-    - `initial::Bool = true`: whether to use initial guess for marginal values
-    - `Vm_guess::AbstractArray = zeros(1, 1, 1)`: initial guess for marginal value of liquid assets
-    - `Vk_guess::AbstractArray = zeros(1, 1, 1)`: initial guess for marginal value of illiquid assets
-    - `distr_guess::AbstractArray = zeros(1, 1, 1)`: initial guess for stationary distribution
-"""
-function Kdiff(
-    K_guess::Float64,
-    n_par,
-    m_par,
-    initial::Bool = true,
-    Vm_guess::AbstractArray = zeros(1, 1, 1),
-    Vk_guess::AbstractArray = zeros(1, 1, 1),
-    distr_guess::AbstractArray = zeros(1, 1, 1),
-)
-    #----------------------------------------------------------------------------
-    # Calculate other prices from capital stock
-    #----------------------------------------------------------------------------
-    # #----------------------------------------------------------------------------
-    # # Array (inc) to store incomes
-    # # inc[1] = labor income , inc[2] = rental income,
-    # # inc[3]= liquid assets income, inc[4] = capital liquidation income
-    # #----------------------------------------------------------------------------
-    Paux = n_par.Π^1000          # Calculate ergodic ince distribution from transitions
-    distr_y = Paux[1, :]            # stationary income distribution
-    N = employment(K_guess, 1.0 ./ (m_par.μ * m_par.μw), m_par)
-    r = interest(K_guess, 1.0 ./ m_par.μ, N, m_par) + 1.0
-    w = wage(K_guess, 1.0 ./ m_par.μ, N, m_par)
-    Y = output(K_guess, 1.0, N, m_par)
-    profits = profitsSS_fnc(Y, m_par.RB, m_par)
-    unionprofits = (1.0 .- 1.0 / m_par.μw) .* w .* N
-
-    LC = 1.0 ./ m_par.μw * w .* N
-    taxrev =
-        ((n_par.grid_y / n_par.H) .* LC) -
-        m_par.τlev .* ((n_par.grid_y / n_par.H) .* LC) .^ (1.0 - m_par.τprog )
-    taxrev[end] =
-        n_par.grid_y[end] .* profits -
-        m_par.τlev .* (n_par.grid_y[end] .* profits) .^ (1.0 - m_par.τprog )
-    incgrossaux = ((n_par.grid_y / n_par.H) .* LC)
-    incgrossaux[end] = n_par.grid_y[end] .* profits
-    av_tax_rate = dot(distr_y, taxrev) ./ (dot(distr_y, incgrossaux))
-
-    incgross, inc, eff_int = incomes(
+    Kdiff(
+        KD,
         n_par,
         m_par,
-        1.0 ./ m_par.μw,
-        1.0,
-        1.0,
-        m_par.RB,
-        m_par.τprog ,
-        m_par.τlev,
-        n_par.H,
-        1.0,
-        1.0,
-        r,
-        w,
-        N,
-        profits,
-        unionprofits,
-        av_tax_rate,
+        initialize = true,
+        Wb_guess = zeros(1, 1, 1),
+        Wk_guess = zeros(1, 1, 1),
+        distr_guess = zeros(1, 1, 1)
     )
-    #----------------------------------------------------------------------------
-    # Initialize policy function (guess/stored values)
-    #----------------------------------------------------------------------------
 
-    # initial guess consumption and marginal values (if not set)
-    if initial
-        c_guess =
-            inc[1] .+ inc[2] .* (n_par.mesh_k .* r .> 0) .+ inc[3] .* (n_par.mesh_m .> 0)
-        if any(any(c_guess .< 0.0))
-            @warn "negative consumption guess"
+This function is used to find the stationary equilibrium of the household block of the
+model, in particular, it is used in [`find_steadystate()`](@ref).
+
+Calculate the difference between the capital stock that is demanded/assumed (KD) and the
+capital stock that prevails under that demanded capital stock's implied prices when
+households face idiosyncratic income risk (Aiyagari model).
+
+Requires global functions from the IncomesETC module and [`Ksupply()`](@ref).
+
+# Arguments
+- `KD::Float64`: Assumed capital demand (guess)
+- `n_par::NumericalParameters`, `m_par::ModelParameters`
+- `initialize::Bool = true`: If true, initialize the marginal value functions and
+    stationary distribution, otherwise use the provided guesses that follow. Providing the
+    guesses can be used in [`CustomBrent()`](@ref) to speed up the solution since the
+    results from the previous iteration can be used as starting values.
+- `Wb_guess::AbstractArray = zeros(1, 1, 1)`: Guess for marginal value of liquid assets
+- `Wk_guess::AbstractArray = zeros(1, 1, 1)`: Guess for marginal value of illiquid
+    assets
+- `distr_guess::AbstractArray = zeros(1, 1, 1)`: Guess for stationary distribution
+
+# Returns
+- `diff::Float64`: Difference between the demanded and supplied capital stock
+- `Wb::AbstractArray`: Marginal value of liquid assets, implied by capital demand
+- `Wk::AbstractArray`: Marginal value of illiquid assets, implied by capital demand
+- `distr::AbstractArray`: Stationary distribution of idiosyncratic states, implied by
+    capital demand
+"""
+function Kdiff(
+    KD::Float64,
+    n_par,
+    m_par;
+    initialize::Bool = true,
+    Wb_guess::AbstractArray = zeros(1, 1, 1),
+    Wk_guess::AbstractArray = zeros(1, 1, 1),
+    distr_guess::AbstractArray = zeros(1, 1, 1),
+)
+
+    ## ------------------------------------------------------------------------------------
+    ## Step 1: Calculate aggregates implied by capital demand
+    ## ------------------------------------------------------------------------------------
+
+    # See module IncomesETC for details on the function compute_args_hh_prob_ss
+    args_hh_prob = compute_args_hh_prob_ss(KD, m_par, n_par)
+
+    @read_args_hh_prob()
+
+    ## ------------------------------------------------------------------------------------
+    ## Step 2: Calculate incomes of households given aggregates from above
+    ## ------------------------------------------------------------------------------------
+
+    # Net incomes of households
+    net_income, _, eff_int = incomes(n_par, m_par, args_hh_prob)
+
+    ## ------------------------------------------------------------------------------------
+    ## Step 3: Initialize marginal value functions and stationary distribution
+    ## ------------------------------------------------------------------------------------
+
+    # If initialize is true, set up guesses here, otherwise use keyword arguments.
+    if initialize
+
+        # Guess consumption: consume factor income (if positive)
+        net_labor_union_inc_GHH = net_income[1]
+        rental_inc = net_income[2]
+        liquid_asset_inc = net_income[3]
+
+        # assume that the consumption guess has the following form
+        x_guess =
+            net_labor_union_inc_GHH .+ rental_inc .* (n_par.mesh_k .* (RK .- 1.0) .> 0) .+
+            liquid_asset_inc .* (n_par.mesh_b .> 0)
+        if any(any(x_guess .< 0.0))
+            @warn "Negative consumption guess. Potentially reduce Kmax_coarse!"
         end
-        Vm = eff_int .* mutil(c_guess, m_par)
-        Vk = (r + m_par.λ) .* mutil(c_guess, m_par)
+
+        # Based on consumption guess update the marginal value of liquid assets
+        Wb = eff_int .* mutil(x_guess, m_par)
+
+        # Based on consumption guess update the marginal value of illiquid assets
+        Wk = (RK + m_par.λ) .* mutil(x_guess, m_par)
+
+        # Guess stationary distribution
         distr = n_par.dist_guess
     else
-        Vm = Vm_guess
-        Vk = Vk_guess
+
+        # Use provided keyword arguments
+        Wb = Wb_guess
+        Wk = Wk_guess
         distr = distr_guess
     end
-    #----------------------------------------------------------------------------
-    # Calculate supply of funds for given prices
-    #----------------------------------------------------------------------------
-    KS = Ksupply(m_par.RB, r, n_par, m_par, Vm, Vk, distr, inc, eff_int)
-    K = KS[1]                                                     # capital
-    Vm = KS[end-2]                                                 # marginal value of liquid assets
-    Vk = KS[end-1]                                                 # marginal value of illiquid assets
-    distr = KS[end]                                                   # stationary distribution  
-    diff = K - K_guess                                               # excess supply of funds
-    return diff, Vm, Vk, distr
+
+    ## ------------------------------------------------------------------------------------
+    ## Step 4: Calculate supply of capital given aggregates from above
+    ## ------------------------------------------------------------------------------------
+
+    # Call function Ksupply from fcn_ksupply.jl
+    KsupplyOut = Ksupply(args_hh_prob, n_par, m_par, Wb, Wk, distr, net_income, eff_int)
+
+    # Unpack results
+    KS = KsupplyOut[1]
+    Wb = KsupplyOut[end - 2]
+    Wk = KsupplyOut[end - 1]
+    distr = KsupplyOut[end]
+
+    # Calculate excess supply of funds
+    diff = KS - KD
+
+    ## ------------------------------------------------------------------------------------
+    ## Return results
+    ## ------------------------------------------------------------------------------------
+
+    return diff, Wb, Wk, distr
 end

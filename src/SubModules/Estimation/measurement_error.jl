@@ -14,7 +14,6 @@ Build measurement error.
 - `meas_error_std`: standard deviations of observables with measurement error
 """
 function measurement_error(Data, observed_vars, e_set)
-
     if !isempty(e_set.meas_error_input)
 
         # find correct positions for measurement error

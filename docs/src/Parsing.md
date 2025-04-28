@@ -1,5 +1,5 @@
 # Parsing
-The `Parsing` submodule provides macros used for automatic code generation, structs, indexes, etc. These map, e.g., deviations from steady state of aggregate variables to equations lines in the non-linear difference equation that describe the economy. 
+The `Parsing` submodule provides macros used for automatic code generation, structs, indexes, etc. These map, e.g., deviations from steady state of aggregate variables to equations lines in the non-linear difference equation that describe the economy.
 
 ## Collect variables: macros
 ```@docs

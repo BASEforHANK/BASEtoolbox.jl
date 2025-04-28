@@ -17,8 +17,7 @@ the following areas of the estimation:
 - **estimation of variances**: `shock_names` contain the aggregate shocks in the model,
     whose variances are estimated. `me_treatment` defines how measurement errors
     are treated: for `:fixed`, their variances are fixed by the data-variance, otherwise
-    they are estimated either with `:bounded` uniform priors, or `:unbounded` priors 
-    (see [`BASEforHANK.Estimation.measurement_error()`](@ref)). For the latter case, the priors are set in
+    they are estimated either with `:bounded` uniform priors, or `:unbounded` priors (see [`BASEforHANK.Estimation.measurement_error()`](@ref)). For the latter case, the priors are set in
     `meas_error_distr`
 - **numerical parameters**: the maximum number of iterations to find the mode of the
     likelihood (see [`BASEforHANK.Estimation.mode_finding()`](@ref)) is set in `max_iter_mode`. `ndraws`, `burnin`
@@ -34,11 +33,13 @@ and its maximization. We get the model parameters that are to be estimated,
 together with their priors, from `m_par` (in addition to measurement error variances,
 see [Settings](@ref)).
 
+There is also the option to provide a file with initial guesses of parameters for the mode finding, which might have computational advantages compared to the priors from `m_par`. In the baseline example we provide these initial guesses through the txt-file named `par_final_dict`. The first if-condition in the function `BASEforHANK.find_mode()` guarantees that if the file is not provided, priors from `m_par` will be used for mode finding. However, if the extra file is provided, the contained dictionary therein is loaded and the specified guesses are assigned to the starting values. Loading it as a dictionary guarantees that the assignment is order-insensitive and thus robust to changes in the individual selection of which parameters are to be estimated. Note that it is also possible to only specify values for a part of the to-be-estimated parameters and in this case the missing starting values will be replaced by the mode of priors from `m_par`.
+
 ### The likelihood function
 The function [`BASEforHANK.Estimation.likeli()`](@ref) computes the log-likelihood of the model parameters `par`
 in the following steps:
 
-1. call [`BASEforHANK.PerturbationSolution.LinearSolution_estim()`](@ref) to derive the linear state-space representation of the model given `par`.
+1. call [`BASEforHANK.PerturbationSolution.LinearSolution_reduced_system()`](@ref) to derive the linear state-space representation of the model given `par`.
     Differently from [`BASEforHANK.PerturbationSolution.LinearSolution()`](@ref), differentiate only the system of *aggregate* equilibrium
     conditions with respect to *aggregate* variables, i.e. [`BASEforHANK.PerturbationSolution.Fsys_agg()`](@ref). This is sufficient,
     as the estimated parameters do not enter in the heterogeneous agent part of the equilibrium system [^BBL].
@@ -57,7 +58,7 @@ with the package `Optim`. Note that in order to obtain the Hessian, you need to 
 ### Called functions
 ```@docs
 BASEforHANK.Estimation.likeli
-BASEforHANK.PerturbationSolution.LinearSolution_estim
+BASEforHANK.PerturbationSolution.LinearSolution_reduced_system
 BASEforHANK.Estimation.kalman_filter
 BASEforHANK.Estimation.measurement_error
 ```
@@ -75,6 +76,7 @@ BASEforHANK.Estimation.rwmh
 BASEforHANK.Estimation.multi_chain_init
 BASEforHANK.Estimation.prioreval
 BASEforHANK.Estimation.kalman_filter_smoother
+BASEforHANK.find_mode
 ```
 
 [^BBL]:

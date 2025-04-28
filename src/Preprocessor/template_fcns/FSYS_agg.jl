@@ -1,10 +1,22 @@
+#=
+
+Template function for Fsys_agg.jl
+
+Explanation:
+During the preprocessing step, `PreprocessInputs.jl` reads in this template file and
+copies the content from `input_aggregate_model.mod` into the code block below at
+the line marked with "# aggregate model marker". The code block is then written to
+`FSYS_agg_generated.jl` in the `generated_fcns` directory.
+
+=#
+
 @doc raw"""
     Fsys_agg(X, XPrime, XSS, distrSS, m_par, n_par, indexes)
 
 Return deviations from aggregate equilibrium conditions.
 
 `indexes` can be both `IndexStruct` or `IndexStructAggr`; in the latter case
-(which is how function is called by [`LinearSolution_estim()`](@ref)), variable-vectors
+(which is how function is called by [`LinearSolution_reduced_system()`](@ref)), variable-vectors
 `X`,`XPrime`, and `XSS` only contain the aggregate variables of the model.
 """
 function Fsys_agg(
@@ -16,26 +28,23 @@ function Fsys_agg(
     n_par,
     indexes,
 )
-    # The function call with Duals takes
-    # Reserve space for error terms
+
+    ## ------------------------------------------------------------------------------------
+    ## Preamble
+    ## ------------------------------------------------------------------------------------
+
+    # Initialize the output vector, use the same type as the input
     F = zeros(eltype(X), size(X))
-    ############################################################################
-    #            I. Read out argument values                                   #
-    ############################################################################
 
-    ############################################################################
-    # I.1. Generate code that reads aggregate states/controls
-    #      from steady state deviations. Equations take the form of:
-    # r       = exp.(XSS[indexes.rSS] .+ X[indexes.r])
-    # rPrime  = exp.(XSS[indexes.rSS] .+ XPrime[indexes.r])
-    ############################################################################
-
-    # @generate_equations(aggr_names)
+    # Unpack X, XPrime, and XSS into variables
     @generate_equations()
 
-    # Take aggregate model from model file
+    ## ------------------------------------------------------------------------------------
+    ## Get the equilibrium conditions for the aggregate model (`input_aggregate_model.mod`)
+    ## ------------------------------------------------------------------------------------
+
+    # DO NOT DELETE OR EDIT NEXT LINE! This is needed for parser.
     # aggregate model marker
-    # @include "../3_Model/input_aggregate_model.jl"
 
     return F
 end

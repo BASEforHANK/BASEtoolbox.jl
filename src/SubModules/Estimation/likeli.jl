@@ -2,11 +2,11 @@
     likeli(par, Data, Data_missing, H_sel, priors, meas_error, meas_error_std, sr, lr, m_par, e_set; smoother=false)
 Compute the likelihood of `Data`, given model-parameters `par` and prior `priors` (maximize to find MLE of `par`).
 
-Solve model with [`LinearSolution_estim()`](@ref), compute likelihood with [`kalman_filter()`](@ref) or with [`kalman_filter_smoother()`](@ref) (if `smoother==True`).
+Solve model with [`LinearSolution_reduced_system()`](@ref), compute likelihood with [`kalman_filter()`](@ref) or with [`kalman_filter_smoother()`](@ref) (if `smoother==True`).
 
 # Returns
 *if `smoother==False`:*
-- `log_like`,`prior_like`,`post_like`,`alarm`: log-likelihoods (`post` is the sum of `prior` and computed likelihood); `alarm` indicates error when solving model with [`LinearSolution_estim`](@ref), sets log-likelihood to `-9.e15`
+- `log_like`,`prior_like`,`post_like`,`alarm`: log-likelihoods (`post` is the sum of `prior` and computed likelihood); `alarm` indicates error when solving model with [`LinearSolution_reduced_system`](@ref), sets log-likelihood to `-9.e15`
 *if `smoother==True`:*
 - `smoother_output`: returns from [`kalman_filter_smoother()`](@ref)
 """
@@ -24,7 +24,6 @@ function likeli(
     e_set;
     smoother = false,
 )
-
     return likeli_backend(
         par,
         Data,
@@ -45,17 +44,16 @@ end
     likeli(par, sr, lr, er, m_par, e_set; smoother=false)
 Compute the likelihood of `er.Data`, given model-parameters `par` and prior `er.priors` (maximize to find MLE of `par`).
 
-Solve model with [`LinearSolution_estim()`](@ref), compute likelihood with [`kalman_filter()`](@ref) or with [`kalman_filter_smoother()`](@ref) (if `smoother==True`).
+Solve model with [`LinearSolution_reduced_system()`](@ref), compute likelihood with [`kalman_filter()`](@ref) or with [`kalman_filter_smoother()`](@ref) (if `smoother==True`).
 
 # Returns
 *if `smoother==False`:*
-- `log_like`,`prior_like`,`post_like`,`alarm`: log-likelihoods (`post` is the sum of `prior` and computed likelihood); `alarm` indicates error when solving model with [`LinearSolution_estim`](@ref), sets log-likelihood to `-9.e15`
+- `log_like`,`prior_like`,`post_like`,`alarm`: log-likelihoods (`post` is the sum of `prior` and computed likelihood); `alarm` indicates error when solving model with [`LinearSolution_reduced_system`](@ref), sets log-likelihood to `-9.e15`
 *if `smoother==True`:*
 - `smoother_output`: returns from [`kalman_filter_smoother()`](@ref)
 - `State2Control`,`LOM`: state-to-control and state transition matrizzes
 """
 function likeli(par, sr, lr, er, m_par, e_set; smoother = false)
-
     return likeli_backend(
         par,
         er.Data,
@@ -95,7 +93,7 @@ function likeli_backend(
         alarm = true
         State2Control = zeros(sr.n_par.ncontrols_r, sr.n_par.nstates_r)
         if e_set.debug_print
-            println("Parameter try violates PRIOR")
+            @printf "Parameter try violates PRIOR.\n"
         end
     else
         if e_set.me_treatment != :fixed
@@ -121,7 +119,7 @@ function likeli_backend(
             m_iter = 1
             if e_set.me_treatment != :fixed
                 for (k, v) in meas_error # read out position of measurement errors
-                    MCov[v, v] = par[m_start+m_iter] .^ 2
+                    MCov[v, v] = par[m_start + m_iter] .^ 2
                     m_iter += 1
                 end
             else
@@ -137,14 +135,14 @@ function likeli_backend(
         State2Control::Array{eltype(par),2},
         LOM::Array{eltype(par),2},
         alarm_LinearSolution::Bool =
-            LinearSolution_estim(sr, m_par, lr.A, lr.B; estim = true)
+            LinearSolution_reduced_system(sr, m_par, lr.A, lr.B; allow_approx_sol = false)
 
         # BLAS.set_num_threads(Threads.nthreads())
         if alarm_LinearSolution # abort if model doesn't solve
             log_like = -9.e15
             alarm = true
             if e_set.debug_print
-                println("Parameter try leads to inexistent or unstable equilibrium")
+                @printf "Parameter try leads to inexistent or unstable equilibrium.\n"
             end
         else
             MX = [I; State2Control]
@@ -166,7 +164,6 @@ function likeli_backend(
     else
         return smoother_output
     end
-
 end
 
 @doc raw"""

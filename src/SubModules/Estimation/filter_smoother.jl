@@ -33,7 +33,7 @@ function kalman_filter(
     # treat non-well-behaved covariance matrix
     SIG = lyapd(LOM, SCov) #0.040247 seconds (27 allocations: 4.188 MiB)
     # 0.015693 seconds (13 allocations: 2.141 MiB)
-    prox!(SIG, IndPSD(), SIG) # ensures symmetric, positive definite SIG (from ProximalOperators package) 
+    prox!(SIG, IndPSD(), SIG) # ensures symmetric, positive definite SIG (from ProximalOperators package)
     t = size(Data)
     n = size(LOM)
     nH = size(H)
@@ -57,7 +57,7 @@ function kalman_filter(
         H_slice[miss_temp, :] .= 0.0
 
         # compute likelihood contribution
-        # resi = Data[s, :] .- H_slice * xhat 
+        # resi = Data[s, :] .- H_slice * xhat
         BLAS.gemv!('N', -1.0, H_slice, xhat, 1.0, copyto!(resi, Data[s, :]))
         # HS = H_slice * SIG
         BLAS.symm!('R', 'L', 1.0, SIG, H_slice, 0.0, HS)
@@ -74,7 +74,7 @@ function kalman_filter(
         if sign_logdet < 0
             log_lik += -10.e8
             if e_set.debug_print
-                println("KF")
+                @printf "KF\n"
             end
             return log_lik
         else
@@ -98,7 +98,6 @@ function kalman_filter(
         symmetric_square0!(Z, SIG, SIG, ZSaux)
         symmetric_square!(K, MCov, SIG, KMaux)
         SIG[SCov_ind] += SCov[SCov_ind]
-
     end
 
     loglik = 0.5 * log_lik
@@ -119,7 +118,7 @@ function kalman_filter(
 
     # treat non-well-behaved covariance matrix
     SIG = lyapd(LOM, SCov)
-    prox!(SIG, IndPSD(), SIG) # ensures symmetric, positive definite SIG (from ProximalOperators package) 
+    prox!(SIG, IndPSD(), SIG) # ensures symmetric, positive definite SIG (from ProximalOperators package)
     #SIG.= nearest_spd(SIG)
 
     t = size(Data)
@@ -139,19 +138,19 @@ function kalman_filter(
     Lxaux = Vector{Float64}(undef, n[1])
     @views @inbounds for s = 1:t[1]
         # compute likelihood contribution
-        # resi = Data[s, :] .- H * xhat 
+        # resi = Data[s, :] .- H * xhat
         BLAS.gemv!('N', -1.0, H, xhat, 1.0, copyto!(resi, Data[s, :]))
         # H * SIG
         BLAS.symm!('R', 'L', 1.0, SIG, H, 0.0, HS)
         # Ω = H * S *H' + MCov
         BLAS.gemm!('N', 'T', 1.0, H, HS, 1.0, copyto!(Ω, MCov))
-        OmegaInv = inv(Ω) # I/Ω is translated into inv 
+        OmegaInv = inv(Ω) # I/Ω is translated into inv
 
         logdet_Ω, sign_logdet = logabsdet(Ω)
         if sign_logdet < 0
             log_lik += -10.e8
             if e_set.debug_print
-                println("KF")
+                @printf "KF\n"
             end
             return log_lik
         else
@@ -172,7 +171,6 @@ function kalman_filter(
         symmetric_square0!(Z, SIG, SIG, ZSaux)
         symmetric_square!(K, MCov, SIG, KMaux)
         SIG[SCov_ind] += SCov[SCov_ind]
-
 
         # SIG = 0.5 * (SIG + SIG')
     end
@@ -227,7 +225,6 @@ function kalman_filter_smoother(
     MCov::Array{Float64,2},
     e_set,
 )
-
     T, n_obs_vars = size(Data)
     n_states = size(LOM)[1]
 
@@ -254,7 +251,7 @@ function kalman_filter_smoother(
         if sign_logdet < 0
             log_lik += -10.e8
             if e_set.debug_print
-                println("KF")
+                @printf "KF\n"
             end
             return log_lik
         else
@@ -276,15 +273,14 @@ function kalman_filter_smoother(
         Sigma_tgt[:, :, t] =
             Sigma_tgtm1[:, :, t] -
             SH * (OmegaInv[D_nomiss[t, :], D_nomiss[t, :], t] * transpose(SH))
-        xhat_tgtm1[:, t+1] =
+        xhat_tgtm1[:, t + 1] =
             LOM * xhat_tgtm1[:, t] + K[:, D_nomiss[t, :], t] * resi[D_nomiss[t, :], t]
         Sigma_tgtm1_temp =
             L[:, :, t] * (Sigma_tgtm1[:, :, t] * L[:, :, t]') +
             K[:, D_nomiss[t, :], t] *
             (MCov[D_nomiss[t, :], D_nomiss[t, :]] * K[:, D_nomiss[t, :], t]') +
             SCov
-        Sigma_tgtm1[:, :, t+1] = 0.5 * (Sigma_tgtm1_temp + transpose(Sigma_tgtm1_temp))
-
+        Sigma_tgtm1[:, :, t + 1] = 0.5 * (Sigma_tgtm1_temp + transpose(Sigma_tgtm1_temp))
     end
 
     xhat_tgT = zeros(Float64, n_states, T)
@@ -299,21 +295,21 @@ function kalman_filter_smoother(
         r[:, t] =
             H[D_nomiss[t, :], :]' *
             OmegaInv[D_nomiss[t, :], D_nomiss[t, :], t] *
-            resi[D_nomiss[t, :], t] + L[:, :, t]' * r[:, t+1]
+            resi[D_nomiss[t, :], t] + L[:, :, t]' * r[:, t + 1]
         xhat_tgT[:, t] = xhat_tgtm1[:, t] + Sigma_tgtm1[:, :, t] * r[:, t]
 
         N[:, :, t] =
             H[D_nomiss[t, :], :]' *
             OmegaInv[D_nomiss[t, :], D_nomiss[t, :], t] *
-            H[D_nomiss[t, :], :] + L[:, :, t]' * N[:, :, t+1] * L[:, :, t]
+            H[D_nomiss[t, :], :] + L[:, :, t]' * N[:, :, t + 1] * L[:, :, t]
         Sigma_tgT[:, :, t] =
             Sigma_tgtm1[:, :, t] - Sigma_tgtm1[:, :, t] * N[:, :, t] * Sigma_tgtm1[:, :, t]
 
-        s[:, t] = SCov * r[:, t+1]
+        s[:, t] = SCov * r[:, t + 1]
         m[D_nomiss[t, :], t] =
             MCov[D_nomiss[t, :], D_nomiss[t, :]] * (
                 OmegaInv[D_nomiss[t, :], D_nomiss[t, :], t] * resi[D_nomiss[t, :], t] -
-                K[:, D_nomiss[t, :], t]' * r[:, t+1]
+                K[:, D_nomiss[t, :], t]' * r[:, t + 1]
             )
     end
 
@@ -333,7 +329,7 @@ function kalman_filter(
     # treat non-well-behaved covariance matrix
     SIG = lyapd(LOM, SCov) #0.040247 seconds (27 allocations: 4.188 MiB)
     # 0.015693 seconds (13 allocations: 2.141 MiB)
-    prox!(SIG, IndPSD(), SIG) # ensures symmetric, positive definite SIG (from ProximalOperators package) 
+    prox!(SIG, IndPSD(), SIG) # ensures symmetric, positive definite SIG (from ProximalOperators package)
     t = size(Data)
     n = size(LOM)
     nH = size(H)
@@ -374,7 +370,7 @@ function kalman_filter(
         if sign_logdet < 0
             log_lik += -10.e8
             if e_set.debug_print
-                println("KF")
+                @printf "KF\n"
             end
             return log_lik
         else
@@ -406,7 +402,6 @@ function kalman_filter(
     return loglik
 end
 
-
 function kalman_filter_herbst(Data, LOM, SCov, H, MCov, t0, e_set)
     tol = 1e-7
     converged = false
@@ -436,13 +431,13 @@ function kalman_filter_herbst(Data, LOM, SCov, H, MCov, t0, e_set)
         if sign_logdet < 0
             log_lik += -10.e8
             if e_set.debug_print
-                println("KF")
+                @printf "KF\n"
             end
             return log_lik
         else
             iFν = F \ ν
             if i > t0
-                log_lik += -logdet_F - (ν'*iFν)[1]
+                log_lik += -logdet_F - (ν' * iFν)[1]
             end
         end
 

@@ -2,8 +2,6 @@
 # - beta_pars
 # - ig_pars
 
-
-
 @doc raw"""
     beta_pars(betamean,betavariance)
 

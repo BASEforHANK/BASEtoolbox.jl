@@ -1,37 +1,39 @@
-# __precompile__(false)
-# Code runs on Julia 1.9.3
-# ------------------------------------------------------------------------------
-## Package Calls
-# ------------------------------------------------------------------------------
-
 module PostEstimation
 
-    # Sibling modules
-    using ..PerturbationSolution
+# Sibling modules
+using ..PerturbationSolution
+using ..Tools
+using ..Parsing
 
-    # 3rd Party modules
-    using   Plots,
-            VegaLite,
-            StatsPlots,
-            LinearAlgebra,
-            CategoricalArrays,
-            DataFrames
-            
-    using FFTW: ifft
+# 3rd Party modules
+using Plots,
+    StatsPlots, LinearAlgebra, CategoricalArrays, DataFrames, AlgebraOfGraphics, Printf
 
-        
-    include("PostEstimation/compute_hist_decomp.jl")
-    include("PostEstimation/compute_irfs_vardecomp.jl")
-    include("PostEstimation/compute_vardecomp_bounds.jl")
-    include("PostEstimation/plot_irfs.jl")
-    include("PostEstimation/plot_vardecomp.jl")
-    include("PostEstimation/compute_bcfreq_vardecomp.jl")
-    
-    export compute_irfs_vardecomp,
-        plot_irfs,
-        compute_hist_decomp,
-        plot_vardecomp,
-        compute_bcfreq_vardecomp,
-        compute_vardecomp_bounds
+using LaTeXStrings
+using CairoMakie: BarPlot, Label
+using FFTW: ifft
+using KernelDensity: kde
+using Interpolations
 
-end # end submodule Estimation
+include("PostEstimation/compute_irfs.jl")
+include("PostEstimation/compute_vardecomp.jl")
+include("PostEstimation/compute_hist_decomp.jl")
+
+include("PostEstimation/plot_irfs.jl")
+include("PostEstimation/plot_irfs_cat.jl")
+include("PostEstimation/plot_distributional_irfs.jl")
+include("PostEstimation/plot_vardecomp.jl")
+include("PostEstimation/plot_hist_decomp.jl")
+
+export compute_irfs,
+    compute_vardecomp,
+    compute_vardecomp_bcfreq,
+    compute_hist_decomp,
+    plot_irfs,
+    plot_irfs_cat,
+    plot_vardecomp,
+    plot_vardecomp_bcfreq,
+    plot_distributional_irfs,
+    plot_hist_decomp
+
+end

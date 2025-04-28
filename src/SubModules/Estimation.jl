@@ -14,31 +14,28 @@ using ..SteadyState
 using ..PerturbationSolution
 
 # 3rd Party modules
-using   LinearAlgebra,
-        Distributions,
-        Roots,
-        Flatten,
-        OrderedCollections,
-        Setfield,
-        Optim,
-        FileIO,
-        DataFrames,
-        CSV,
-        FieldMetadata,
-        Parameters,
-        FiniteDiff
-    
-using   Parameters: @unpack
-using   MatrixEquations: lyapd
-using   ProximalOperators: prox!, IndPSD
-import  Flatten: flattenable
+using LinearAlgebra,
+    Distributions,
+    Roots,
+    Flatten,
+    OrderedCollections,
+    Setfield,
+    Optim,
+    FileIO,
+    DataFrames,
+    CSV,
+    FieldMetadata,
+    Parameters,
+    FiniteDiff,
+    Printf,
+    PrettyTables
 
-export  mode_finding,
-        likeli,
-        nearest_spd,
-        rwmh 
-        
+using Parameters: @unpack
+using MatrixEquations: lyapd
+using ProximalOperators: prox!, IndPSD
+import Flatten: flattenable
 
+export mode_finding, likeli, nearest_spd, rwmh
 
 include("Estimation/likeli.jl")
 include("Estimation/filter_smoother.jl")

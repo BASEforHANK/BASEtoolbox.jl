@@ -9,36 +9,36 @@ module SteadyState
 using ..Tools
 using ..Parsing
 using ..IncomesETC
+using ..Types
 
 # 3rd Party modules
-using   LinearAlgebra,
-        SparseArrays,
-        Distributions,
-        Roots,
-        ForwardDiff,
-        Flatten
-    
+using LinearAlgebra, SparseArrays, Distributions, Roots, ForwardDiff, Flatten, Printf
+
 using Parameters: @unpack
 using KrylovKit: eigsolve
 using FFTW: dct, ifft
 
-export  updateV!,
-        updateV,
-        EGM_policyupdate!,
-        EGM_policyupdate,
-        DirectTransition!,
-        DirectTransition,
-        Ksupply,
-        find_steadystate,
-        first_stage_reduction
-        
+export updateW!,
+    updateW,
+    EGM_policyupdate!,
+    EGM_policyupdate,
+    DirectTransition!,
+    DirectTransition,
+    Ksupply,
+    find_steadystate,
+    first_stage_reduction
 
 # ------------------------------------------------------------------------------
 ## Define Functions
 # ------------------------------------------------------------------------------
-include("../Model/input_aggregate_names.jl") # this dependency is not ideal
+# Documentation mode: if paths to model are not defined, the code will use the baseline example.
+if !isdefined(Main, :paths)
+    include("../../examples/baseline/Model/input_aggregate_names.jl") # this dependency is not ideal
+else
+    include(Main.paths["src_example"] * "/Model/input_aggregate_names.jl") # this dependency is not ideal
+end
 include("SteadyState/EGM/EGM_policyupdate.jl")
-include("SteadyState/EGM/updateV.jl")
+include("SteadyState/EGM/updateW.jl")
 include("SteadyState/find_steadystate.jl")
 include("SteadyState/first_stage_reduction.jl")
 include("SteadyState/IM_fcns/fcn_directtransition.jl")

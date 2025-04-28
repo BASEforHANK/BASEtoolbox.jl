@@ -1,8 +1,8 @@
 @doc raw"""
-    @make_struct_aggr(struct_name) 
+    @make_struct_aggr(struct_name)
 
-Make `struct` `struct_name` with two fields for every variable name in `aggr_names`
-(for steady state value and for deviation from it).
+Make `struct_name` with two fields for every variable name in `aggr_names` (for steady state
+value and for deviation from it).
 
 # Requires
 (module) global `aggr_names`
@@ -25,9 +25,9 @@ end
 @doc raw"""
     @make_struct(struct_name)
 
-Make `struct` `struct_name` with two fields for every variable name in `s_names` (state variables)
-and `c_names` (control variables), together with fields for distribution-states
-and marginal value function-controls.
+Make `struct_name` with two fields for every variable name in `s_names` (state variables)
+and `c_names` (control variables), together with fields for distribution-states and marginal
+value function-controls.
 
 # Requires
 (module) globals `state_names`, `control_names`
@@ -49,29 +49,29 @@ macro make_struct(struct_name)
     # fieldsSS=[:($(Symbol(i, "SS::Int"))) for i in var_names]
     esc(quote
         struct $struct_name
-            distr_mSS::Array{Int,1}
+            distr_bSS::Array{Int,1}
             distr_kSS::Array{Int,1}
-            distr_ySS::Array{Int,1}
+            distr_hSS::Array{Int,1}
             COPSS::Array{Int,1}
             $(fieldsSS_states...)
-            VmSS::Array{Int,1}
-            VkSS::Array{Int,1}
+            WbSS::Array{Int,1}
+            WkSS::Array{Int,1}
             $(fieldsSS_controls...)
-            distr_m::Array{Int,1}
+            distr_b::Array{Int,1}
             distr_k::Array{Int,1}
-            distr_y::Array{Int,1}
+            distr_h::Array{Int,1}
             COP::Array{Int,1}
             $(fields_states...)
-            Vm::Array{Int,1}
-            Vk::Array{Int,1}
+            Wb::Array{Int,1}
+            Wk::Array{Int,1}
             $(fields_controls...)
         end
     end)
 end
 struct SteadyStateStruct
     KSS::Any
-    VmSS::Any
-    VkSS::Any
+    WbSS::Any
+    WkSS::Any
     distrSS::Any
     n_par::Any
 end
@@ -86,9 +86,9 @@ struct SteadyResults
     n_par::Any
     m_par::Any
     CDFSS::Any
-    CDF_m::Any
-    CDF_k::Any
-    CDF_y::Any
+    CDF_bSS::Any
+    CDF_kSS::Any
+    CDF_hSS::Any
     distrSS::Any
     state_names::Any
     control_names::Any

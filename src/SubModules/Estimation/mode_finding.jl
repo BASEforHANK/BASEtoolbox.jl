@@ -59,7 +59,7 @@ function mode_finding(sr, lr, m_par, e_set, par_start)
     par = copy(par_start)
 
     if e_set.me_treatment != :fixed
-        m_par = Flatten.reconstruct(m_par, par[1:length(par)-length(meas_error)])
+        m_par = Flatten.reconstruct(m_par, par[1:(length(par) - length(meas_error))])
     else
         m_par = Flatten.reconstruct(m_par, par)
     end
@@ -87,9 +87,8 @@ function mode_finding(sr, lr, m_par, e_set, par_start)
             e_set,
         )[3]
 
-
     # Code variant with box-constrained optimization, used for updating compression
-    OptOpt = Optim.Options(
+    OptOpt = Optim.Options(;
         show_trace = true,
         show_every = 20,
         store_trace = true,
@@ -102,12 +101,16 @@ function mode_finding(sr, lr, m_par, e_set, par_start)
     par_final = Optim.minimizer(opti)
     # Update estimated model parameters and resolve model
     if e_set.me_treatment != :fixed
-        m_par =
-            Flatten.reconstruct(m_par, par_final[1:length(par_final)-length(meas_error)])
+        m_par = Flatten.reconstruct(
+            m_par,
+            par_final[1:(length(par_final) - length(meas_error))],
+        )
     else
         m_par = Flatten.reconstruct(m_par, par_final)
     end
-    println("updating model reduction after initial optimization")
+    if sr.n_par.verbose
+        @printf "Updating model reduction after initial optimization.\n"
+    end
     @set! sr.n_par.further_compress = false
     sr_aux = model_reduction(sr, lr, m_par) # revert to full model
     lr_aux = update_model(sr_aux, lr, m_par) # solve full model
@@ -137,7 +140,7 @@ function mode_finding(sr, lr, m_par, e_set, par_start)
             e_set,
         )[3]
 
-    OptOpt = Optim.Options(
+    OptOpt = Optim.Options(;
         show_trace = true,
         show_every = 20,
         store_trace = true,
@@ -148,21 +151,26 @@ function mode_finding(sr, lr, m_par, e_set, par_start)
     opti = optimize(LL, Optim.minimizer(opti), e_set.optimizer, OptOpt)
     par_final = Optim.minimizer(opti)
 
-
     # Update estimated model parameters and resolve model
     if e_set.me_treatment != :fixed
-        m_par =
-            Flatten.reconstruct(m_par, par_final[1:length(par_final)-length(meas_error)])
+        m_par = Flatten.reconstruct(
+            m_par,
+            par_final[1:(length(par_final) - length(meas_error))],
+        )
     else
         m_par = Flatten.reconstruct(m_par, par_final)
     end
     ll_old = -Optim.minimum(opti)
 
-    println("updating model reduction after mode finding finished")
+    if sr.n_par.verbose
+        @printf "Updating model reduction after mode finding finished.\n"
+    end
     @set! sr.n_par.further_compress = false
     sr_aux = model_reduction(sr, lr, m_par) # revert to full model
     lr_aux = update_model(sr_aux, lr, m_par) # solve full model
-    println("new reduction")
+    if sr.n_par.verbose
+        @printf "New reduction.\n"
+    end
     @set! sr_aux.n_par.further_compress = true
     sr = model_reduction(sr_aux, lr_aux, m_par) # update model reduction
     lr = update_model(sr, lr_aux, m_par)   # solve new reduced model
@@ -188,8 +196,9 @@ function mode_finding(sr, lr, m_par, e_set, par_start)
         )[3]
 
     posterior_mode = -LL_final(par_final)
-    println("Likelihood at mode under ... reduction")
-    println("old: ", ll_old, " new: ", posterior_mode)
+    if sr.n_par.verbose
+        @printf "Likelihood at mode under reduction: old: %f new: %f\n" ll_old posterior_mode
+    end
 
     # Run Kalman smoother
     smoother_output = likeli(
@@ -210,12 +219,12 @@ function mode_finding(sr, lr, m_par, e_set, par_start)
     # Compute Hessian at posterior mode
     if e_set.compute_hessian == true
         if sr.n_par.verbose
-            println("Computing Hessian. This might take a while...")
+            @printf "Computing Hessian. This might take a while...\n"
         end
-        hessian_final = FiniteDiff.finite_difference_hessian(LL, par_final, relstep = 0.001)
+        hessian_final = FiniteDiff.finite_difference_hessian(LL, par_final; relstep = 0.001)
     else
         if sr.n_par.verbose
-            println("Assuming Hessian is I...")
+            @printf "Assuming Hessian is I...\n"
         end
         hessian_final = Matrix{Float64}(I, length(par_final), length(par_final))
     end

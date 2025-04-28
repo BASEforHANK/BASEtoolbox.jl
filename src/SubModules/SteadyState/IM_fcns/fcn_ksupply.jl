@@ -1,221 +1,404 @@
-@doc raw"""
-    Ksupply(RB_guess,R_guess,w_guess,profit_guess,n_par,m_par)
+"""
+    Ksupply(
+        args_hh_prob,
+        n_par,
+        m_par,
+        Wb,
+        Wk,
+        distr_guess,
+        net_income,
+        eff_int,
+    )
 
-Calculate the aggregate savings when households face idiosyncratic income risk.
+Calculate the aggregate savings when households face idiosyncratic income risk by first
+solving the household problem using the endogenous grid method (EGM) and then finding the
+stationary distribution of idiosyncratic states.
 
-Idiosyncratic state is tuple ``(m,k,y)``, where
-``m``: liquid assets, ``k``: illiquid assets, ``y``: labor income
+Idiosyncratic state is tuple `(b,k,y)`, where:
+
+ 1. `b`: liquid assets,
+ 2. `k`: illiquid assets,
+ 3. `y`: labor income.
+
+This function is used in [`find_steadystate()`](@ref) to find the stationary equilibrium, as
+an input to [`Kdiff()`](@ref), and in
+[`BASEforHANK.PerturbationSolution.prepare_linearization()`](@ref) to prepare the
+linearization of the model.
 
 # Arguments
-- `R_guess`: real interest rate illiquid assets
-- `RB_guess`: nominal rate on liquid assets
-- `w_guess`: wages
-- `profit_guess`: profits
-- `n_par::NumericalParameters`
-- `m_par::ModelParameters`
+
+  - `args_hh_prob`: Vector of arguments to the household problem
+  - `RK_guess`: gross real interest rate illiquid assets
+  - `n_par`, `m_par`
+  - `Wb`, `Wk`: guess for marginal value functions
+  - `distr_guess`: guess for stationary distribution
+  - `net_income`: incomes, output of functions from the IncomesETC module
+  - `eff_int`: effective interest rate, output of functions from the IncomesETC module
 
 # Returns
-- `K`,`B`: aggregate saving in illiquid (`K`) and liquid (`B`) assets
--  `TransitionMat`,`TransitionMat_a`,`TransitionMat_n`: `sparse` transition matrices
-    (average, with [`a`] or without [`n`] adjustment of illiquid asset)
-- `distr`: ergodic steady state of `TransitionMat`
-- `c_a_star`,`m_a_star`,`k_a_star`,`c_n_star`,`m_n_star`: optimal policies for
-    consumption [`c`], liquid [`m`] and illiquid [`k`] asset, with [`a`] or
-    without [`n`] adjustment of illiquid asset
-- `V_m`,`V_k`: marginal value functions
+
+  - `K`,`B`: aggregate saving in illiquid (`K`) and liquid (`B`) assets
+  - `Γ`,`Γ_a`,`Γ_n`: `sparse` transition matrices (average, with [`a`] or without [`n`]
+    adjustment of illiquid asset)
+  - `x_a_star`,`b_a_star`,`k_a_star`,`x_n_star`,`b_n_star`: optimal policies for consumption
+    [`c`], liquid [`m`] and illiquid [`k`] asset, with [`a`] or without [`n`] adjustment of
+    illiquid asset
+  - `Wb`,`Wk`: marginal value functions
+  - `distr`: ergodic steady state of `Γ`
 """
 function Ksupply(
-    RB_guess::Float64,
-    R_guess::Float64,
+    args_hh_prob::Vector,
     n_par,
     m_par,
-    Vm::AbstractArray,
-    Vk::AbstractArray,
+    Wb::AbstractArray,
+    Wk::AbstractArray,
     distr_guess::AbstractArray,
-    inc::AbstractArray,
+    net_income::AbstractArray,
     eff_int::AbstractArray,
 )
+    @read_args_hh_prob()
 
-    #   initialize distance variables
+    ## ------------------------------------------------------------------------------------
+    ## Step 0: Take care of complete markets case
+    ## ------------------------------------------------------------------------------------
+
+    if typeof(n_par.model) == CompleteMarkets
+        @assert @isdefined(CompMarketsCapital) "Complete Markets Model requires CompMarketsCapital function."
+        rSS = (1.0 .- m_par.β) ./ m_par.β  # complete markets interest rate
+        K = CompMarketsCapital(rSS, m_par)
+        B = m_par.ψ * K
+        Wb = ones(n_par.nb, n_par.nk, n_par.nh) .* eff_int
+        Wk = ones(n_par.nb, n_par.nk, n_par.nh)
+        distr = reshape((n_par.Π ^ 1000)[1, :], (n_par.nb, n_par.nk, n_par.nh))
+        Γ = sparse(I(2))
+        Γ_a = Γ
+        Γ_n = Γ
+        x_a_star = ones(n_par.nb, n_par.nk, n_par.nh)
+        x_n_star = ones(n_par.nb, n_par.nk, n_par.nh)
+        b_a_star = ones(n_par.nb, n_par.nk, n_par.nh)
+        b_n_star = ones(n_par.nb, n_par.nk, n_par.nh)
+        k_a_star = ones(n_par.nb, n_par.nk, n_par.nh)
+        return K,
+        B,
+        Γ,
+        Γ_a,
+        Γ_n,
+        x_a_star,
+        b_a_star,
+        k_a_star,
+        x_n_star,
+        b_n_star,
+        Wb,
+        Wk,
+        distr
+    end
+
+    ## ------------------------------------------------------------------------------------
+    ## Step 1: Preallocate variables
+    ## ------------------------------------------------------------------------------------
+
+    ## Loop variables ---------------------------------------------------------------------
+
     dist = 9999.0
     dist1 = dist
     dist2 = dist
-
-    q = 1.0       # price of Capital
-    #----------------------------------------------------------------------------
-    # Iterate over consumption policies
-    #----------------------------------------------------------------------------
     count = 0
-    n = size(Vm)
-    # containers for policies, marginal value functions etc.
-    m_n_star = similar(Vm)
-    m_a_star = similar(Vm)
-    k_a_star = similar(Vm)
-    c_a_star = similar(Vm)
-    c_n_star = similar(Vm)
-    EVm = similar(Vm)
-    EVk = similar(Vk)
-    Vm_new = similar(Vm)
-    Vk_new = similar(Vk)
-    iVm = invmutil(Vm, m_par)
-    iVk = invmutil(Vk, m_par)
-    iVm_new = similar(iVm)
-    iVk_new = similar(iVk)
-    E_return_diff = similar(EVm)
-    EMU = similar(EVm)
-    c_star_n = similar(EVm)
-    m_star_n = similar(EVm)
-    mutil_c_a = similar(EVm)
-    D1 = similar(EVm)
-    D2 = similar(EVm)
-    Resource_grid = reshape(inc[2] .+ inc[3] .+ inc[4], (n[1] .* n[2], n[3]))
-    while dist > n_par.ϵ && count < 10000 # Iterate consumption policies until converegence
-        count = count + 1
-        # Take expectations for labor income change
-        #EVk  .= reshape(reshape(Vk, (n[1] .* n[2], n[3])) * n_par.Π', (n[1], n[2], n[3]))
-        BLAS.gemm!(
-            'N',
-            'T',
-            1.0,
-            reshape(Vk, (n[1] .* n[2], n[3])),
-            n_par.Π,
-            0.0,
-            reshape(EVk, (n[1] .* n[2], n[3])),
-        )
-        EVk .= reshape(EVk, (n[1], n[2], n[3]))
-        BLAS.gemm!(
-            'N',
-            'T',
-            1.0,
-            reshape(Vm, (n[1] .* n[2], n[3])),
-            n_par.Π,
-            0.0,
-            reshape(EVm, (n[1] .* n[2], n[3])),
-        )
-        EVm .= reshape(EVm, (n[1], n[2], n[3]))
-        EVm .*= eff_int
 
-        # Policy update step
+    ## Policy and value functions ---------------------------------------------------------
+
+    nb, nk, nh = size(Wb)
+
+    # Policy functions on exogenous grid
+    b_n_star = similar(Wb)
+    b_a_star = similar(Wb)
+    k_a_star = similar(Wb)
+    x_a_star = similar(Wb)
+    x_n_star = similar(Wb)
+
+    # Policy functions on endogenous grid, non-adjustment case
+    x_tilde_n = similar(Wb)
+    b_tilde_n = similar(Wb)
+
+    # Expected marginal value functions
+    EWb = similar(Wb)
+    EWk = similar(Wk)
+
+    # New marginal value functions
+    Wb_new = similar(Wb)
+    Wk_new = similar(Wk)
+
+    # Inverse marginal value functions
+    iWb = invmutil(Wb, m_par)
+    iWk = invmutil(Wk, m_par)
+    iWb_new = similar(iWb)
+    iWk_new = similar(iWk)
+
+    # Distance between old and new inverse policy functions
+    D1 = similar(Wb)
+    D2 = similar(Wb)
+
+    # Difference between expected marginal value functions of assets
+    E_return_diff = similar(Wb)
+
+    # Marginal utility of consumption
+    EMU = similar(Wb)
+
+    # Marginal utility of consumption, adjustment case
+    mutil_x_a = similar(Wb)
+
+    ## Resouce grid -----------------------------------------------------------------------
+
+    # Asset income plus liquidation value (adjustment case)
+    rental_inc = net_income[2]
+    liquid_asset_inc = net_income[3]
+    capital_liquidation_inc = net_income[4]
+
+    # Exogenous resource grid for the adjustment case in EGM calculated according to eq.
+    # (resources adjustment)
+    R_exo_a =
+        reshape(rental_inc .+ liquid_asset_inc .+ capital_liquidation_inc, (nb .* nk, nh))
+
+    ## ------------------------------------------------------------------------------------
+    ## Step 2: Loop
+    ## ------------------------------------------------------------------------------------
+
+    # Iterate over marginal values until convergence
+    loop_time = time()
+    while dist > n_par.ϵ && count < 10000
+        count += 1
+
+        ## Take expectations given exogenous state transition -----------------------------
+
+        #=
+        Perform matrix multiplication using BLAS and reshape the result.
+
+        Essentially this function calculates the expected marginal value of illiquid assets
+        as would EWk .= reshape(reshape(Wk, (nb .* nk, nh)) * n_par.Π', (nb, nk, nh)),
+        however, the BLAS `gemm!` function allows faster computation.
+
+        The following lines use the BLAS `gemm!` function to perform fast matrix
+        multiplication on the input matrix `Wk` and the parameter matrix `n_par.Π`. The
+        result is stored in `EWk`. The matrices are reshaped before and after the
+        multiplication to match the required dimensions.
+
+        Arguments:
+        - `Wk`: Input matrix to be multiplied, reshaped to dimensions `(nb * nk, nh)`.
+        - `n_par.Π`: Parameter matrix used for multiplication.
+        - `EWk`: Output matrix to store the result, reshaped to dimensions `(nb * nk, nh)`.
+        - `n`: Tuple containing the dimensions for reshaping the matrices.
+
+        Additionally, BLAS.gemm! has inputs 1.0 and 0.0 to specify potential scaling factors
+        for the input matrices (not used). The arguments 'N' and 'T' specify that the
+        matrices are not transposed before multiplication.
+
+        The final result in `EWk` is reshaped back to dimensions `(nb, nk, nh)`.
+        =#
+
+        # Calculate expected marginal value of illiquid assets using BLAS following eq.
+        # (ECV1)
+        if typeof(n_par.model) == TwoAsset
+            BLAS.gemm!(
+                'N',
+                'T',
+                1.0,
+                reshape(Wk, (nb .* nk, nh)),
+                n_par.Π,
+                0.0,
+                reshape(EWk, (nb .* nk, nh)),
+            )
+            EWk .= reshape(EWk, (nb, nk, nh))
+        end
+
+        # Repeating the same process for the expected marginal value of liquid assets
+        # following eq. (ECV2)
+        BLAS.gemm!(
+            'N',
+            'T',
+            1.0,
+            reshape(Wb, (nb .* nk, nh)),
+            n_par.Π,
+            0.0,
+            reshape(EWb, (nb .* nk, nh)),
+        )
+        EWb .= reshape(EWb, (nb, nk, nh))
+
+        # Applying the effective interest rate to the expected marginal value of liquid
+        # assets to match the expression shown in the Envelope condition in the
+        # documentation (CV2)
+        EWb .*= eff_int
+
+        ## Policy update step -------------------------------------------------------------
+
+        # Given expected marginal values, update the policy functions
         EGM_policyupdate!(
-            c_a_star,
-            m_a_star,
+            x_a_star,
+            b_a_star,
             k_a_star,
-            c_n_star,
-            m_n_star,
+            x_n_star,
+            b_n_star,
             E_return_diff,
             EMU,
-            c_star_n,
-            m_star_n,
-            Resource_grid,
-            EVm,
-            EVk,
-            q,
-            m_par.π,
-            RB_guess,
-            1.0,
-            inc,
+            x_tilde_n,
+            b_tilde_n,
+            R_exo_a,
+            EWb,
+            EWk,
+            args_hh_prob,
+            net_income,
             n_par,
             m_par,
-            false,
+            n_par.warn_egm,
+            n_par.model,
         )
 
-        # marginal value update step
-        updateV!(
-            Vk_new,
-            Vm_new,
-            mutil_c_a,
-            EVk,
-            c_a_star,
-            c_n_star,
-            m_n_star,
-            R_guess - 1.0,
-            q,
+        ## Marginal value update step -------------------------------------------------------
+
+        # Given the policy functions, update the marginal value functions
+        updateW!(
+            Wk_new,
+            Wb_new,
+            mutil_x_a,
+            EWk,
+            x_a_star,
+            x_n_star,
+            b_n_star,
+            args_hh_prob,
             m_par,
             n_par,
+            n_par.model,
         )
-        invmutil!(iVk_new, Vk_new, m_par)
-        invmutil!(iVm_new, Vm_new, m_par)
-        # Calculate distance in updates
-        D1 .= iVk_new .- iVk
-        D2 .= iVm_new .- iVm
-        dist1 = maximum(abs, D1)
+
+        ## Calculate distance in updates and update ----------------------------------------
+
+        # Calculate distance of inverse marginal value functions (more conservative), and
+        # update marginal value functions
+
+        if typeof(n_par.model) == TwoAsset
+            invmutil!(iWk_new, Wk_new, m_par)
+        end
+        invmutil!(iWb_new, Wb_new, m_par)
+
+        if typeof(n_par.model) == TwoAsset
+            D1 .= iWk_new .- iWk
+        end
+        D2 .= iWb_new .- iWb
+
+        if typeof(n_par.model) == TwoAsset
+            dist1 = maximum(abs, D1)
+        end
         dist2 = maximum(abs, D2)
-        dist = max(dist1, dist2) # distance of old and new policy
 
-        # update policy guess/marginal values of liquid/illiquid assets
-        Vm .= Vm_new
-        Vk .= Vk_new
-        iVk .= iVk_new
-        iVm .= iVm_new
+        if typeof(n_par.model) == TwoAsset
+            dist = max(dist1, dist2)
+        else
+            dist = dist2
+        end
+
+        if typeof(n_par.model) == TwoAsset
+            Wk .= Wk_new
+        end
+        Wb .= Wb_new
+        if typeof(n_par.model) == TwoAsset
+            iWk .= iWk_new
+        end
+        iWb .= iWb_new
     end
-    println("EGM Iterations: ", count)
-    println("EGM Dist: ", dist)
+    loop_time = time() - loop_time
 
-    #------------------------------------------------------
-    # Find stationary distribution (Is direct transition better for large model?)
-    #------------------------------------------------------
+    if n_par.verbose
+        @printf "EGM: Iterations %d, Distance %.2e, Time %.2f\n" count dist loop_time
+    end
 
-    # Define transition matrix
+    # Correct Wk for one asset case
+    if typeof(n_par.model) == OneAsset
+        Wk .= 1.0
+    end
+
+    ## ------------------------------------------------------------------------------------
+    ## Step 3: Find stationary distribution
+    ## ------------------------------------------------------------------------------------
+
+    ## Define transition matrix -----------------------------------------------------------
+
+    # Calculate inputs for sparse transition matrix
+    #=
+
+    MakeTransition from fcn_maketransition.jl returns the following variables:
+    - S_a: start index for adjustment case
+    - T_a: target index for adjustment case
+    - W_a: weight for adjustment case
+    - S_n: start index for non-adjustment case
+    - T_n: target index for non-adjustment case
+    - W_n: weight for non-adjustment case
+
+    =#
     S_a, T_a, W_a, S_n, T_n, W_n =
-        MakeTransition(m_a_star, m_n_star, k_a_star, n_par.Π, n_par)
-    TransitionMat_a = sparse(
+        MakeTransition(b_a_star, b_n_star, k_a_star, n_par.Π, n_par, n_par.model)
+
+    # Create sparse transition matrix for adjustment case of dimensions nb * nk * nh times
+    # nb * nk * nh such that Γ_a[S_a[k], T_a[k]] = W_a[k].
+    Γ_a = sparse(
         S_a,
         T_a,
         W_a,
-        n_par.nm * n_par.nk * n_par.ny,
-        n_par.nm * n_par.nk * n_par.ny,
+        n_par.nb * n_par.nk * n_par.nh,
+        n_par.nb * n_par.nk * n_par.nh,
     )
-    TransitionMat_n = sparse(
+
+    # Create sparse transition matrix for non-adjustment case of dimensions nb * nk * nh
+    # times nb * nk * nh such that Γ_n[S_n[k], T_n[k]] = W_n[k].
+    Γ_n = sparse(
         S_n,
         T_n,
         W_n,
-        n_par.nm * n_par.nk * n_par.ny,
-        n_par.nm * n_par.nk * n_par.ny,
+        n_par.nb * n_par.nk * n_par.nh,
+        n_par.nb * n_par.nk * n_par.nh,
     )
-    Γ = m_par.λ .* TransitionMat_a .+ (1.0 .- m_par.λ) .* TransitionMat_n
 
-    # Calculate left-hand unit eigenvector
+    # Joint, probability-weighted transition matrix
+    Γ = m_par.λ .* Γ_a .+ (1.0 .- m_par.λ) .* Γ_n
 
+    ## Stationary distribution ------------------------------------------------------------
+
+    # Calculate left-hand unit eigenvector of Γ' using eigsolve from KrylovKit
     aux = real.(eigsolve(Γ', distr_guess[:], 1)[2][1])
 
-    ## Exploit that the Eigenvector of eigenvalue 1 is the nullspace of TransitionMat' -I
-    #     Q_T = LinearMap((dmu, mu) -> dist_change!(dmu, mu, Γ), n_par.nm * n_par.nk * n_par.ny, ismutating = true)
-    #     aux = fill(1/(n_par.nm * n_par.nk * n_par.ny), n_par.nm * n_par.nk * n_par.ny)#distr_guess[:] # can't use 0 as initial guess
-    #     gmres!(aux, Q_T, zeros(n_par.nm * n_par.nk * n_par.ny))  # i.e., solve x'(Γ-I) = 0 iteratively
-    ##qr algorithm for nullspace finding
-    #     aux2 = qr(Γ - I)
-    #     aux = Array{Float64}(undef, n_par.nm * n_par.nk * n_par.ny)
-    #     aux[aux2.prow] = aux2.Q[:,end]
-    #
-    distr = (reshape((aux[:]) ./ sum((aux[:])), (n_par.nm, n_par.nk, n_par.ny)))
+    # Normalize and reshape to stationary distribution (nb x nk x nh)
+    distr = (reshape((aux[:]) ./ sum((aux[:])), (n_par.nb, n_par.nk, n_par.nh)))
 
-    #-----------------------------------------------------------------------------
-    # Calculate capital stock
-    #-----------------------------------------------------------------------------
-    K = dot(sum(distr, dims = (1, 3)), n_par.grid_k)
-    B = dot(sum(distr, dims = (2, 3)), n_par.grid_m)
+    ## ------------------------------------------------------------------------------------
+    ## Step 4: Calculate aggregate savings
+    ## ------------------------------------------------------------------------------------
+
+    # Aggregate savings in illiquid assets
+    supply_illiquid = dot(sum(distr; dims = (1, 3)), n_par.grid_k)
+
+    # Aggregate savings in liquid assets
+    supply_liquid = dot(sum(distr; dims = (2, 3)), n_par.grid_b)
+
+    if typeof(n_par.model) == TwoAsset
+        K = supply_illiquid
+        B = supply_liquid
+    elseif typeof(n_par.model) == OneAsset
+        K = (1.0 - m_par.ψ) * supply_liquid
+        B = m_par.ψ * supply_liquid
+    end
+
+    ## ------------------------------------------------------------------------------------
+    ## Return results
+    ## ------------------------------------------------------------------------------------
+
     return K,
     B,
     Γ,
-    TransitionMat_a,
-    TransitionMat_n,
-    c_a_star,
-    m_a_star,
+    Γ_a,
+    Γ_n,
+    x_a_star,
+    b_a_star,
     k_a_star,
-    c_n_star,
-    m_n_star,
-    Vm,
-    Vk,
+    x_n_star,
+    b_n_star,
+    Wb,
+    Wk,
     distr
-end
-function next_dist(mu, Q)
-    @unpack m, n, colptr, rowval, nzval = Q
-    nextmu = similar(mu)
-    @inbounds for col = 1:m
-        nextmu[col] = 0.0
-        for n_row = colptr[col]:colptr[col+1]-1
-            nextmu[col] += mu[rowval[n_row]] * nzval[n_row]
-        end
-    end
-    return nextmu
 end
