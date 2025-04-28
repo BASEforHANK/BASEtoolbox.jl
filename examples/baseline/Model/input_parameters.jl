@@ -80,13 +80,11 @@ parameter::T = value | "ascii_name" | L"latex_name" | prior_distribution | estim
 
     # Tradable shares
     ωΠ::T =
-        0.2 | "omegaPi" | "fraction of tradable firm-profits" | L"\omega^{\Pi}" |
+        0.2 | "omegaPi" | "fraction tradable profits" | L"\omega^{\Pi}" |
         Beta(beta_pars(0.2, 0.075^2)...) | false
-    ιΠ::T =
-        0.016 | "iotaPi" | "fraction of shares that retire / depreciate" | L"\iota^{\Pi}" |
-        _ | false
+    ιΠ::T = 0.016 | "iotaPi" | "fraction depreciating shares" | L"\iota^{\Pi}" | _ | false
     shiftΠ::T =
-        0.5 | "shiftPi" | "fraction of tradable firm-profits" | L"\shift^{\Pi}" |
+        0.5 | "shiftPi" | "fraction tradable profits" | L"\shift^{\Pi}" |
         Beta(beta_pars(0.5, 0.25^2)...) | true
 
     # monetary policy
@@ -148,7 +146,7 @@ parameter::T = value | "ascii_name" | L"latex_name" | prior_distribution | estim
         L"\rho_{Pshock}" | Beta(beta_pars(0.5, 0.2^2)...) | false
     σ_Tprogshock::T =
         0.0 | "sigma_Pshock" | "standard deviation of tax progressivity shock" |
-        L"\sigma_P" | InverseGamma(ig_pars(0.001, 0.02^2)...) | true # Std tax progr.
+        L"\sigma_P" | InverseGamma(ig_pars(0.001, 0.02^2)...) | true
 
     ρ_Gshock::T =
         0.98 | "rho_Gshock" | "autocorrelation of deficit shock" | L"\rho_D" |

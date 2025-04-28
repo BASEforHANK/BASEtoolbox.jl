@@ -72,58 +72,58 @@ pretty_table(
 ## Linearize the full model, find sparse state-space representation
 ## ------------------------------------------------------------------------------------------
 
-lr_full = linearize_full_model(sr_full, m_par; ss_only = true);
+lr_full = linearize_full_model(sr_full, m_par);
 
-# ## ------------------------------------------------------------------------------------------
-# ## Compute all IRFs, VDs, and BCVDs
-# ## ------------------------------------------------------------------------------------------
+## ------------------------------------------------------------------------------------------
+## Compute all IRFs, VDs, and BCVDs
+## ------------------------------------------------------------------------------------------
 
-# @printf "\n"
-# @printf "Compute IRFs, VDs, and BCVDs...\n"
+@printf "\n"
+@printf "Compute IRFs, VDs, and BCVDs...\n"
 
-# # Get indices of the shocks
-# exovars = [getfield(sr_full.indexes, shock_names[i]) for i = 1:length(shock_names)];
+# Get indices of the shocks
+exovars = [getfield(sr_full.indexes, shock_names[i]) for i = 1:length(shock_names)];
 
-# # Get standard deviations of the shocks
-# stds = [getfield(sr_full.m_par, Symbol("σ_", i)) for i in shock_names];
+# Get standard deviations of the shocks
+stds = [getfield(sr_full.m_par, Symbol("σ_", i)) for i in shock_names];
 
-# # Compute IRFs
-# IRFs, _, IRFs_order = compute_irfs(
-#     exovars,
-#     lr_full.State2Control,
-#     lr_full.LOMstate,
-#     sr_full.XSS,
-#     sr_full.indexes;
-#     init_val = stds,
-# );
+# Compute IRFs
+IRFs, _, IRFs_order = compute_irfs(
+    exovars,
+    lr_full.State2Control,
+    lr_full.LOMstate,
+    sr_full.XSS,
+    sr_full.indexes;
+    init_val = stds,
+);
 
-# ## ------------------------------------------------------------------------------------------
-# ## Graphical outputs
-# ## ------------------------------------------------------------------------------------------
+## ------------------------------------------------------------------------------------------
+## Graphical outputs
+## ------------------------------------------------------------------------------------------
 
-# @printf "\n"
-# @printf "Plotting...\n"
+@printf "\n"
+@printf "Plotting...\n"
 
-# mkpath(paths["bld_example"] * "/IRFs");
-# plot_irfs(
-#     [(:Z, "TFP")],
-#     [
-#         (:Y, "Output"),
-#         (:C, "Consumption"),
-#         (:I, "Investment"),
-#         (:N, "Employment"),
-#         (:wH, "Wage of households"),
-#         (:RK, "Return on capital"),
-#     ],
-#     [(IRFs, "Baseline")],
-#     IRFs_order,
-#     sr_full.indexes;
-#     show_fig = false,
-#     save_fig = true,
-#     path = paths["bld_example"] * "/IRFs",
-#     yscale = "standard",
-#     style_options = (lw = 2, color = [:blue, :red], linestyle = [:solid, :dash]),
-# );
+mkpath(paths["bld_example"] * "/IRFs");
+plot_irfs(
+    [(:Z, "TFP")],
+    [
+        (:Y, "Output"),
+        (:C, "Consumption"),
+        (:I, "Investment"),
+        (:N, "Employment"),
+        (:wH, "Wage of households"),
+        (:RK, "Return on capital"),
+    ],
+    [(IRFs, "Baseline")],
+    IRFs_order,
+    sr_full.indexes;
+    show_fig = false,
+    save_fig = true,
+    path = paths["bld_example"] * "/IRFs",
+    yscale = "standard",
+    style_options = (lw = 2, color = [:blue, :red], linestyle = [:solid, :dash]),
+);
 
-# @printf "\n"
-# @printf "Done.\n"
+@printf "\n"
+@printf "Done.\n"

@@ -51,166 +51,134 @@ parameter::T = value | "ascii_name" | L"latex_name" | prior_distribution | estim
 
     # Technological parameters
     α::T = 0.318 | "alpha" | "capital share" | L"\alpha" | _ | false
-    δ_0::T = (0.07 + 0.016) / 4 | "delta" | "depreciation rate" | L"\delta" | _ | false
-    δ_s::T =
-        0.1 | "delta_s" | "slope of depreciation rate" | L"\delta_s" |
-        Gamma(gamma_pars(5.0, 2.0^2)...) | true
-    ϕ::T =
-        0.5 | "phi" | "capital adjustment costs" | L"\phi" |
-        Gamma(gamma_pars(4.0, 2.0^2)...) | true
+    δ_0::T = 0.0215 | "delta" | "depreciation rate" | L"\delta" | _ | false
+    δ_s::T = 0.70557 | "delta_s" | "slope of depreciation rate" | L"\delta_s" | _ | false
+    ϕ::T = 1.94092 | "phi" | "capital adjustment costs" | L"\phi" | _ | false
     μ::T = 1.1 | "mu" | "price markup" | L"\mu" | _ | false
-    κ::T =
-        1 / 11 | "kappa" | "price adjustment costs" | L"\kappa" |
-        Gamma(gamma_pars(0.1, 0.03^2)...) | true
+    κ::T = 0.14561 | "kappa" | "price adjustment costs" | L"\kappa" | _ | false
     μw::T = 1.1 | "mu_w" | "wage markup" | L"\mu_w" | _ | false
-    κw::T =
-        1 / 11 | "kappa_w" | "wage adjustment costs" | L"\kappa_w" |
-        Gamma(gamma_pars(0.1, 0.03^2)...) | true
+    κw::T = 0.23931 | "kappa_w" | "wage adjustment costs" | L"\kappa_w" | _ | false
 
     # Further steady-state parameters
-    Tlev::T = 1.0 + 0.1775 | "tau_lev" | "income tax rate level" | L"\tau^l" | _ | false
-    Tprog::T =
-        1.0 + 0.1022 | "tau_pro" | "income tax rate progressivity" | L"\tau^p" | _ | false
-    Tc::T = 1.0 + 0.0 | "Tc" | "VAT rate (gross)" | L"T_c" | _ | false
-    RRB::T = (1.0 .^ 0.25) | "RB" | "real rate on bonds (gross)" | L"RRB" | _ | false
-    Rbar::T = ((1.09 .^ 0.25) .- 1.0) | "Rbar" | "borrowing wedge" | L"\bar R" | _ | false
+    Tlev::T = 1.1775 | "tau_lev" | "income tax rate level" | L"\tau^l" | _ | false
+    Tprog::T = 1.1022 | "tau_pro" | "income tax rate progressivity" | L"\tau^p" | _ | false
+    Tc::T = 1.0 | "Tc" | "VAT rate (gross)" | L"T_c" | _ | false
+    RRB::T = 1.0 | "RB" | "real rate on bonds (gross)" | L"RRB" | _ | false
+    Rbar::T = 0.02178 | "Rbar" | "borrowing wedge" | L"\bar R" | _ | false
     q::T = 1.0 | "q" | "price of capital" | L"q" | _ | false
     Z::T = 1.0 | "Z" | "TFP" | L"Z" | _ | false
     σ::T = 1.0 | "sigma" | "income risk" | L"\sigma" | _ | false
     ψ::T = 0.25 | "psi" | "share of capital in liquid assets" | L"\psi" | _ | false
 
     # Tradable shares
-    ωΠ::T =
-        0.2 | "omegaPi" | "fraction of tradable firm-profits" | L"\omega^{\Pi}" |
-        Beta(beta_pars(0.2, 0.075^2)...) | false
-    ιΠ::T =
-        0.016 | "iotaPi" | "fraction of shares that retire / depreciate" | L"\iota^{\Pi}" |
-        _ | false
-
-    # this parameter has no use and can only be estimated if RB=1.0
-    shiftΠ::T =
-        0.5 | "shiftPi" | "fraction of tradable firm-profits" | L"\shift^{\Pi}" |
-        Beta(beta_pars(0.5, 0.25^2)...) | false
+    ωΠ::T = 0.2 | "omegaPi" | "fraction tradable profits" | L"\omega^{\Pi}" | _ | false
+    ιΠ::T = 0.016 | "iotaPi" | "fraction depreciating shares" | L"\iota^{\Pi}" | _ | false
 
     # monetary policy
-    ρ_R::T =
-        0.7 | "rho_R" | "persistence of Taylor rule" | L"\rho_R" |
-        Beta(beta_pars(0.5, 0.2^2)...) | true
+    ρ_R::T = 0.80306 | "rho_R" | "persistence of Taylor rule" | L"\rho_R" | _ | false
     θ_π::T =
-        2.0 | "theta_pi" | "reaction of Taylor rule to inflation" | L"\theta_\pi" |
-        Normal(1.7, 0.3) | true
+        2.07808 | "theta_pi" | "reaction of Taylor rule to inflation" | L"\theta_\pi" | _ |
+        false
     θ_Y::T =
-        0.125 | "theta_Y" | "reaction of Taylor rule to output" | L"\theta_y" |
-        Normal(0.125, 0.05) | true
+        0.21873 | "theta_Y" | "reaction of Taylor rule to output" | L"\theta_y" |
+        Normal(0.125, 0.05) | false
 
     # fiscal policy
     scale_prog::Bool =
         false | "scale_prog" | "scaling of tax rate with tax base" | "scale_prog" | _ |
         false
-    γ_B::T =
-        0.1 | "gamma_B" | "reaction of deficit to debt" | L"\gamma_B" |
-        Gamma(gamma_pars(0.1, 0.075^2)...) | true
+    γ_B::T = 0.102013 | "gamma_B" | "reaction of deficit to debt" | L"\gamma_B" | _ | false
     γ_π::T =
-        0.0 | "gamma_pi" | "reaction of deficit to inflation" | L"\gamma_{\pi}" |
-        Normal(0.0, 1.0) | true
+        -2.1737 | "gamma_pi" | "reaction of deficit to inflation" | L"\gamma_{\pi}" | _ |
+        false
     γ_Y::T =
-        0.0 | "gamma_Y" | "reaction of deficit to output" | L"\gamma_Y" | Normal(0.0, 1.0) |
-        true
+        -0.43631 | "gamma_Y" | "reaction of deficit to output" | L"\gamma_Y" | _ | false
 
-    ρ_τ::T =
-        0.5 | "rho_tau" | "persistence of tax rule" | L"\rho_\tau" |
-        Beta(beta_pars(0.5, 0.2^2)...) | true
+    ρ_τ::T = 0.49265 | "rho_tau" | "persistence of tax rule" | L"\rho_\tau" | _ | false
     γ_Bτ::T =
-        0.0 | "gamma_Btau" | "reaction of tax level to debt" | L"\gamma_B^\tau" |
-        Normal(0.0, 1.0) | true
+        3.29306 | "gamma_Btau" | "reaction of tax level to debt" | L"\gamma_B^\tau" | _ |
+        false
     γ_Yτ::T =
-        0.0 | "gamma_Ytau" | "reaction of tax level to output" | L"\gamma_Y_\tau" |
-        Normal(0.0, 1.0) | true
+        -0.92073 | "gamma_Ytau" | "reaction of tax level to output" | L"\gamma_Y_\tau" | _ |
+        false
 
-    ρ_P::T =
-        0.5 | "rho_P" | "persistence of tax progressivity" | L"\rho_P" |
-        Beta(beta_pars(0.5, 0.2^2)...) | true
+    ρ_P::T = 0.91942 | "rho_P" | "persistence of tax progressivity" | L"\rho_P" | _ | false
     γ_BP::T =
-        0.0 | "gamma_BP" | "reaction of tax progressivity to debt" | L"\gamma_B^P" |
-        Normal(0.0, 1.0) | false
+        0.0 | "gamma_BP" | "reaction of tax progressivity to debt" | L"\gamma_B^P" | _ |
+        false
     γ_YP::T =
-        0.0 | "gamma_YP" | "reaction of tax progressivity to output" | L"\gamma_Y^P" |
-        Normal(0.0, 1.0) | false
+        0.0 | "gamma_YP" | "reaction of tax progressivity to output" | L"\gamma_Y^P" | _ |
+        false
     γ_WP::T =
-        0.0 | "gamma_WP" | "reaction of tax progressivity to output" | L"\gamma_W^P" |
-        Normal(0.0, 1.0) | false
+        0.0 | "gamma_WP" | "reaction of tax progressivity to output" | L"\gamma_W^P" | _ |
+        false
 
     # exogeneous aggregate "shocks"
 
     ρ_Sshock::T =
         1e-8 | "rho_Sshock" | "autocorrelation of uncertainty shock" | L"\rho_{Sshock}" |
-        Beta(beta_pars(0.5, 0.2^2)...) | false
+        _ | false
 
     ρ_Tprogshock::T =
         1e-8 | "rho_Pshock" | "autocorrelation of tax progressivity shock" |
-        L"\rho_{Pshock}" | Beta(beta_pars(0.5, 0.2^2)...) | false
+        L"\rho_{Pshock}" | _ | false
     σ_Tprogshock::T =
-        0.0 | "sigma_Pshock" | "standard deviation of tax progressivity shock" |
-        L"\sigma_P" | InverseGamma(ig_pars(0.001, 0.02^2)...) | true # Std tax progr.
+        0.06865 | "sigma_Pshock" | "standard deviation of tax progressivity shock" |
+        L"\sigma_P" | _ | false
 
     ρ_Gshock::T =
-        0.98 | "rho_Gshock" | "autocorrelation of deficit shock" | L"\rho_D" |
-        Beta(beta_pars(0.5, 0.2^2)...) | true
+        0.96822 | "rho_Gshock" | "autocorrelation of deficit shock" | L"\rho_D" | _ | false
     σ_Gshock::T =
-        0.00 | "sigma_G" | "standard deviation of deficit shock" | L"\sigma_D" |
-        InverseGamma(ig_pars(0.001, 0.02^2)...) | true
+        0.00376 | "sigma_G" | "standard deviation of deficit shock" | L"\sigma_D" | _ |
+        false
 
     ρ_Rshock::T =
         1e-8 | "rho_Rshock" | "autocorrelation of Taylor rule shock" | L"\rho_{Rshock}" |
-        Beta(beta_pars(0.5, 0.2^2)...) | false
+        _ | false
     σ_Rshock::T =
-        0.0 | "sigma_Rshock" | "standard deviation of Taylor rule shock" | L"\sigma_R" |
-        InverseGamma(ig_pars(0.001, 0.02^2)...) | true
+        0.00231 | "sigma_Rshock" | "standard deviation of Taylor rule shock" | L"\sigma_R" |
+        _ | false
 
     ρ_A::T =
-        0.9 | "rho_A" | "autocorrelation of bond-spread shock" | L"\rho_A" |
-        Beta(beta_pars(0.5, 0.2^2)...) | true
+        0.97241 | "rho_A" | "autocorrelation of bond-spread shock" | L"\rho_A" | _ | false
     σ_A::T =
-        0.0 | "sigma_A" | "standard deviation of bond-spread shock" | L"\sigma_A" |
-        InverseGamma(ig_pars(0.001, 0.02^2)...) | true
+        0.00158 | "sigma_A" | "standard deviation of bond-spread shock" | L"\sigma_A" | _ |
+        false
 
-    ρ_Z::T =
-        0.9 | "rho_Z" | "autocorrelation of TFP shock" | L"\rho_Z" |
-        Beta(beta_pars(0.5, 0.2^2)...) | true
+    ρ_Z::T = 0.99782 | "rho_Z" | "autocorrelation of TFP shock" | L"\rho_Z" | _ | false
     σ_Z::T =
-        0.0 | "sigma_Z" | "standard deviation of TFP shock" | L"\sigma_Z" |
-        InverseGamma(ig_pars(0.001, 0.02^2)...) | true
+        0.00601 | "sigma_Z" | "standard deviation of TFP shock" | L"\sigma_Z" | _ | false
 
     ρ_ZI::T =
-        0.9 | "rho_Psi" | "autocorrelation of investment efficiency shock" | L"\rho_\Psi" |
-        Beta(beta_pars(0.5, 0.2^2)...) | true
+        0.76371 | "rho_Psi" | "autocorrelation of investment efficiency shock" |
+        L"\rho_\Psi" | _ | false
     σ_ZI::T =
-        0.0 | "sigma_Psi" | "standard deviation of investment efficiency shock" |
-        L"\sigma_\Psi" | InverseGamma(ig_pars(0.001, 0.02^2)...) | true
+        0.07211 | "sigma_Psi" | "standard deviation of investment efficiency shock" |
+        L"\sigma_\Psi" | _ | false
 
     ρ_μ::T =
-        0.9 | "rho_mu" | "autocorrelation of price markup shock" | L"\rho_\mu" |
-        Beta(beta_pars(0.5, 0.2^2)...) | true
+        0.90374 | "rho_mu" | "autocorrelation of price markup shock" | L"\rho_\mu" | _ |
+        false
     σ_μ::T =
-        0.0 | "sigma_mu" | "standard deviation of price markup shock" | L"\sigma_\mu" |
-        InverseGamma(ig_pars(0.001, 0.02^2)...) | true
+        0.01351 | "sigma_mu" | "standard deviation of price markup shock" | L"\sigma_\mu" |
+        _ | false
 
     ρ_μw::T =
-        0.9 | "rho_muw" | "autocorrelation of wage markup shock" | L"\rho_{\mu w}" |
-        Beta(beta_pars(0.5, 0.2^2)...) | true
+        0.90579 | "rho_muw" | "autocorrelation of wage markup shock" | L"\rho_{\mu w}" | _ |
+        false
     σ_μw::T =
-        0.0 | "sigma_muw" | "standard deviation of wage markup shock" | L"\sigma_{\mu w}" |
-        InverseGamma(ig_pars(0.001, 0.02^2)...) | true
+        0.03506 | "sigma_muw" | "standard deviation of wage markup shock" |
+        L"\sigma_{\mu w}" | _ | false
 
     ρ_s::T =
-        0.84 | "rho_sigma" | "autocorrelation of income risk shock" | L"\rho_s" |
-        Beta(beta_pars(0.7, 0.2^2)...) | true
+        0.54472 | "rho_sigma" | "autocorrelation of income risk shock" | L"\rho_s" | _ |
+        false
     σ_Sshock::T =
-        0.0 | "sigma_Sshock" | "standard deviation of income risk shock" | L"\sigma_s" |
-        Gamma(gamma_pars(0.65, 0.3^2)...) | true
+        0.69186 | "sigma_Sshock" | "standard deviation of income risk shock" | L"\sigma_s" |
+        _ | false
     Σ_n::T =
-        0.0 | "Sigma_n" | "reaction of income risk to aggregates" | L"\Sigma_N" |
-        Normal(0.0, 100.0) | true
+        28.87977 | "Sigma_n" | "reaction of income risk to aggregates" | L"\Sigma_N" | _ |
+        false
 end
 
 """
