@@ -90,6 +90,7 @@ control_names = [
     "Π_U",
     "Π_E",
     "TotalAssets",
+    "τprog",
 ]
 
 # List of (the subset) of aggregate states, that need to be duplicated (e.g. across countries or industries)

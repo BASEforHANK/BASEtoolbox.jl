@@ -73,3 +73,5 @@ Cgrowth$SS = 1.0
 Tgrowth$SS = 1.0
 
 TotalAssets$SS = B$SS + q$SS * K$SS
+
+τprog$SS = Tprog$SS .- 1.0

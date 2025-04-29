@@ -92,8 +92,8 @@ function mode_finding(sr, lr, m_par, e_set, par_start)
         show_trace = true,
         show_every = 20,
         store_trace = true,
-        x_tol = e_set.x_tol,
-        f_tol = e_set.f_tol,
+        x_abstol = e_set.x_tol,
+        f_reltol = e_set.f_tol,
         iterations = div(e_set.max_iter_mode, 3),
     )
     opti = optimize(Laux, par, e_set.optimizer, OptOpt)
@@ -144,8 +144,8 @@ function mode_finding(sr, lr, m_par, e_set, par_start)
         show_trace = true,
         show_every = 20,
         store_trace = true,
-        x_tol = e_set.x_tol,
-        f_tol = e_set.f_tol,
+        x_abstol = e_set.x_tol,
+        f_reltol = e_set.f_tol,
         iterations = div(e_set.max_iter_mode, 3) * 2,
     )
     opti = optimize(LL, Optim.minimizer(opti), e_set.optimizer, OptOpt)

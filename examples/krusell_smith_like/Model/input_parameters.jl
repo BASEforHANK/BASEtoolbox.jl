@@ -202,8 +202,8 @@ Collect parameters for the numerical solution of the model in a `struct`.
     State2Control_save::Array{Float64,2} = zeros(ncontrols, nstates)
 end
 
-@doc raw"""
-EstimationSettings()
+"""
+    EstimationSettings()
 
 Collect settings for the estimation of the model parameters in a `struct`.
 
@@ -222,7 +222,7 @@ in the fields `mode_start_file`, `data_file`, `save_mode_file` and `save_posteri
         :π,
         :TOP10Wshare,
         :TOP10Ishare,
-        :Tprog, # TODO
+        :τprog,
         :σ,
     ]
 
@@ -231,7 +231,7 @@ in the fields `mode_start_file`, `data_file`, `save_mode_file` and `save_posteri
     data_rename::Dict{Symbol,Symbol} = Dict(
         :pi => :π,
         :sigma2 => :σ,
-        :tauprog => :τprog, # TODO
+        :tauprog => :τprog,
         :w90share => :TOP10Wshare,
         :I90share => :TOP10Ishare,
     )

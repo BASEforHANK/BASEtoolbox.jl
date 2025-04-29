@@ -118,6 +118,9 @@ F[indexes.Tprog] =
     )
 # This variable needs to be set for the package!
 
+# Auxiliary variable for the estimation
+F[indexes.τprog] = (log(τprog)) - (log(Tprog .- 1.0))
+
 # Level of labor tax, see equation 35 in BBL (typos!), this determines Tlev
 F[indexes.Tlev] =
     (Tbar .- 1.0) - (av_labor_tax_rate(
