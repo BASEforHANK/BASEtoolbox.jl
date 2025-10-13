@@ -1,79 +1,90 @@
-@R$1 #no replication
-# Set aggregate steady state variabel values
-A$SS = 1.0
-ZI$SS = 1.0
-μ$SS = m_par.μ
-μw$SS = m_par.μw
-Tprog$SS = m_par.Tprog
-Tlev$SS = m_par.Tlev
-Tc$SS = m_par.Tc
+# Steady state values that are given already:
+# - outputs of `Ksupply`, in particular: KSS, BSS
+# - all variables in args_hh_prob_names
+# - all variables in distr_names
 
-mc$SS = 1.0 ./ μ$SS
-mcw$SS = 1.0 ./ μw$SS
-Z$SS = m_par.Z
-wF$SS = wage(mc$SS, Z$SS, K$SS, N$SS, m_par)
-Y$SS = output(Z$SS, K$SS, N$SS, m_par)
+## Shocks
+ZSS = m_par.Z
+ZISS = 1.0
+μSS = m_par.μ
+μwSS = m_par.μw
+ASS = 1.0
+RshockSS = 1.0
+GshockSS = 1.0
+TprogshockSS = 1.0
+SshockSS = 1.0
 
-σ$SS = 1.0
-Tprog_obs$SS = 1.0
-Gshock$SS = 1.0
-Rshock$SS = 1.0
-Tprogshock$SS = 1.0
+## Growth rates
+YgrowthSS = 1.0
+BgovgrowthSS = 1.0
+IgrowthSS = 1.0
+wgrowthSS = 1.0
+CgrowthSS = 1.0
+TgrowthSS = 1.0
 
-π$SS = 1.0
-πw$SS = 1.0
+## Further assumptions (partly also used in args_hh_prob)
+mcSS = 1.0 ./ μSS
+mcwSS = 1.0 ./ μwSS
+πSS = 1.0
+πwSS = 1.0
+uSS = 1.0
 
-Sshock$SS = 1.0
-RB$SS = RRL$SS .* π$SS
-LP$SS = 1 + RKSS - RBSS
-LPXA$SS = 1 + RKSS - RBSS
-I$SS = m_par.δ_0 * KSS
+## Variables (that are not already defined)
 
+# nominal interest rates
+RBSS = RRLSS .* πSS
+RLSS = RBSS
+RDSS = RRDSS .* πSS
+
+# production side
+wFSS = wage(mcSS, ZSS, KSS, NSS, m_par)
+YSS = output(ZSS, KSS, NSS, m_par)
+ISS = m_par.δ_0 * KSS
+Π_FSS = (1.0 - mcSS) .* YSS
+
+# financial market
+LPSS = RKSS / (RBSS / πSS)
+LPXASS = LPSS
 BDSS = -sum(distr_bSS .* (n_par.grid_b .< 0) .* n_par.grid_b)
+qΠSS = (m_par.ωΠ .* Π_FSS) ./ (RBSS / πSS .- 1 .+ m_par.ιΠ) + 1.0
+BgovSS = BSS .- qΠSS .+ 1.0
+TotalAssetsSS = BSS + qSS * KSS
 
-# Calculate taxes and government expenditures
-T$SS =
-    (Tbar$SS .- 1.0) .* (1.0 ./ m_par.μw .* wF$SS .* N$SS) + # labor income
-    (Tbar$SS .- 1.0) .* Π_E$SS + # profit income
-    (Tbar$SS .- 1.0) * ((1.0 .- 1.0 ./ m_par.μw) .* wF$SS .* N$SS) # union profit income
+# fiscal side
+RK_before_taxesSS = ((RKSS - 1.0) ./ (1.0 - (TkSS - 1.0))) + 1.0
+TRSS = transfer_scheme(n_par, m_par, args_hh_prob; distr_h = distr_hSS)
 
-RL$SS = RB$SS
-RD$SS = RRD$SS .* π$SS
+# jointly determine C, T, G (interacted through consumption tax)
+# resource constaint, plugged in government budget constraint and tax revenues
+CSS =
+    (
+        YSS - ISS - (RRDSS .- RRLSS) * BDSS + (RRLSS - 1.0) * BgovSS - (
+            (TbarSS .- 1.0) .* (wHSS .* NSS + Π_ESS + Π_USS) +
+            (TkSS .- 1.0) .* (RK_before_taxesSS .- 1.0) .* KSS - (TRSS .- 1.0)
+        )
+    ) ./ (1.0 + (TcSS .- 1.0))
 
-Π_F$SS = (1.0 - mc$SS) .* Y$SS
+# tax revenues
+TSS =
+    (TbarSS .- 1.0) .* (wHSS .* NSS + Π_ESS + Π_USS) +
+    (TcSS .- 1.0) .* CSS +
+    (TkSS .- 1.0) .* (RK_before_taxesSS .- 1.0) .* KSS - (TRSS .- 1.0)
 
-qΠ$SS =
-    (RRL$SS .- 1 .+ m_par.ιΠ) == 0.0 ? 1.0 :
-    m_par.ωΠ .* Π_F$SS ./ (RRL$SS .- 1 .+ m_par.ιΠ) + 1.0
+# government spending from budget constraint
+GSS = TSS - (RRLSS - 1.0) * BgovSS
 
-Bgov$SS = B$SS .- qΠ$SS .+ 1.0
-G$SS = T$SS - (RRL$SS - 1.0) * Bgov$SS
-qΠlag$SS = qΠ$SS
+# remaining aggregates
+BYSS = BSS / YSS
+TYSS = TSS / YSS
 
-C$SS = (Y$SS - m_par.δ_0 * K$SS - G$SS - (RRD$SS .- RRL$SS) * BD$SS)
-
-mcw$SS = 1.0 ./ m_par.μw
-u$SS = 1.0
-
-BY$SS = B$SS / Y$SS
-TY$SS = T$SS / Y$SS
-Tlag$SS = T$SS
-
-Ylag$SS = Y$SS
-Bgovlag$SS = Bgov$SS
-Glag$SS = G$SS
-Ilag$SS = I$SS
-wFlag$SS = wF$SS
-qlag$SS = q$SS
-Clag$SS = C$SS
-Tbarlag$SS = Tbar$SS
-Tproglag$SS = Tprog$SS
-
-Ygrowth$SS = 1.0
-Bgovgrowth$SS = 1.0
-Igrowth$SS = 1.0
-wgrowth$SS = 1.0
-Cgrowth$SS = 1.0
-Tgrowth$SS = 1.0
-
-TotalAssets$SS = B$SS + q$SS * K$SS
+## Lags
+YlagSS = YSS
+BgovlagSS = BgovSS
+TlagSS = TSS
+IlagSS = ISS
+wFlagSS = wFSS
+qlagSS = qSS
+ClagSS = CSS
+TbarlagSS = TbarSS
+TproglagSS = TprogSS
+qΠlagSS = qΠSS

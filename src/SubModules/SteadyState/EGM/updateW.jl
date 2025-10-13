@@ -14,7 +14,7 @@ Update the marginal values for the liquid and illiquid assets, given the current
 continuation value for the illiquid asset `EWkPrime`, the policy functions [`x_a_star`,
 `x_n_star`, `b_n_star`], and today's prices [`args_hh_prob`].
 
-Consult the document ['Computational Notes.md'](Computational Notes.md), specifically
+Consult the document ['ComputationalNotes.md'](ComputationalNotes.md), specifically
 section 3 with the title 'Update the continuation values (CV1) and (CV2) using the Envelope
 conditions' for an explanation of the function's code.
 

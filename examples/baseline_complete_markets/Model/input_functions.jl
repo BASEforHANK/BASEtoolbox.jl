@@ -59,6 +59,12 @@ function labor_market_clearing_ss(
     return (N .- labor_supply(wH, Hprog, τlev, τprog, τc, m_par, tax_base, scaling))
 end
 
+## Transfers ------------------------------------------------------------------------------
+
+function transfer_scheme(n_par, m_par, args_hh_prob)
+    return zeros(size(n_par.grid_h))
+end
+
 ## Optional functions ---------------------------------------------------------------------
 
 # CompMarketsCapital is used in find_steadystate.jl to improve initial guesses, if not

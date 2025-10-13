@@ -9,4 +9,8 @@ BASEforHANK.Parsing.@make_fnaggr
 BASEforHANK.Parsing.@make_struct
 BASEforHANK.Parsing.@make_struct_aggr
 BASEforHANK.Parsing.@generate_equations
+BASEforHANK.Parsing.@write_args_hh_prob_ss
+BASEforHANK.Parsing.@write_args_hh_prob
+BASEforHANK.Parsing.@read_args_hh_prob
+BASEforHANK.Parsing.@read_args_hh_prob_ss
 ```

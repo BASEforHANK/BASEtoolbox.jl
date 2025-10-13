@@ -59,6 +59,37 @@ function labor_market_clearing_ss(
     return (N .- labor_supply(wH, Hprog, τlev, τprog, τc, m_par, tax_base, scaling))
 end
 
+## Transfers ------------------------------------------------------------------------------
+
+function transfer_scheme(n_par, m_par, args_hh_prob; distr_h = nothing)
+    @read_args_hh_prob()
+
+    # Compute aggregate labor compensation
+    labor_compensation = wH .* N ./ Hprog
+
+    # Compute aggregate tax base of labor income tax
+    tax_base = labor_compensation .+ Π_E
+
+    # Gross labor income of workers, see eq. (Gross income) and (Tax func)
+    g_labor_inc =
+        labor_compensation .* (n_par.grid_h / Htilde) .^ scale_Hprog((Tprog .- 1.0), m_par)
+
+    # Net income, see eq. (Gross income) and (Tax func)
+    n_labor_inc =
+        labor_tax_f.(g_labor_inc, (Tlev .- 1.0), (Tprog .- 1.0), tax_base, m_par.scale_prog)
+
+    # Transfer scheme
+    transfer = (Ttr_1 .- 1.0) .* labor_compensation .- (Ttr_2 .- 1.0) .* n_labor_inc
+    transfer = max.(transfer, zero(eltype(transfer))) # to deal with ForwardDiff
+
+    # If distr_h is given, return aggregate transfer
+    if distr_h === nothing
+        return transfer
+    else
+        return dot(distr_h, transfer) .+ 1.0
+    end
+end
+
 ## Optional functions ---------------------------------------------------------------------
 
 # CompMarketsCapital is used in find_steadystate.jl to improve initial guesses, if not

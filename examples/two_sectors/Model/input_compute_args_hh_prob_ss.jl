@@ -46,14 +46,20 @@ function compute_args_hh_prob_ss(K, m_par, n_par)
     # Assumption on q in steady state
     q = m_par.q
 
+    # Assumption on RRL in steady state
+    RRL = m_par.RRB
+
+    # Assumption on RRD in steady state
+    RRD = borrowing_rate_ss(RRL, m_par)
+
     # Assumption on taxes
-    Tlev = 1.0
-    Tprog = 1.0
-    Tc = 1.0
-    Tk = 1.0
+    Tlev = m_par.Tlev
+    Tprog = m_par.Tprog
+    Tc = m_par.Tc
+    Tk = m_par.Tk
 
     # Assumption
-    σ = 1.0
+    σ = m_par.σ
 
     # Assumption on Hprog in steady state
     Hprog = dot(
@@ -80,26 +86,26 @@ function compute_args_hh_prob_ss(K, m_par, n_par)
         1.0,
     )
 
+    # Definition of Service Goods
+    S = N .* Z
+
+    # Definition of Housing
+    H = K .* Z
+
     # Calculate interest rate using interest function
-    RK_before_taxes = 1.0 .+ interest(mc, Z, K, N, m_par)
+    RK_before_taxes = 1.0 .+ interest(Z, H, S, m_par)
 
     # Calculate capital return net of capital return tax
     RK = (RK_before_taxes .- 1.0) .* (1.0 .- (Tk .- 1.0)) .+ 1.0
 
     # Calculate wage that firms face using wage function
-    wF = wage(mc, Z, K, N, m_par)
+    wF = wage(mc, Z, H, S, m_par)
 
     # Calculate output using output function
-    Y = output(Z, K, N, m_par)
-
-    # No-arbitrage condition for returns
-    RRL = RK
-
-    # Assumption on RRD in steady state
-    RRD = borrowing_rate_ss(RRL, m_par)
+    Y = output(H, S, m_par)
 
     # Calculate profits using profits function
-    Π_E = profits_F_ss(mc, Y)
+    Π_E = profits_E_ss(mc, Y, m_par)
 
     # Calculate wage that households face
     wH = mcw .* wF

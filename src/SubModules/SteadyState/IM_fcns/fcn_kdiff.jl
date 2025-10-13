@@ -71,13 +71,13 @@ function Kdiff(
     if initialize
 
         # Guess consumption: consume factor income (if positive)
-        net_labor_union_inc_GHH = net_income[1]
-        rental_inc = net_income[2]
+        n_labor_union_inc_GHH = net_income[1]
+        n_rental_inc = net_income[2]
         liquid_asset_inc = net_income[3]
 
         # assume that the consumption guess has the following form
         x_guess =
-            net_labor_union_inc_GHH .+ rental_inc .* (n_par.mesh_k .* (RK .- 1.0) .> 0) .+
+            n_labor_union_inc_GHH .+ n_rental_inc .* (n_par.mesh_k .* (RK .- 1.0) .> 0) .+
             liquid_asset_inc .* (n_par.mesh_b .> 0)
         if any(any(x_guess .< 0.0))
             @warn "Negative consumption guess. Potentially reduce Kmax_coarse!"

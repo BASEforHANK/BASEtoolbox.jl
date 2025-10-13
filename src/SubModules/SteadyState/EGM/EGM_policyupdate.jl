@@ -17,7 +17,7 @@ Method.
 Optimal policies are defined over the exogenously fixed grid, while values of optimal
 policies (`b` and `k`) can have off-grid values. Please refer to the subsection with the
 title 'Update the optimal policy functions' of the document ['Computational
-Notes.md'](Computational Notes.md), for a detailed explanation of the function's code. The
+Notes.md'](ComputationalNotes.md), for a detailed explanation of the function's code. The
 FOC's mentioned in the code are the Euler Equations as in the ['documentation of the
 household problem'](HouseholdProblem.md).
 
@@ -75,14 +75,14 @@ function EGM_policyupdate(
     ## Resource grid ----------------------------------------------------------------------
 
     # Asset income plus liquidation value (adjustment case)
-    rental_inc = net_income[2]
+    n_rental_inc = net_income[2]
     liquid_asset_inc = net_income[3]
     capital_liquidation_inc = net_income[4]
 
     # Exogenous grid of non-human resources, calculated based on the equation (resources
     # adjustment) in the documentation
     R_exo_a =
-        reshape(rental_inc .+ liquid_asset_inc .+ capital_liquidation_inc, (nb .* nk, nh))
+        reshape(n_rental_inc .+ liquid_asset_inc .+ capital_liquidation_inc, (nb .* nk, nh))
 
     ## ------------------------------------------------------------------------------------
     ## Call the inplace function to update policies
@@ -193,8 +193,8 @@ function EGM_policyupdate!(
     β::Float64 = m_par.β
 
     # Income components
-    net_labor_union_inc_GHH = net_income[1]
-    rental_inc = net_income[2]
+    n_labor_union_inc_GHH = net_income[1]
+    n_rental_inc = net_income[2]
     liquid_asset_inc = net_income[3]
 
     ## ------------------------------------------------------------------------------------
@@ -227,8 +227,8 @@ function EGM_policyupdate!(
     # Step iii): Endogenous grid points for liquid assets, calculated based on the equation
     # (end. grid non-adj.) in the documentation
     b_tilde_n .= (
-        (1.0 .+ (Tc .- 1.0)) .* x_tilde_n .+ n_par.mesh_b .- net_labor_union_inc_GHH .-
-        rental_inc
+        (1.0 .+ (Tc .- 1.0)) .* x_tilde_n .+ n_par.mesh_b .- n_labor_union_inc_GHH .-
+        n_rental_inc
     )
     eff_int = RRL .* (b_tilde_n .> 0.0) + RRD .* (b_tilde_n .<= 0.0)
     b_tilde_n .= b_tilde_n ./ eff_int
@@ -263,8 +263,8 @@ function EGM_policyupdate!(
                     if n_par.grid_b[bb] .< bcpol
                         x_n_star[bb, kk, jj] =
                             (
-                                net_labor_union_inc_GHH[bb, kk, jj] .+
-                                rental_inc[bb, kk, jj] .+ liquid_asset_inc[bb, kk, jj] .-
+                                n_labor_union_inc_GHH[bb, kk, jj] .+
+                                n_rental_inc[bb, kk, jj] .+ liquid_asset_inc[bb, kk, jj] .-
                                 n_par.grid_b[1]
                             ) ./ (1 .+ (Tc .- 1.0))
                         b_n_star[bb, kk, jj] = n_par.grid_b[1]
@@ -311,8 +311,8 @@ function EGM_policyupdate!(
     β::Float64 = m_par.β
 
     # Income components
-    net_labor_union_inc_GHH = net_income[1]
-    rental_inc = net_income[2]
+    n_labor_union_inc_GHH = net_income[1]
+    n_rental_inc = net_income[2]
     liquid_asset_inc = net_income[3]
     capital_liquidation_inc = net_income[4]
 
@@ -346,8 +346,8 @@ function EGM_policyupdate!(
     # Step iii): Endogenous grid points for liquid assets, calculated based on the equation
     # (end. grid non-adj.) in the documentation
     b_tilde_n .= (
-        (1.0 .+ (Tc .- 1.0)) .* x_tilde_n .+ n_par.mesh_b .- net_labor_union_inc_GHH .-
-        rental_inc
+        (1.0 .+ (Tc .- 1.0)) .* x_tilde_n .+ n_par.mesh_b .- n_labor_union_inc_GHH .-
+        n_rental_inc
     )
     eff_int = RRL .* (b_tilde_n .> 0.0) + RRD .* (b_tilde_n .<= 0.0)
     b_tilde_n .= b_tilde_n ./ eff_int
@@ -382,8 +382,8 @@ function EGM_policyupdate!(
                     if n_par.grid_b[bb] .< bcpol
                         x_n_star[bb, kk, jj] =
                             (
-                                net_labor_union_inc_GHH[bb, kk, jj] .+
-                                rental_inc[bb, kk, jj] .+ liquid_asset_inc[bb, kk, jj] .-
+                                n_labor_union_inc_GHH[bb, kk, jj] .+
+                                n_rental_inc[bb, kk, jj] .+ liquid_asset_inc[bb, kk, jj] .-
                                 n_par.grid_b[1]
                             ) ./ (1 .+ (Tc .- 1.0))
                         b_n_star[bb, kk, jj] = n_par.grid_b[1]
@@ -530,7 +530,7 @@ function EGM_policyupdate!(
     # grid adj.) in the documentation
     R_tilde_a =
         (1.0 .+ (Tc .- 1.0)) .* x_tilde_a .+ b_hat_a .+ capital_liquidation_inc[1, :, :] .-
-        net_labor_union_inc_GHH[1, :, :]
+        n_labor_union_inc_GHH[1, :, :]
 
     #=
 
@@ -585,7 +585,7 @@ function EGM_policyupdate!(
     aux_x = reshape(x_tilde_n[:, 1, :], (nb, nh))
 
     # Income (from mesh, first and second dimension do not matter)
-    aux_inc = reshape(net_labor_union_inc_GHH[1, 1, :], (1, nh))
+    aux_inc = reshape(n_labor_union_inc_GHH[1, 1, :], (1, nh))
 
     # Use composite at k'=0 from constrained problem, when b' is on grid, x_tilde_n is the
     # the policy function on the endogenous grid for the non-adjustment case.
@@ -702,7 +702,7 @@ function EGM_policyupdate!(
 
     =#
 
-    labor_inc_grid = net_labor_union_inc_GHH[1, 1, :][:]
+    labor_inc_grid = n_labor_union_inc_GHH[1, 1, :][:]
     log_index2 = zeros(Bool, nb .* nk)
 
     @views @inbounds begin

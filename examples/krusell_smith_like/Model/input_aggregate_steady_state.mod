@@ -1,26 +1,27 @@
-@R$1 #no replication
+# Steady state values that are given already:
+# - outputs of `Ksupply`, in particular: KSS, BSS
+# - all variables in args_hh_prob_names
+# - all variables in distr_names
 
-Z$SS = m_par.Z
+## Shocks
+ZSS = m_par.Z
 
-mcw = 1.0 ./ m_par.μw
-mc = 1.0 ./ m_par.μ
+## Further assumptions (partly also used in args_hh_prob)
+mcSS = 1.0 ./ m_par.μ
+mcwSS = 1.0 ./ m_par.μw
 
-wF$SS = wage(mc, Z$SS, K$SS, N$SS, m_par)
-Y$SS = output(Z$SS, K$SS, N$SS, m_par)
-Tprog$SS = m_par.Tprog
-Tlev$SS = m_par.Tlev
+# production side
+wFSS = wage(mcSS, ZSS, KSS, NSS, m_par)
+YSS = output(ZSS, KSS, NSS, m_par)
+ISS = m_par.δ_0 * KSS
+Π_FSS = (1.0 - mcSS) .* YSS
 
-I$SS = m_par.δ_0 * KSS
-σSS = m_par.σ
-qSS = 1.0
-Tc$SS = m_par.Tc
+# financial market
 BDSS = -sum(distr_bSS .* (n_par.grid_b .< 0) .* n_par.grid_b)
+TotalAssetsSS = KSS
 
-# Calculate taxes and government expenditures
-RRD$SS = RRL$SS
+# fiscal side
+RK_before_taxesSS = ((RKSS - 1.0) ./ (1.0 - (TkSS - 1.0))) + 1.0
 
-Π_F$SS = (1.0 - mc) .* Y$SS
-
-C$SS = Y$SS - I$SS
-
-TotalAssets$SS = K$SS
+# resource constaint
+CSS = YSS - ISS

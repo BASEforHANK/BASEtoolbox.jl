@@ -1,46 +1,61 @@
-@R$1 #no replication
-# Set aggregate steady state variabel values
-Tprog$SS = m_par.Tprog
-Tlev$SS = m_par.Tlev
-Tc$SS = m_par.Tc
+# Steady state values that are given already:
+# - outputs of `Ksupply`, in particular: KSS, BSS
+# - all variables in args_hh_prob_names
+# - all variables in distr_names
 
-mc$SS = 1.0 ./ m_par.μ
-mcw$SS = 1.0 ./ m_par.μw
-Z$SS = m_par.Z
-wF$SS = wage(mc$SS, Z$SS, K$SS, N$SS, m_par)
-Y$SS = output(Z$SS, K$SS, N$SS, m_par)
+## Shocks
+ZSS = m_par.Z
 
-σ$SS = 1.0
-Rshock$SS = 1.0
+RshockSS = 1.0
 
-π$SS = 1.0
-πw$SS = 1.0
+## Further assumptions (partly also used in args_hh_prob)
+mcSS = 1.0 ./ m_par.μ
+mcwSS = 1.0 ./ m_par.μw
+πSS = 1.0
+πwSS = 1.0
 
-RB$SS = m_par.RRB .* π$SS
-I$SS = m_par.δ_0 * KSS
+## Variables (that are not already defined)
 
+# nominal interest rates
+RBSS = m_par.RRB .* πSS
+RLSS = RBSS
+RDSS = RRDSS .* πSS
+
+# production side
+wFSS = wage(mcSS, ZSS, KSS, NSS, m_par)
+YSS = output(ZSS, KSS, NSS, m_par)
+ISS = m_par.δ_0 * KSS
+Π_FSS = (1.0 - mcSS) .* YSS
+
+# financial market
 BDSS = -sum(distr_bSS .* (n_par.grid_b .< 0) .* n_par.grid_b)
+BgovSS = BSS
+TotalAssetsSS = BSS + qSS * KSS
 
-# Calculate taxes and government expenditures
-T$SS =
-    (Tbar$SS .- 1.0) .* (1.0 ./ m_par.μw .* wF$SS .* N$SS) + # labor income
-    (Tbar$SS .- 1.0) .* Π_E$SS + # profit income
-    (Tbar$SS .- 1.0) * ((1.0 .- 1.0 ./ m_par.μw) .* wF$SS .* N$SS) # union profit income
+# fiscal side
+RK_before_taxesSS = ((RKSS - 1.0) ./ (1.0 - (TkSS - 1.0))) + 1.0
 
-RL$SS = RB$SS
-RD$SS = RRD$SS .* π$SS
+# jointly determine C, T, G (interacted through consumption tax)
+# resource constaint, plugged in government budget constraint and tax revenues
+CSS =
+    (
+        YSS - ISS - (RRDSS .- RRLSS) * BDSS + (RRLSS - 1.0) * BgovSS - (
+            (TbarSS .- 1.0) .* (wHSS .* NSS + Π_ESS + Π_USS) +
+            (TkSS .- 1.0) .* (RK_before_taxesSS .- 1.0) .* KSS
+        )
+    ) ./ (1.0 + (TcSS .- 1.0))
 
-Bgov$SS = B$SS
-G$SS = T$SS - (RRL$SS - 1.0) * Bgov$SS
-Π_F$SS = (1.0 - mc$SS) .* Y$SS
+# tax revenues
+TSS =
+    (TbarSS .- 1.0) .* (wHSS .* NSS + Π_ESS + Π_USS) +
+    (TcSS .- 1.0) .* CSS +
+    (TkSS .- 1.0) .* (RK_before_taxesSS .- 1.0) .* KSS
 
-C$SS = (Y$SS - m_par.δ_0 * K$SS - G$SS - (RRD$SS .- RRL$SS) * BD$SS)
+# government spending from budget constraint
+GSS = TSS - (RRLSS - 1.0) * BgovSS
 
-mcw$SS = 1.0 ./ m_par.μw
-
-Bgovlag$SS = Bgov$SS
-wFlag$SS = wF$SS
-qlag$SS = q$SS
-Tbarlag$SS = Tbar$SS
-
-TotalAssets$SS = B$SS + q$SS * K$SS
+## Lags
+BgovlagSS = BgovSS
+wFlagSS = wFSS
+qlagSS = qSS
+TbarlagSS = TbarSS

@@ -69,7 +69,7 @@ function Ksupply(
         B = m_par.ψ * K
         Wb = ones(n_par.nb, n_par.nk, n_par.nh) .* eff_int
         Wk = ones(n_par.nb, n_par.nk, n_par.nh)
-        distr = reshape((n_par.Π ^ 1000)[1, :], (n_par.nb, n_par.nk, n_par.nh))
+        distr = reshape((n_par.Π^1000)[1, :], (n_par.nb, n_par.nk, n_par.nh))
         Γ = sparse(I(2))
         Γ_a = Γ
         Γ_n = Γ
@@ -149,14 +149,14 @@ function Ksupply(
     ## Resouce grid -----------------------------------------------------------------------
 
     # Asset income plus liquidation value (adjustment case)
-    rental_inc = net_income[2]
+    n_rental_inc = net_income[2]
     liquid_asset_inc = net_income[3]
     capital_liquidation_inc = net_income[4]
 
     # Exogenous resource grid for the adjustment case in EGM calculated according to eq.
     # (resources adjustment)
     R_exo_a =
-        reshape(rental_inc .+ liquid_asset_inc .+ capital_liquidation_inc, (nb .* nk, nh))
+        reshape(n_rental_inc .+ liquid_asset_inc .+ capital_liquidation_inc, (nb .* nk, nh))
 
     ## ------------------------------------------------------------------------------------
     ## Step 2: Loop

@@ -36,56 +36,32 @@ In the following, we call the root directory of the repository `BASEtoolbox.jl` 
 
 `examples/`: Contains the examples that showcase the toolbox. For each example, there is a subfolder in `examples/` that contains the main file to run the example as well as all relevant files for the example. The baseline example that showcases most functions of the toolbox is given by `examples/baseline/main.jl`. This is strictly required as it serves as the baseline for testing and documentation.
 
-`bld`: Contains the generated files (after generating them). The folder is not part of the repository, but is created when running (certain parts of) the toolbox. That is, the folder contains:
+`bld/`: Contains the generated files (after generating them). The folder is not part of the repository, but is created when running (certain parts of) the toolbox. That is, the folder contains:
 - the generated files from the examples as subfolders of `bld/`.
 
 `docs/`: Contains the documentation of the toolbox, that is:
 - the source code in `src/`,
 - and the generated documentation in `build/`.
 
+`test/`: Contains the tests for the toolbox.
+
 ### Building the documentation
 
 You can build the documentation *locally* by starting a new Julia REPL in the root directory of the repository, activating the environment, and running the following command: `include("docs/make.jl")`. You can access the documentation, once it is built locally, via running `python3 -m http.server --directory docs/build/`. If you then open your browser at [http://localhost:8000](http://localhost:8000), the documentation should render properly. Beyond that, the documentation is hosted via GitHub Pages and can be accessed [here](https://hildebrandecon.github.io/BASEtoolbox.jl/).
 
-## Setting up your model
+### Getting started with your model
 
-### Getting started
+The backbone of the toolbox is a computation algorithm to efficiently solve one- or two-asset heterogeneous agent models. The household problem, including all notation, is described in detail in [Household Problem](HouseholdProblem.md). The algorithm is described in [Computational Notes](ComputationalNotes.md).
 
 If you want to add a new model, the recommended way is to start by copying one of the provided examples into a new folder in `examples/`. This way, you can make sure that all necessary files are present and that the toolbox can be run without any issues.
 
-[to do: add more details here]
+We provide a detailed description of the user inputs in a typical example in [General example structure](GeneralStructure.md). To decide which example is best suited as a starting point for your needs, you can look at the list of the provided examples in [Examples](GeneralStructure.md).
 
-### Special features
+!!! tip
+    If your model differs only in the aggregate model part, you can simply stay in the `examples/<your_example>/` folder. In this case you should not need to change the files `src/`. This also holds for some options built into the household problem already, e.g. taxes. Those can entirely be adjusted within your `example/<your_example>/` folder without changing the `src/` files.
 
-#### Multiple economies or sectors
-
-The structure of the problem at hand allows for multiple economies or sectors in the aggregate model part as it would be nothing else than stating additional equations for each of them. To simplify writing up such models, the preprocessor allows using a certain syntax to mark the equations that would need to be repeated or copied for each economy and numbered accordingly. Instead, the preprocessor _automatically_ copies marked equations. Because many ASCII characters are reserved for other purposes, the syntax uses the `?` symbol.
-
-The HANK economy is considered to be economy 1, not receiving an additional number. Any repeated equation will then get an additional number, starting with 2. The preprocessor will then automatically replace the `?` symbol with the respective number and will repeat the equation accordingly.
-
-E.g., the following two code snippets from `input_aggregate_model.mod` are equivalent for the preprocessor:
-
-```julia
-# TFP HANK economy
-F[indexes.Z]    = (log(ZPrime)) - (m_par.ρ_Z * log(Z))
-
-# TFP economy 2
-F[indexes.Z2]   = (log(Z2Prime)) - (m_par.ρ_Z * log(Z2))
-```
-```julia
-# TFP HANK and all other economies
-F[indexes.Z?]    = (log(Z?Prime)) - (m_par.ρ_Z * log(Z?))
-```
-
-At the beginning of the `input_aggregate_model.mod` file, the user has to specify the number of economies or sectors in their model by the following line:
-```julia
-# Setting the number of economies to 2.
-@R?2
-```
-
-The same logic applies when specifying the variable names in `input_aggregate_names.jl` and `input_aggregate_steady_state.mod`. Consequently, the syntax can be also used when referring to steady state variables during writing down the model. E.g., ```Z?SS``` refers to the steady state value of variable `Z` for each economy.
-
-In order to enable convenient syntax highlighting and because the `?` character serves other purposes in `Julia`, `.mod` files are used instead of `.jl` files for the user-specified model equations. In VS Code, you can still set the syntax highlighting to Julia for `.mod` files by clicking on the language mode in the bottom right corner of the editor.
+!!! warning
+    We only advise very proficient "HANK users" to change the `src/` files. This is because changing code at one place may not be enough for the model to be still valid.
 
 ## Methods
 

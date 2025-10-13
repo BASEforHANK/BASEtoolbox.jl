@@ -22,7 +22,7 @@ profits_U(wF, wH, N) = (wF .- wH) .* N
 ## Financial markets ----------------------------------------------------------------------
 
 # Borrowing rate, as function of lending rate and parameters
-borrowing_rate_ss(RRL, m_par) = RRL .+ m_par.Rbar
+borrowing_rate_ss(RRL, m_par) = RRL
 
 ## Labor market clearing ------------------------------------------------------------------
 
@@ -49,6 +49,12 @@ function labor_market_clearing_ss(
     tax_base = wH .* N ./ Hprog .+ Π_E
 
     return (N .- labor_supply(wH, Hprog, τlev, τprog, τc, m_par, tax_base, scaling))
+end
+
+## Transfers ------------------------------------------------------------------------------
+
+function transfer_scheme(n_par, m_par, args_hh_prob)
+    return zeros(size(n_par.grid_h))
 end
 
 ## Optional functions ---------------------------------------------------------------------

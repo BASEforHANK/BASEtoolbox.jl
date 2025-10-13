@@ -47,3 +47,4 @@ VectorInterface = "409d34a3-91d5-4945-b6ec-7529ddf182d8"
 [compat]
 ForwardDiff = "<1.0" # Without this, we run into issues with the eigenvalues
 KrylovKit = "=0.8.3" # Without this, we run into issues with the eigenvalues
+JuliaFormatter = "1" # VS Code is only compatible with this version

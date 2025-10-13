@@ -45,8 +45,8 @@ distr_h = sum(distrSS; dims = (1, 2))
 
 ## Capital Utilization --------------------------------------------------------------------
 
-# Normailzation of utilization to 1 in stationary equilibrium
-δ_1 = exp(XSS[indexes.RKSS]) - 1.0 + m_par.δ_0
+# Normalize utilization to 1 in stationary equilibrium
+δ_1 = exp(XSS[indexes.RK_before_taxesSS]) - 1.0 + m_par.δ_0
 
 # Express second utilization coefficient in relative terms
 δ_2 = δ_1 * m_par.δ_s
@@ -140,10 +140,26 @@ F[indexes.G] = (log(G)) - (log(BgovPrime + T - RB / π * Bgov))
 
 # Total goverment tax revenues, see below equation 35 in BBL
 F[indexes.T] =
-    (log(T)) - (log((Tbar .- 1.0) * (wH * N) + (Tbar .- 1.0) * Π_E + (Tbar .- 1.0) * Π_U))
+    (log(T)) - (log(
+        (Tbar .- 1.0) * (wH * N + Π_E + Π_U) +
+        (Tc .- 1.0) * C +
+        (Tk .- 1.0) * (RK_before_taxes .- 1.0) * K - (TR .- 1.0),
+    ))
 
 # VAT rate (gross)
 F[indexes.Tc] = (log(Tc)) - (XSS[indexes.TcSS])
+# This variable needs to be set for the package!
+
+# Capital income tax rate (gross)
+F[indexes.Tk] = (log(Tk)) - (XSS[indexes.TkSS])
+# This variable needs to be set for the package!
+
+# Flat (lump-sum) tax level (gross)
+F[indexes.Ttr_1] = (log(Ttr_1)) - (XSS[indexes.Ttr_1SS])
+F[indexes.Ttr_2] = (log(Ttr_2)) - (XSS[indexes.Ttr_2SS])
+@write_args_hh_prob()
+F[indexes.TR] =
+    (log(TR)) - (log(transfer_scheme(n_par, m_par, args_hh_prob; distr_h = distr_h)))
 # This variable needs to be set for the package!
 
 # Primary deficit shock
@@ -236,7 +252,11 @@ F[indexes.mc] =
 F[indexes.μ] = (log(μPrime / m_par.μ)) - (m_par.ρ_μ * log(μ / m_par.μ))
 
 # Rate of return on capital
-F[indexes.RK] = (log(RK)) - (log(1 + MPKserv * u - q * depr))
+F[indexes.RK_before_taxes] = (log(RK_before_taxes)) - (log(1 + MPKserv * u - q * depr))
+# This variable needs to be set for the package!
+
+# Rate of return on capital, net of capital taxes
+F[indexes.RK] = (log(RK)) - (log((RK_before_taxes .- 1.0) * (1.0 .- (Tk .- 1.0)) .+ 1.0))
 # This variable needs to be set for the package!
 
 # Wages that firms pay
@@ -280,7 +300,6 @@ F[indexes.u] = (log(MPKserv)) - (log(q * (δ_1 + δ_2 * (u - 1.0))))
 
 # Asset pricing equation for tradable stocks
 F[indexes.qΠ] =
-    qΠ == 1.0 ? (log(RBPrime / πPrime)) :
     (log(RBPrime / πPrime)) -
     (log(((qΠPrime - 1.0) * (1 - ιΠ) + ωΠ * Π_FPrime) / (qΠ - 1.0)))
 

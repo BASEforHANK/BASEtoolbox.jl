@@ -31,25 +31,29 @@ mc = 1.0 ./ m_par.μ
 ## Fiscal policy --------------------------------------------------------------------------
 
 # Average tax rate, see equation 34 in BBL (here simplified)
-F[indexes.Tbar] = (log(Tbar)) - (XSS[indexes.TbarSS])
+F[indexes.Tbar] = (log(Tbar)) - (0.0)
 # This variable needs to be set for the package!
 
 # Progressivity of labor tax, see equation 33a in BBL (here simplified)
-F[indexes.Tprog] = (log(Tprog)) - (XSS[indexes.TprogSS])
+F[indexes.Tprog] = (log(Tprog)) - (0.0)
 # This variable needs to be set for the package!
 
 # Level of labor tax, see equation 35 in BBL (typos!), this determines Tlev
-F[indexes.Tlev] = (log(Tlev)) - (XSS[indexes.TlevSS])
+F[indexes.Tlev] = (log(Tlev)) - (0.0)
 # This variable needs to be set for the package!
 
 # VAT rate (gross)
-F[indexes.Tc] = (log(Tc)) - (XSS[indexes.TcSS])
+F[indexes.Tc] = (log(Tc)) - (0.0)
+# This variable needs to be set for the package!
+
+# Capital income tax rate (gross)
+F[indexes.Tk] = (log(Tk)) - (0.0)
 # This variable needs to be set for the package!
 
 ## Labor market ---------------------------------------------------------------------------
 
 # Idiosyncratic income risk (contemporaneous reaction to business cycle)
-F[indexes.σ] = (log(σ)) - (XSS[indexes.σSS])
+F[indexes.σ] = (log(σ)) - (0.0)
 # This variable needs to be set for the package!
 
 # Wages that households receive
@@ -83,7 +87,12 @@ F[indexes.Hprog] = (log(Hprog)) - (XSS[indexes.HprogSS])
 ## Production -----------------------------------------------------------------------------
 
 # Rate of return on capital
-F[indexes.RK] = (log(RK)) - (log(1 + interest(mc, Z, K, N, m_par)))
+F[indexes.RK_before_taxes] =
+    (log(RK_before_taxes)) - (log(1 + interest(mc, Z, K, N, m_par)))
+# This variable needs to be set for the package!
+
+# Rate of return on capital, net of capital taxes
+F[indexes.RK] = (log(RK)) - (log((RK_before_taxes .- 1.0) * (1.0 .- (Tk .- 1.0)) .+ 1.0))
 # This variable needs to be set for the package!
 
 # Wages that firms pay

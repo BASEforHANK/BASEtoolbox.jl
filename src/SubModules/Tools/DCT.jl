@@ -12,7 +12,7 @@ This implementation uses the DCT-II, i.e., it normalizes the matrix to be orthon
 
 # Returns
 
-  - `Array{Float64, 2}`: A square `n × n` matrix representing the Discrete Cosine Transform.
+  - `DC::Array{Float64, 2}`: A square `n × n` matrix representing the Discrete Cosine Transform.
 """
 function mydctmx(n::Int)
     DC::Array{Float64,2} = zeros(n, n)

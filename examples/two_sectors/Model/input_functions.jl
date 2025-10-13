@@ -1,18 +1,18 @@
 ## Production -----------------------------------------------------------------------------
 
 # Production function
-output(Z, K, N, m_par) = Z * K^m_par.α * N^(1 - m_par.α)
+output(H, S, m_par) = H^m_par.α * S^(1 - m_par.α)
 
 # Real wages that firms pay
-wage(mc, Z, K, N, m_par) = mc * (1 - m_par.α) * Z * (K / N)^m_par.α
+wage(mc, Z, H, S, m_par) = mc * (1 - m_par.α) * Z * (H / S)^m_par.α
 
 # Real rental rate of capital, absent utilization-adjusted depreciation
-interest(mc, Z, K, N, m_par) = mc * m_par.α * Z * (K / N)^(m_par.α - 1.0) - m_par.δ_0
+interest(Z, H, S, m_par) = m_par.α * Z * (H / S)^(m_par.α - 1.0) - m_par.δ_0
 
 ## Profits --------------------------------------------------------------------------------
 
-# Steady state payout to entrepreneurs
-profits_E_ss(mc, Y) = (1.0 .- mc) .* Y
+# Steady state payout of profits to 'entrepreneur' (housing firm profits are zero in SS)
+profits_E_ss(mc, Y, m_par) = (1.0 .- mc) .* Y .* (1 - m_par.α)
 
 ## Union ----------------------------------------------------------------------------------
 
@@ -41,11 +41,13 @@ function labor_market_clearing_ss(
     m_par,
     scaling::Bool,
 )
-    wF = wage(mc, Z, K, N, m_par)
+    S = N .* Z
+    H = K .* Z
+    wF = wage(mc, Z, H, S, m_par)
     wH = mcw .* wF
 
-    Y = output(Z, K, N, m_par)
-    Π_E = profits_E_ss(mc, Y)
+    Y = output(H, S, m_par)
+    Π_E = profits_E_ss(mc, Y, m_par)
     tax_base = wH .* N ./ Hprog .+ Π_E
 
     return (N .- labor_supply(wH, Hprog, τlev, τprog, τc, m_par, tax_base, scaling))
@@ -55,32 +57,4 @@ end
 
 function transfer_scheme(n_par, m_par, args_hh_prob)
     return zeros(size(n_par.grid_h))
-end
-
-## Optional functions ---------------------------------------------------------------------
-
-# CompMarketsCapital is used in find_steadystate.jl to improve initial guesses, if not
-# provided, the model will use the initial guess for K from the model parameters. First, get
-# K/N (capital intensity) from rearranging interest function, then, compute full insurance
-# labor supply and return K given these assumptions. This is hard-coded and should be
-# adjusted if the model changes.
-function CompMarketsCapital(rK, m_par)
-    Z = m_par.Z
-    mc = 1 / m_par.μ
-    mcw = 1 / m_par.μw
-    K_over_N = ((rK + m_par.δ_0) / (m_par.α * Z * mc))^(1 / (m_par.α - 1))
-    wF = wage(mc, Z, K_over_N, 1.0, m_par)
-    wH = mcw .* wF
-    Hprog = 1.0
-    N = labor_supply(
-        wH,
-        Hprog,
-        (m_par.Tlev .- 1.0),
-        (m_par.Tprog .- 1.0),
-        (m_par.Tc .- 1.0),
-        m_par,
-        0.0,
-        false,
-    )
-    return K_over_N * N
 end

@@ -4,15 +4,15 @@ makedocs(;
     sitename = "Documentation for BASEforHANK module",
     pages = [
         "Home" => "index.md",
+        "Household problem" => "HouseholdProblem.md",
+        "Computational Notes" => "ComputationalNotes.md",
+        "Example Structure" => "GeneralStructure.md",
         "Steady state" => "SteadyState.md",
         "Perturbation solution" => "PerturbationSolution.md",
         "Estimation" => "Estimation.md",
         "Post estimation" => "PostEstimation.md",
         "Tools" => "Tools.md",
         "Parser" => "Parsing.md",
-        "Household problem" => "HouseholdProblem.md",
-        "Baseline example" => "examples/baseline.md",
-        "Computational Notes" => "Computational Notes.md",
     ],
     format = Documenter.HTML(;
         mathengine = Documenter.HTMLWriter.MathJax3(),
@@ -20,4 +20,4 @@ makedocs(;
     ),
 )
 
-deploydocs(; repo = "github.com/BASEforHANK/BASEtoolbox.jl.git", versions = nothing)
+deploydocs(; repo = "github.com/hildebrandecon/BASEtoolbox.jl.git", versions = nothing)

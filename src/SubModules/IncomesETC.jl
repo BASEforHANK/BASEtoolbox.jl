@@ -7,6 +7,7 @@ using LinearAlgebra, Roots, ForwardDiff, Printf
 export incomes!,
     incomes,
     av_labor_tax_rate,
+    transfer_scheme,
     mutil!,
     mutil,
     invmutil!,
@@ -47,7 +48,7 @@ function labor_supply(wH, Hprog, τlev, τprog, τc, m_par, tax_base, scaling::B
 end
 
 include("IncomesETC/incomes.jl")
-include("IncomesETC/av_labor_tax_rate.jl")
+include("IncomesETC/tax_system.jl")
 include("IncomesETC/other.jl")
 
 # Documentation mode: if paths to model are not defined, the code will use the baseline example.

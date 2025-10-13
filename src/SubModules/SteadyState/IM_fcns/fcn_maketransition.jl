@@ -16,7 +16,7 @@ Calculate the mass (weight) of households that transition from the startindex to
 targetindex according to the method of [Young
 (2010)](https://www.sciencedirect.com/science/article/abs/pii/S0165188909001316). Refer to
 subsection 'Aggregation via non-stochastic simulations' in ['Computational
-Notes.md'](Computational Notes.md) for further details.
+Notes.md'](ComputationalNotes.md) for further details.
 
 Requires global functions from the [`Tools`](@ref) submodule.
 

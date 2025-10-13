@@ -14,8 +14,7 @@ and the current distribution.
 
 The function calls the in-place version [`DirectTransition!`](@ref) to update the
 distribution. For details on the implementation see that function and subsection
-'Aggregation via non-stochastic simulations in ['Computational Notes.md'](Computational
-Notes.md) for further details.
+'Aggregation via non-stochastic simulations in ['ComputationalNotes.md'](ComputationalNotes.md) for further details.
 
 # Arguments
 
@@ -64,7 +63,7 @@ and the current distribution. The function updates the distribution in place.
 The function is used in `FSYS.jl` function to update the distribution of households given
 the policy functions and the current distribution. For details on the implementation see
 subsection 'Aggregation via non-stochastic simulations in ['Computational
-Notes.md'](Computational Notes.md) for further details.
+Notes.md'](ComputationalNotes.md) for further details.
 
 # Arguments
 

@@ -24,6 +24,7 @@ dup_state_names = Vector{String}(undef, 0)
 distr_names = ["GiniC", "GiniW", "TOP10Ishare", "TOP10Inetshare", "TOP10Wshare", "sdlogy"]
 
 control_names = [
+    "RK_before_taxes",
     "RK",
     "wF",
     "Y",
@@ -44,6 +45,7 @@ control_names = [
     "Tlev",
     "Tprog",
     "Tc",
+    "Tk",
     "Π_U",
     "Π_E",
     "TotalAssets",
@@ -107,6 +109,7 @@ args_hh_prob_names = [
     "Tprog",
     "Tbar",
     "Tc",
+    "Tk",
     "Π_E",
     "Π_U",
     "Htilde",
@@ -114,13 +117,14 @@ args_hh_prob_names = [
 ]
 
 # ascii names used for cases where unicode doesn't work, e.g., file saves
-unicode2ascii(x) = replace.(
+unicode2ascii(x) =
     replace.(
-        replace.(replace.(replace.(x, "τ" => "tau"), "σ" => "sigma"), "π" => "pi"),
-        "μ" => "mu",
-    ),
-    "ρ" => "rho",
-)
+        replace.(
+            replace.(replace.(replace.(x, "τ" => "tau"), "σ" => "sigma"), "π" => "pi"),
+            "μ" => "mu",
+        ),
+        "ρ" => "rho",
+    )
 
 state_names_ascii = unicode2ascii(state_names)
 control_names_ascii = unicode2ascii(control_names)

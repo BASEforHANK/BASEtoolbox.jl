@@ -7,33 +7,11 @@
 n_rep = 1 # Number of n_rep of some model equations (e.g. countries, industries)
 
 # List of aggregate shocks, without duplication (e.g. across countries or industries)
-shock_names = [:Z, :ZI, :μ, :μw, :A, :Rshock, :Gshock, :Tprogshock, :Sshock]
+shock_names = [:Z, :Rshock]
 
 # List of aggregate states, without duplication of names (e.g. across countries or industries)
 # Duplicated names are created below
-state_names = [
-    "A",
-    "Z",
-    "ZI",
-    "RB",
-    "μ",
-    "μw",
-    "σ",
-    "Ylag",
-    "Bgovlag",
-    "Tlag",
-    "Ilag",
-    "wFlag",
-    "qlag",
-    "Clag",
-    "Tbarlag",
-    "Tproglag",
-    "qΠlag",
-    "Gshock",
-    "Tprogshock",
-    "Rshock",
-    "Sshock",
-]
+state_names = ["Z", "RB", "Bgovlag", "wFlag", "qlag", "Tbarlag", "Rshock"]
 
 # List of (the subset) of aggregate states, that need to be duplicated (e.g. across countries or industries)
 dup_state_names = Vector{String}(undef, 0)
@@ -46,6 +24,7 @@ dup_state_names = Vector{String}(undef, 0)
 distr_names = ["GiniC", "GiniW", "TOP10Ishare", "TOP10Inetshare", "TOP10Wshare", "sdlogy"]
 
 control_names = [
+    "σ",
     "RK_before_taxes",
     "RK",
     "wF",
@@ -58,9 +37,6 @@ control_names = [
     "N",
     "mc",
     "mcw",
-    "u",
-    "qΠ",
-    "Π_F",
     "RL",
     "RD",
     "RRL",
@@ -73,29 +49,20 @@ control_names = [
     "I",
     "B",
     "BD",
-    "BY",
-    "TY",
     "wH",
     "G",
     "Tlev",
     "Tprog",
     "Tc",
     "Tk",
-    "Ttr_1",
-    "Ttr_2",
-    "TR",
-    "Ygrowth",
-    "Bgovgrowth",
-    "Igrowth",
-    "wgrowth",
-    "Cgrowth",
-    "Tgrowth",
-    "LP",
-    "LPXA",
     "Π_U",
     "Π_E",
+    "Π_S",
+    "πS",
+    "πK",
+    "H",
+    "S",
     "TotalAssets",
-    "τprog",
 ]
 
 # List of (the subset) of aggregate states, that need to be duplicated (e.g. across countries or industries)
@@ -157,8 +124,6 @@ args_hh_prob_names = [
     "Tbar",
     "Tc",
     "Tk",
-    "Ttr_1",
-    "Ttr_2",
     "Π_E",
     "Π_U",
     "Htilde",

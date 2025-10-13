@@ -96,25 +96,18 @@ function prepare_linearization(
 
     WbSS .*= eff_int
 
-    # Distributional summary statistics
-    distr_bSS,
-    distr_kSS,
-    distr_hSS,
-    TOP10WshareSS,
-    TOP10IshareSS,
-    TOP10InetshareSS,
-    GiniWSS,
-    GiniCSS,
-    sdlogySS = distrSummaries(
-        distrSS,
-        qSS,
-        x_a_starSS,
-        x_n_starSS,
-        n_par,
-        net_income,
-        gross_income,
-        m_par,
-    )
+    # Distributional summary statistics (for filling in the steady state vector)
+    _, _, _, TOP10WshareSS, TOP10IshareSS, TOP10InetshareSS, GiniWSS, GiniCSS, sdlogySS =
+        distrSummaries(
+            distrSS,
+            qSS,
+            x_a_starSS,
+            x_n_starSS,
+            n_par,
+            net_income,
+            gross_income,
+            m_par,
+        )
 
     ## ------------------------------------------------------------------------------------
     ## Step 2: Dimensionality reduction
@@ -123,7 +116,7 @@ function prepare_linearization(
     ## DCT coefficients for marginal value functions --------------------------------------
 
     # Identify the co-linear variables in arguments of household problem
-    exclude_list = ["N", "Hprog", "Htilde", "RRD"]
+    exclude_list = ["N", "Hprog", "Htilde"]
     include_list_idx = findall(x -> x ∉ exclude_list, args_hh_prob_names)
 
     if typeof(n_par.model) == CompleteMarkets

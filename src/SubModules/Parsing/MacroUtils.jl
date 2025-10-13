@@ -64,7 +64,6 @@ a suffix "SS".
 
 (module) global `args_hh_prob_names`
 """
-
 macro write_args_hh_prob_ss()
     varname = Symbol(args_hh_prob_names[1], "SS")
     ex = quote
@@ -112,7 +111,6 @@ a suffix "SS".
 
 (module) global `args_hh_prob_names`, `args_hh_prob`
 """
-
 macro read_args_hh_prob_ss()
     ex = quote end
     for (i, j) in enumerate(args_hh_prob_names)
@@ -236,7 +234,9 @@ macro make_fn(fn_name)
                     (tNo + 1):(tNo + tNo2), # COPSS
                     $(fieldsSS_states...),
                     ((tNo + tNo2) + $(n_states) + 1):((tNo + tNo2) + tNo2 + $(n_states)), # WbSS
-                    ((tNo + tNo2) + tNo2 + $(n_states) + 1):((tNo + tNo2) + 2 * tNo2 + $(n_states)), # WkSS
+                    ((tNo + tNo2) + tNo2 + $(n_states) + 1):((tNo + tNo2) + 2 * tNo2 + $(
+                        n_states
+                    )), # WkSS
                     $(fieldsSS_controls...),
                     1:(n_par.nb - 1), # distr_b
                     (n_par.nb):(n_par.nb + n_par.nk - 2), # distr_k
@@ -246,9 +246,7 @@ macro make_fn(fn_name)
                     (tNo + tNo4 + $(n_states) - 2):(tNo + tNo4 + length(
                         compressionIndexesWb,
                     ) + $(n_states) - 3), # Wb
-                    (tNo + tNo4 + length(
-                        compressionIndexesWb,
-                    ) + $(n_states) - 2):(tNo + tNo4 + length(
+                    (tNo + tNo4 + length(compressionIndexesWb) + $(n_states) - 2):(tNo + tNo4 + length(
                         compressionIndexesWb,
                     ) + length(compressionIndexesWk) + $(n_states) - 3), # Wk
                     $(fields_controls...),

@@ -1,21 +1,19 @@
 # Documentation of the household problem
 
-<span style="color:red">**TO DO: Note: this is a preliminary version, needs to be checked carefully and written more clearly.**</span>
-
 This section documents the household problem that is at the core of the package. Most features are also present in BBL, however, the package extends the model. As a user, given the household problem, you can specify the "surrounding" aggregate equations that determine the inputs to the household problem. You can switch off features of the household problem by setting the parameters or variables accordingly.
 
 The **most important assumptions** of the household problem are the following:
 
 1. GHH preferences with labor supply decision
-2. Taxes: linear and progressive labor and entrepreneurial income tax, linear value-added tax, linear union-profit tax
+2. Taxes: linear and progressive labor and entrepreneurial income tax, linear value-added tax, linear union-profit tax, linear capital income tax, household-specific but non-distortionary transfers
 3. Entrepreneurship as an idiocyncratic state
-4. 2 accounts: liquid and illiquid assets
+4. 2 accounts: liquid and illiquid assets – note: this can be switched off in the code
 
 At the end of this section, we provide a list of **necessary inputs** to the household problem.
 
 ## Model setup
 
-There is a continuum of ex-ante identical households of measure one, indexed by $i$. Households are infinitely lived, have time-separable preferences with time-discount factor $\beta$, and derive felicity from consumption $c_{it}$ and leisure. They obtain income from supplying labor, $n_{it}$, from renting out capital, $k_{it}$, and from earning interest on bonds, $b_{it}$. What is more, they (potentially) receive entrepreneurial profits, $\Pi_t^E$, and union profits, $\Pi_t^U$. Households pay taxes on labor and profit income as well as a value-added consumption tax.
+There is a continuum of ex-ante identical households of measure one, indexed by $i$. Households are infinitely lived, have time-separable preferences with time-discount factor $\beta$, and derive felicity from consumption $c_{it}$ and leisure. They obtain income from supplying labor, $n_{it}$, from renting out capital, $k_{it}$, and from earning interest on bonds, $b_{it}$. What is more, they (potentially) receive entrepreneurial profits, $\Pi_t^E$, and union profits, $\Pi_t^U$. Households pay taxes on labor and profit income, a value-added consumption tax, a capital income tax, and receive household-specific but non-distortionary transfers.
 
 The model features household heterogeneity. Households differ in their productivity and in whether they obtain profit income. They face incomplete markets, and capital as an asset is illiquid while bonds are liquid.
 
@@ -59,7 +57,9 @@ In the code, this tax level shifter can be easily switched off.
 
 Income related to union profits, $\Pi^U_t$, is taxed at a rate $\bar \tau_t$ that is independent of the recipient's labor income.
 
-Asset income is not taxed.
+Capital income is taxed at a constant rate $\tau^k_t$, that is however, already taken into account in the rental rate of capital, $r^K_t$, that households receive. That is, if the pre-tax rental rate of capital is $r^{K,pre}_t$, then $r^K_t = (1-\tau^k_t) r^{K,pre}_t$.
+
+Household-specific but non-distortionary transfers are denoted by $tr_{it}$. We will specify them later.
 
 ## Idiosyncratic productivity
 
@@ -91,12 +91,12 @@ where $w^H_t$ is the real wage rate that household receive, $h_{it}$ is the (sca
 Given incomes, households optimize intertemporally subject to their budget constraint
 ```math
 \begin{align*}
-(1 + \tau^c_t) c_{it} + b_{it+1} + q_t k_{it+1} &= RR^{i}_{t} b_{it} + (q_t + r^K_t)k_{it} + y^n_{it} + 1\{h_{it} \neq 0\}(1 - \bar \tau_t) \Pi^U_t + 1\{h_{it} = 0\} f_\tau(\Pi^E_t),
+(1 + \tau^c_t) c_{it} + b_{it+1} + q_t k_{it+1} &= RR^{i}_{t} b_{it} + (q_t + r^K_t)k_{it} + y^n_{it} + 1\{h_{it} \neq 0\}(1 - \bar \tau_t) \Pi^U_t + 1\{h_{it} = 0\} f_\tau(\Pi^E_t) + tr_{it},
 \end{align*}
 ```
-where $\Pi^U_t$ is union profits taxed at the average tax rate of labor income $\bar \tau_t$, $\Pi^E_t$ is profit payouts to entrepreneurs, $b_{it}$ is real liquid assets, $k_{it}$ is the amount of illiquid assets, $q_{t}$ is the price of these assets, $r^K_{t}$ is their dividend, and $RR^{i}_{t}$ is the gross real interest rate on liquid assets, which depends on whether the household (thus, the dependence on $i$) is a borrower or lender.
+where $\Pi^U_t$ is union profits taxed at the average tax rate of labor income $\bar \tau_t$, $\Pi^E_t$ is profit payouts to entrepreneurs, $b_{it}$ is real liquid assets, $k_{it}$ is the amount of illiquid assets, $q_{t}$ is the price of these assets, $r^K_{t}$ is their dividend net of taxes, and $RR^{i}_{t}$ is the gross real interest rate on liquid assets, which depends on whether the household (thus, the dependence on $i$) is a borrower or lender. $tr_{it}$ are household-specific but non-distortionary transfers.
 
-All households that do not participate in the capital market $(k_{it+1}=k_{it})$ still obtain dividends and can adjust their liquid asset holdings. Depreciated capital has to be replaced for maintenance, such that the dividend, $r^K_{t}$, is the net return on capital. Holdings of bonds have to be above an exogenous debt limit $\underline{B},$ and holdings of capital have to be non-negative, that is
+All households that do not participate in the capital market $(k_{it+1}=k_{it})$ still obtain dividends and can adjust their liquid asset holdings. Depreciated capital has to be replaced for maintenance, such that the dividend, $r^K_{t}$, is the net return on capital (also net of taxes). Holdings of bonds have to be above an exogenous debt limit $\underline{B},$ and holdings of capital have to be non-negative, that is
 ```math
 k_{it+1} \geq 0, \quad b_{it+1} \geq \underline{B}.
 ```
@@ -105,11 +105,13 @@ Recall, $f_\tau(\Pi_t^E)$ is the progressive tax function defined above, applied
 
 Additionally, consumption is taxed at a rate $\tau^c_t$, i.e. a VAT tax.
 
+Transfers, $tr_{it}$, are household-specific but assumed to be non-distortionary. That is, even if they are household-specific, they do not affect household behavior. This is a simplifying assumption, use it with care.
+
 ### Side note: computation of the budget constraint elements in the code
 
 In the code, the elements of the budget constraint that are necessary to compute the household problem are computed by the `incomes()` function. Based on the parameters and aggregate variables, the function computes (at least) the following elements:
-1. Net labor and union income for workers, adjusted for the composite good / net entrepreneurial profits for entrepreneurs, that is $y^n_{it} + 1\{h_{it} \neq 0\}(1 - \bar \tau_t) \Pi^U_t + 1\{h_{it} = 0\} f_\tau(\Pi^E_t)$ plus the adjustment for the composite good derived below.
-2. Rental income from illiquid assets, that is $r^K_t k_{it}$.
+1. Net labor and union income for workers, adjusted for the composite good / net entrepreneurial profits for entrepreneurs, that is $y^n_{it} + 1\{h_{it} \neq 0\}(1 - \bar \tau_t) \Pi^U_t + 1\{h_{it} = 0\} f_\tau(\Pi^E_t) + tr_{it}$ plus the adjustment for the composite good derived below.
+2. Rental income from illiquid assets, that is $r^K_t k_{it}$ (net of taxes).
 3. Liquid asset income, that is $RR^{i}_{t} b_{it}$.
 4. Liquidation income from illiquid assets, that is $q_t k_{it+1}$.
 
@@ -148,7 +150,7 @@ In periods, where the household cannot adjust, it faces the same problem except 
 Consider the following Lagrangian of the household problem (ignoring the asset choice here, since it is not relevant for the labor supply decision):
 ```math
 \begin{align*}
-\mathcal{L} &= E_0 \sum_{t=0}^\infty \beta^t \Bigg( u(c_{it} - G(h_{it}, n_{it})) + \lambda_{it} \left[ RR^{i}_{t} b_{it} + (q_t + r^K_t) k_{it} + y^n_{it} + 1\{h_{it} \neq 0\}(1 - \bar \tau_t)\Pi^U_t + 1\{h_{it} = 0\} f_\tau(\Pi^E_t) - (1 + \tau^c_t) c_{it}
+\mathcal{L} &= E_0 \sum_{t=0}^\infty \beta^t \Bigg( u(c_{it} - G(h_{it}, n_{it})) + \lambda_{it} \left[ RR^{i}_{t} b_{it} + (q_t + r^K_t) k_{it} + y^n_{it} + 1\{h_{it} \neq 0\}(1 - \bar \tau_t)\Pi^U_t + 1\{h_{it} = 0\} f_\tau(\Pi^E_t) + tr_{it} - (1 + \tau^c_t) c_{it}
  - b_{it+1} - q_t k_{it+1}\right] + \dots \Bigg)
 \end{align*}
 ```
@@ -204,7 +206,7 @@ y^g_{it} = w^H_t h_{it} n_{it} = w^H_t  \frac{N_t}{H^p_t}  h_{it}^\frac{\gamma +
 Finally, consumption in the budget constraint can be replaced with the composite consumption good $x_{it}$:
 ```math
 \begin{align*}
-(1 + \tau^c_t) x_{it} + b_{it+1} + q_t k_{it+1} &= RR^{i}_{t} b_{it} + (q_t + r^K_t)k_{it} + \left(1 - \frac{1-\tau^p_t}{1+\gamma}\right) y^n_{it} + 1\{h_{it} \neq 0\}(1 - \bar \tau_t) \Pi^U_t + 1\{h_{it} = 0\} f_\tau(\Pi^E_t), \tag{BC with x}
+(1 + \tau^c_t) x_{it} + b_{it+1} + q_t k_{it+1} &= RR^{i}_{t} b_{it} + (q_t + r^K_t)k_{it} + \left(1 - \frac{1-\tau^p_t}{1+\gamma}\right) y^n_{it} + 1\{h_{it} \neq 0\}(1 - \bar \tau_t) \Pi^U_t + 1\{h_{it} = 0\} f_\tau(\Pi^E_t) + tr_{it}, \tag{BC with x}
 \end{align*}
 ```
 where $\left(1-\frac{1-\tau^p_t}{1+\gamma}\right)$ simplifies to $\left(\frac{\tau^p_t + \gamma}{1+\gamma}\right)$. This GHH factor is used in the code to transform net labor income, $y^n_{it}$, into the composite consumption good units. Here, we have to take the VAT additionally into account.
@@ -241,16 +243,16 @@ The budget sets for the adjustment case $\Gamma_a$ and the non-adjustment case $
 ```math
 \begin{align*}
     \Gamma_{a}(b,k,h) &= \Bigg\{ k' \geq 0, b' \geq \underline{B} \mid q (k' - k) + b' \leq \left(\frac{\tau^p + \gamma}{1+\gamma}\right) y^n + RR(b) b + r^K k \\
-    & + 1\{h \neq 0\}(1- \tau)\Pi^U + 1\{h = 0\} f_\tau(\Pi^E) \Bigg\} \\
+    & + 1\{h \neq 0\}(1- \tau)\Pi^U + 1\{h = 0\} f_\tau(\Pi^E) + tr \Bigg\} \\
     \Gamma_{n}(b,k,h) &= \Bigg\{b' \geq \underline{B} \mid  b'\leq \left(\frac{\tau^p + \gamma}{1+\gamma}\right) y^n + RR(b) b + r^K k \\
-    & + 1\{h_{it} \neq 0\}(1- \tau)\Pi^U + 1\{h_{it} = 0\} f_\tau(\Pi^E) \Bigg\}.
+    & + 1\{h_{it} \neq 0\}(1- \tau)\Pi^U + 1\{h_{it} = 0\} f_\tau(\Pi^E) + tr \Bigg\}.
 \end{align*}
 ```
 Moreover, the consumption leisure composite $x$ is
 ```math
 \begin{align*}
     x(b,b',k,k',h) &= \frac{1}{1+\tau^c} \Bigg[ \left(\frac{\tau^p + \gamma}{1+\gamma}\right) y^n + RR(b) b + r^K k \\
-    & + 1\{h \neq 0\}(1- \tau)\Pi^U + 1\{h = 0\} f_\tau(\Pi^E) - b' - q (k' - k) \Bigg].
+    & + 1\{h \neq 0\}(1- \tau)\Pi^U + 1\{h = 0\} f_\tau(\Pi^E) + tr - b' - q (k' - k) \Bigg].
 \end{align*}
 ```
 
@@ -305,7 +307,7 @@ In the adjustment case, the household also faces a portfolio problem. Intuitivel
 
 The endogenous grid algorithm (EGM) is used to solve the dynamic household problem with two assets.
 The first-order conditions and Euler equations, which were derived above, form the foundation of the iterative algorithm.
-The document [`Computational Notes.md`](Computational Notes.md) provides a step-by-step explanation of the computational procedure implemented in the code.
+[There are additional notes](ComputationalNotes.md) that provide a step-by-step explanation of the computational procedure implemented in the code.
 
 ## Inputs to the household problem
 
@@ -340,3 +342,38 @@ The document [`Computational Notes.md`](Computational Notes.md) provides a step-
 - cross-sectional average of productivity before scaling, $\tilde{H}_t$
 - cross-sectional average of productivity, weighted by tax progressivity factor, $H^p_t$
 - total effective hours, $N_t$
+
+## Fiscal implications of the household problem
+
+### Average "labor" tax rate
+
+The average tax rate on labor income, $\bar \tau_t$, is computed as the ratio of total tax revenue from labor income to total gross labor income. In this, we define entrepreneurial profits as labor income, since entrepreneurs do not work, but earn entrepreneurial profits. In other words, $\bar \tau_t$ is the average tax rate that is applied to all income sources taxes using the tax function $f_\tau(\cdot)$:
+```math
+\begin{align*}
+\bar \tau_t = \frac{\int (y^g_{it} - f_\tau(y^g_{it})) di + \int (\Pi^E_t - f_\tau(\Pi^E_t)) 1\{h_{it} = 0\} di}{\int y^g_{it} di + \int \Pi^E_t 1\{h_{it} = 0\} di}.
+\end{align*}
+```
+
+With this specification, we can then compute the total tax revenue from labor income as $\bar \tau_t \left(\int y^g_{it} di + \int \Pi^E_t 1\{h_{it} = 0\} di\right)$, which is used in the government budget constraint, and equal to $\bar \tau_t w^H_t N_t + \bar \tau_t \Pi^E_t$.
+
+### Total tax revenue
+
+Total tax revenue, $T_t$, is given by the sum of tax revenue from labor income, tax revenue from entrepreneurial profits, tax revenue from union profits, consumption tax revenue, revenue from taxing capital income, and costs of transfers:
+```math
+\begin{align*}
+T_t &= \int (y^g_{it} - f_\tau(y^g_{it})) di + \int (\Pi^E_t - f_\tau(\Pi^E_t)) 1\{h_{it} = 0\} di + \bar \tau_t \Pi^U_t + \tau^c_t C_t + \tau^k_t r^{K,pre}_t K_t - \int tr_{it} di \\
+&= \bar \tau_t w^H_t N_t + \bar \tau_t \Pi^E_t + \bar \tau_t \Pi^U_t + \tau^c_t C_t + \tau^k_t r^{K,pre}_t K_t - \int tr_{it} di,
+\end{align*}
+```
+
+### Transfer scheme
+
+We assume that transfers, $tr_{it}$, are household-specific but non-distortionary. That is, even if they are household-specific, they do not affect household behavior. This is a simplifying assumption, use it with care.
+
+The transfer scheme is given by
+```math
+\begin{align*}
+tr_{it} = \max \left\{0, \tau^{tr}_1 w^H_t N_t - \tau^{tr}_2 y^n_{it} \right\},
+\end{align*}
+```
+where $\tau^{tr}_1$ and $\tau^{tr}_2$ are parameters that govern the level and the slope of the transfer scheme. Economically, the transfer scheme implements a baseline transfer of $\tau^{tr}_1 w^H_t N_t$ that is reduced in proportion to the household's net labor income, $y^n_{it}$, until it reaches zero. The transfer scheme thus provides a safety net for low-income households.

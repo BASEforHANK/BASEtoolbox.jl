@@ -99,7 +99,8 @@ function incomes!(net_inc, gross_inc, RRi, n_par, m_par, args_hh_prob)
     RRi .= RRL .* (n_par.mesh_b .> 0.0) .+ RRD .* (n_par.mesh_b .<= 0.0)
 
     # Type 2: gross/net income: rental income from illiquid assets
-    rental_inc = (RK .- 1.0) .* n_par.mesh_k
+    g_rental_inc = (RK .- 1.0) ./ (1 .- (Tk .- 1.0)) .* n_par.mesh_k
+    n_rental_inc = (RK .- 1.0) .* n_par.mesh_k
 
     # Type 3: gross/net income: liquid asset income
     liquid_asset_inc = RRi .* n_par.mesh_b
@@ -125,6 +126,10 @@ function incomes!(net_inc, gross_inc, RRi, n_par, m_par, args_hh_prob)
     n_e_profits =
         labor_tax_f.(g_e_profits, (Tlev .- 1.0), (Tprog .- 1.0), tax_base, m_par.scale_prog)
 
+    # Type 1: household-specific, non-distortionary transfers
+    transfers = transfer_scheme(n_par, m_par, args_hh_prob)
+    transfers = reshape(transfers, 1, 1, :)
+
     # Type 5: transformation of composite to consumption for workers
     comp_labor_GHH =
         (1.0 .- scale_GHH((Tprog .- 1.0), m_par)) / (1.0 .+ (Tc .- 1.0)) .* n_labor_inc
@@ -136,20 +141,20 @@ function incomes!(net_inc, gross_inc, RRi, n_par, m_par, args_hh_prob)
     =#
 
     # Combine all net income sources, adjust for entrepreneurs
-    net_inc[1] = n_labor_inc_adj .+ n_u_profits
+    net_inc[1] = n_labor_inc_adj .+ n_u_profits .+ transfers
     net_inc[1][:, :, end] .= n_e_profits
-    net_inc[2] = rental_inc
+    net_inc[2] = n_rental_inc
     net_inc[3] = liquid_asset_inc
     net_inc[4] = liquidation_inc
     net_inc[5] = comp_labor_GHH
     net_inc[5][:, :, end] .= 0.0
-    net_inc[6] = n_labor_inc .+ n_u_profits
+    net_inc[6] = n_labor_inc .+ n_u_profits .+ transfers
     net_inc[6][:, :, end] .= n_e_profits
 
     # Combine all gross income sources, adjust for entrepreneurs
-    gross_inc[1] = g_labor_inc .+ g_u_profits
+    gross_inc[1] = g_labor_inc .+ g_u_profits .+ transfers
     gross_inc[1][:, :, end] .= g_e_profits
-    gross_inc[2] = rental_inc
+    gross_inc[2] = g_rental_inc
     gross_inc[3] = liquid_asset_inc
     gross_inc[4] = liquidation_inc
     gross_inc[5] = g_labor_inc

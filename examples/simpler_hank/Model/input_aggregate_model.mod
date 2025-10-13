@@ -74,10 +74,18 @@ F[indexes.G] = (log(G)) - (log(BgovPrime + T - RB / π * Bgov))
 
 # Total goverment tax revenues, see below equation 35 in BBL
 F[indexes.T] =
-    (log(T)) - (log((Tbar .- 1.0) * (wH * N) + (Tbar .- 1.0) * Π_E + (Tbar .- 1.0) * Π_U))
+    (log(T)) - (log(
+        (Tbar .- 1.0) * (wH * N + Π_E + Π_U) +
+        (Tc .- 1.0) * C +
+        (Tk .- 1.0) * (RK_before_taxes .- 1.0) * K,
+    ))
 
 # VAT rate (gross)
 F[indexes.Tc] = (log(Tc)) - (XSS[indexes.TcSS])
+# This variable needs to be set for the package!
+
+# Capital income tax rate (gross)
+F[indexes.Tk] = (log(Tk)) - (XSS[indexes.TkSS])
 # This variable needs to be set for the package!
 
 ## Monetary policy ------------------------------------------------------------------------
@@ -155,8 +163,13 @@ F[indexes.mc] =
     )
 
 # Rate of return on capital
-F[indexes.RK] =
-    (log(RK)) - (log(1.0 + interest(mc, Z, K, N, m_par) + m_par.δ_0 - q * m_par.δ_0))
+F[indexes.RK_before_taxes] =
+    (log(RK_before_taxes)) -
+    (log(1.0 + interest(mc, Z, K, N, m_par) + m_par.δ_0 - q * m_par.δ_0))
+# This variable needs to be set for the package!
+
+# Rate of return on capital, net of capital taxes
+F[indexes.RK] = (log(RK)) - (log((RK_before_taxes .- 1.0) * (1.0 .- (Tk .- 1.0)) .+ 1.0))
 # This variable needs to be set for the package!
 
 # Wages that firms pay

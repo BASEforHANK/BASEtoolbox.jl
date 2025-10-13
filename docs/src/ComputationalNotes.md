@@ -156,8 +156,8 @@ The real interest rate on liquid assets $RR(\tilde b)$ can depend on the level o
 
 ```Julia
 b_tilde_n .= (
-    (1.0 .+ τc) .* x_tilde_n .+ n_par.mesh_m .- net_labor_union_inc_GHH .-
-    rental_inc
+    (1.0 .+ τc) .* x_tilde_n .+ n_par.mesh_m .- n_labor_union_inc_GHH .-
+    n_rental_inc
 )
 eff_int =
     (RL ./ π) .* (b_tilde_n .> 0.0) + (RD ./ π) .* (b_tilde_n .<= 0.0)
@@ -209,8 +209,8 @@ for jj = 1:nh
             if n_par.grid_b[bb] .< bcpol
                 x_n_star[bb, kk, jj] =
                     (
-                        net_labor_union_inc_GHH[bb, kk, jj] .+
-                        rental_inc[bb, kk, jj] .+ liquid_asset_inc[bb, kk, jj] .-
+                        n_labor_union_inc_GHH[bb, kk, jj] .+
+                        n_rental_inc[bb, kk, jj] .+ liquid_asset_inc[bb, kk, jj] .-
                         n_par.grid_b[1]
                     ) ./ (1 .+ τc)
                 b_n_star[bb, kk, jj] = n_par.grid_b[1]
@@ -378,7 +378,7 @@ The endogenous grid points are calculated and allocated to the variable `R_tilde
 ```Julia
 R_tilde_a =
         (1.0 .+ τc) .* x_tilde_a .+ b_hat_a .+ capital_liquidation_inc[1, :, :] .-
-        net_labor_union_inc_GHH[1, :, :]
+        n_labor_union_inc_GHH[1, :, :]
 ```
 
 
@@ -436,7 +436,7 @@ aux_x = reshape(x_tilde_n[:, 1, :], (nb, nh))
 We do the same with net labor income, which only depends on the productivity state.
 
 ```Julia
-aux_inc = reshape(net_labor_union_inc_GHH[1, 1, :], (1, nh))
+aux_inc = reshape(n_labor_union_inc_GHH[1, 1, :], (1, nh))
 ```
 
 **Technical note:** In the code, we now save the results of the endogenous grid algorithm in lists. In the later interpolation step, we will then use these lists as inputs to the interpolation function.

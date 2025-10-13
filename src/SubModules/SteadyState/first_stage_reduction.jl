@@ -210,9 +210,6 @@ function VFI(args_hh_prob, WkSS::Array, WbSS::Array, n_par, m_par)
 
     @read_args_hh_prob()
 
-    # Additional definitions: borrowing rate
-    RRD = borrowing_rate_ss(RRL, m_par)
-
     # Additional definitions: Human capital transition
     Π = n_par.Π .+ zeros(eltype(args_hh_prob), 1)[1]
     PP = ExTransition(m_par.ρ_h, n_par.bounds_h, sqrt(σ))

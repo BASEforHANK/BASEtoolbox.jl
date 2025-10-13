@@ -59,10 +59,17 @@ parameter::T = value | "ascii_name" | L"latex_name" | prior_distribution | estim
     Tlev::T =
         1.0 .+ 0.0 | "tau_lev" | "income tax rate level (gross)" | L"\tau^l" | _ | false
     Tprog::T =
-        1.0 .+ 0.0 | "tau_pro" | "income tax rate progressivity (gross)" | L"\tau^p" | _ |
+        1.0 .+ 0.0 |
+        "tau_pro" |
+        "income tax rate progressivity (gross)" |
+        L"\tau^p" |
+        _ |
         false
     Tbar::T = 1.0 + 0.0 | "tau_bar" | "average tax rate (gross)" | L"\bar \tau" | _ | false
     Tc::T = 1.0 + 0.0 | "Tc" | "VAT rate (gross)" | L"T_c" | _ | false
+    Tk::T = 1.0 + 0.0 | "Tk" | "capital income tax rate (gross)" | L"T_k" | _ | false
+    Ttr_1::T = 1.0 | "Ttr1" | "lump-sum transfer param 1" | L"\tau_{tr1}" | _ | false
+    Ttr_2::T = 1.0 | "Ttr2" | "lump-sum transfer param 2" | L"\tau_{tr2}" | _ | false
     RRB::T = (1.0 .^ 0.25) | "RB" | "real rate on bonds (gross)" | L"RRB" | _ | false
     Rbar::T = ((1.00 .^ 0.25) .- 1.0) | "Rbar" | "borrowing wedge" | L"\bar R" | _ | false
     q::T = 1.0 | "q" | "price of capital" | L"q" | _ | false
@@ -72,7 +79,11 @@ parameter::T = value | "ascii_name" | L"latex_name" | prior_distribution | estim
 
     # fiscal policy
     scale_prog::Bool =
-        false | "scale_prog" | "scaling of tax rate with tax base" | "scale_prog" | _ |
+        false |
+        "scale_prog" |
+        "scaling of tax rate with tax base" |
+        "scale_prog" |
+        _ |
         false
 
     # exogeneous aggregate "shocks"
@@ -164,14 +175,14 @@ Collect parameters for the numerical solution of the model in a `struct`.
         (m_par.ζ .+ m_par.ι) / m_par.ζ
     ]
     Π::Matrix{Float64} = [
-        Tauchen(m_par.ρ_h, nh - 1)[2] .* (1.0 .- m_par.ζ) m_par.ζ .* ones(nh - 1)
+        Tauchen(m_par.ρ_h, nh - 1)[2].*(1.0 .- m_par.ζ) m_par.ζ.*ones(nh - 1)
         m_par.ι ./ (nh - 1)*ones(1, nh - 1) 1.0 .- m_par.ι
     ]
     # bounds of income bins (except entrepreneur)
     bounds_h::Array{Float64,1} = Tauchen(m_par.ρ_h, nh - 1)[3]
 
-    Htilde::Float64 = ((Π ^ 1000)[1, 1:(end - 1)]' * grid_h[1:(end - 1)]) # stationary equilibrium average human capital
-    frac_workers::Float64 = (1.0 / (1.0 - (Π ^ 1000)[1, end]))     # stationary equilibrium fraction workers
+    Htilde::Float64 = ((Π^1000)[1, 1:(end - 1)]' * grid_h[1:(end - 1)]) # stationary equilibrium average human capital
+    frac_workers::Float64 = (1.0 / (1.0 - (Π^1000)[1, end]))     # stationary equilibrium fraction workers
 
     # initial gues for stationary distribution (needed if iterative procedure is used)
     dist_guess::Array{Float64,3} = ones(nb, nk, nh) / (nb * nk * nh)

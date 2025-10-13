@@ -11,7 +11,7 @@ The function is used in the [`MakeTransition()`](@ref) and
 by the policy functions when applying the method of [Young
 (2010)](https://www.sciencedirect.com/science/article/abs/pii/S0165188909001316). Refer to
 subsection 'Aggregation via non-stochastic simulations in ['Computational
-Notes.md'](Computational Notes.md) for further details.
+Notes.md'](ComputationalNotes.md) for further details.
 
 # Arguments
 
@@ -83,7 +83,7 @@ The function is used in the [`DirectTransition`](@ref) function to calculate wei
 policy functions to compute the weights for the gambles when applying the method of [Young
 (2010)](https://www.sciencedirect.com/science/article/abs/pii/S0165188909001316). Refer to
 subsection 'Aggregation via non-stochastic simulations in ['Computational
-Notes.md'](Computational Notes.md) for further details.
+Notes.md'](ComputationalNotes.md) for further details.
 
 # Arguments
 

@@ -90,7 +90,6 @@ in the estimation part (see [`BASEforHANK.PerturbationSolution.LinearSolution_re
     If you change the household decision model and hence need to customize the steady state solution,
     you will need to adjust the template `Preprocessor/template_fcns/prepare_linearization.jl` and not `Preprocessor/generated_fcns/prepare_linearization_generated.jl` which will be overwritten by the model parser based on `Preprocessor/template_fcns/prepare_linearization.jl`. Note that the "definition" of the function (right click in VSCode) in the module is the generated one.
 
-
 ## Parameters
 The model parameters for the steady state have to be calibrated. We set them
 in the `struct` `ModelParameters`. It also contains all other parameters that

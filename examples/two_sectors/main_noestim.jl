@@ -1,5 +1,5 @@
 """
-Mainboard for a simpler HANK model, no estimation.
+Mainboard for a simpler HANK model with two sectors, no estimation.
 """
 
 using PrettyTables, Printf;
@@ -103,13 +103,6 @@ IRFs, _, IRFs_order = compute_irfs(
     init_val = stds,
 );
 
-# Compute variance decomposition of IRFs
-VDs = compute_vardecomp(IRFs);
-
-# Compute business cycle frequency variance decomposition
-VDbcs, UnconditionalVar =
-    compute_vardecomp_bcfreq(exovars, stds, lr_full.State2Control, lr_full.LOMstate);
-
 ## ------------------------------------------------------------------------------------------
 ## Graphical outputs
 ## ------------------------------------------------------------------------------------------
@@ -123,8 +116,8 @@ plot_irfs(
     [
         (:Y, "Output"),
         (:C, "Consumption"),
-        (:I, "Investment"),
-        (:N, "Employment"),
+        (:H, "Housing"),
+        (:S, "Services"),
         (:wF, "Wage (firms)"),
         (:RB, "Nominal rate"),
         (:π, "Inflation"),
@@ -139,52 +132,6 @@ plot_irfs(
     show_fig = false,
     save_fig = true,
     path = paths["bld_example"] * "/IRFs",
-);
-
-mkpath(paths["bld_example"] * "/VDs");
-plot_vardecomp(
-    [
-        (:Y, "Output"),
-        (:C, "Consumption"),
-        (:I, "Investment"),
-        (:N, "Employment"),
-        (:wF, "Wage (firms)"),
-        (:RB, "Nominal rate"),
-        (:π, "Inflation"),
-        (:B, "Government debt"),
-        (:Tprog, "Tax progressivity"),
-        (:Tlev, "Tax level"),
-        (:G, "Government spending"),
-    ],
-    [(VDs, "Baseline")],
-    IRFs_order,
-    sr_full.indexes;
-    show_fig = false,
-    save_fig = true,
-    path = paths["bld_example"] * "/VDs",
-);
-
-mkpath(paths["bld_example"] * "/VDbcs");
-plot_vardecomp_bcfreq(
-    [
-        (:Y, "Output"),
-        (:C, "Consumption"),
-        (:I, "Investment"),
-        (:N, "Employment"),
-        (:wF, "Wage (firms)"),
-        (:RB, "Nominal rate"),
-        (:π, "Inflation"),
-        (:B, "Government debt"),
-        (:Tprog, "Tax progressivity"),
-        (:Tlev, "Tax level"),
-        (:G, "Government spending"),
-    ],
-    [(VDbcs, "Baseline")],
-    IRFs_order,
-    sr_full.indexes;
-    show_fig = false,
-    save_fig = true,
-    path = paths["bld_example"] * "/VDbcs",
 );
 
 @printf "\n"

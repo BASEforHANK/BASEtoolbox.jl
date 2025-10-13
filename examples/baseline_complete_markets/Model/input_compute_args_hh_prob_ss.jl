@@ -12,7 +12,7 @@ as well as (user-specified) functions and then computes the relevant steady stat
 That means, all the necessary arguments must follow from `K` or steady state assumptions in
 the parameter structs.
 
-The function is used in q [`BASEforHANK.SteadyState.Kdiff()`](@ref) to find the stationary
+The function is used in [`BASEforHANK.SteadyState.Kdiff()`](@ref) to find the stationary
 equilibrium of the household block of the model and in
 [`BASEforHANK.PerturbationSolution.prepare_linearization()`](@ref) to prepare the
 linearization of the model.
@@ -31,7 +31,7 @@ linearization of the model.
 function compute_args_hh_prob_ss(K, m_par, n_par)
 
     # Stationary distribution of productivity
-    distr_h = (n_par.Π ^ 1000)[1, :]
+    distr_h = (n_par.Π^1000)[1, :]
 
     # Assumption on markup and markdown
     mc = 1.0 ./ m_par.μ
@@ -50,6 +50,7 @@ function compute_args_hh_prob_ss(K, m_par, n_par)
     Tlev = m_par.Tlev
     Tprog = m_par.Tprog
     Tc = m_par.Tc
+    Tk = m_par.Tk
 
     # Assumption
     σ = m_par.σ
@@ -80,7 +81,10 @@ function compute_args_hh_prob_ss(K, m_par, n_par)
     )
 
     # Calculate interest rate using interest function
-    RK = 1.0 .+ interest(mc, Z, K, N, m_par)
+    RK_before_taxes = 1.0 .+ interest(mc, Z, K, N, m_par)
+
+    # Calculate capital return net of capital return tax
+    RK = (RK_before_taxes .- 1.0) .* (1.0 .- (Tk .- 1.0)) .+ 1.0
 
     # Calculate wage that firms face using wage function
     wF = wage(mc, Z, K, N, m_par)
