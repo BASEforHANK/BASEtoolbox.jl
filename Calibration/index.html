@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Calibration · Documentation for BASEforHANK module</title><meta name="title" content="Calibration · Documentation for BASEforHANK module"/><meta property="og:title" content="Calibration · Documentation for BASEforHANK module"/><meta property="twitter:title" content="Calibration · Documentation for BASEforHANK module"/><meta name="description" content="Documentation for Documentation for BASEforHANK module."/><meta property="og:description" content="Documentation for Documentation for BASEforHANK module."/><meta property="twitter:description" content="Documentation for Documentation for BASEforHANK module."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">Documentation for BASEforHANK module</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../HouseholdProblem/">Household problem</a></li><li><a class="tocitem" href="../ComputationalNotes/">Computational Notes</a></li><li><a class="tocitem" href="../GeneralStructure/">Example Structure</a></li><li><a class="tocitem" href="../SteadyState/">Steady state</a></li><li class="is-active"><a class="tocitem" href>Calibration</a><ul class="internal"><li><a class="tocitem" href="#1-—-What-Calibration-Does"><span>1 — What Calibration Does</span></a></li><li><a class="tocitem" href="#2-—-Required-Ingredients"><span>2 — Required Ingredients</span></a></li><li><a class="tocitem" href="#3-—-Basic-Examples"><span>3 — Basic Examples</span></a></li><li><a class="tocitem" href="#4-—-Higher-Dimensional-Example-and-Global-Optimization"><span>4 — Higher-Dimensional Example and Global Optimization</span></a></li><li><a class="tocitem" href="#5-—-Practical-Tips-and-Checklist"><span>5 — Practical Tips and Checklist</span></a></li></ul></li><li><a class="tocitem" href="../PerturbationSolution/">Perturbation solution</a></li><li><a class="tocitem" href="../Estimation/">Estimation</a></li><li><a class="tocitem" href="../IRF_matching/">IRF Matching</a></li><li><a class="tocitem" href="../PostEstimation/">Post estimation</a></li><li><a class="tocitem" href="../Utilities/">Utilities</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Calibration</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Calibration</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/BASEforHANK/BASEtoolbox.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/BASEforHANK/BASEtoolbox.jl/blob/main/docs/src/Calibration.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Calibration"><a class="docs-heading-anchor" href="#Calibration">Calibration</a><a id="Calibration-1"></a><a class="docs-heading-anchor-permalink" href="#Calibration" title="Permalink"></a></h1><div class="admonition is-info" id="Note-f49ec6733d5068af"><header class="admonition-header">Note<a class="admonition-anchor" href="#Note-f49ec6733d5068af" title="Permalink"></a></header><div class="admonition-body"><p>The calibration code lives in <code>src/SubModules/SteadyState/calibration_steadystate.jl</code> and is part of the <code>SteadyState</code> module.</p></div></div><p>This page documents the <strong>calibration</strong> workflow and how to set it up in practice. Calibration here means choosing parameters so that <strong>model-implied moments</strong> (e.g. capital–output ratio) are close to <strong>target moments</strong> from data or other sources.</p><p>The workflow is built around a single high-level function:</p><pre><code class="language-julia hljs">m_par = BASEforHANK.SteadyState.run_calibration(
+    moments_function,
+    cal_dict,
+    m_par;
+    solver = &quot;NelderMead&quot;,
+)</code></pre><p>All boilerplate (paths, loading modules, etc.) is handled in the example mainboard <code>main_calibration.jl</code>. You only need to:</p><ol><li>Specify <strong>which parameters to calibrate</strong> and <strong>which moments to target</strong> (<code>cal_dict</code>),</li><li>Write a <strong>moments function</strong> that computes the model moments for a given <code>m_par</code>.</li></ol><hr/><h2 id="1-—-What-Calibration-Does"><a class="docs-heading-anchor" href="#1-—-What-Calibration-Does">1 — What Calibration Does</a><a id="1-—-What-Calibration-Does-1"></a><a class="docs-heading-anchor-permalink" href="#1-—-What-Calibration-Does" title="Permalink"></a></h2><p>The calibration routine solves:</p><p class="math-container">\[\min_{\theta} \sum_{j} w_j \left( m^{\text{model}}_j(\theta) - m^{\text{target}}_j \right)^2\]</p><p>where</p><ul><li><p class="math-container">\[\theta\]</p>: a subset of parameters in <code>ModelParameters</code>,</li><li><p class="math-container">\[m^{\text{target}}_j\]</p>: user-specified target moments (e.g. <code>K/Y = 11.22/4</code>),</li><li><p class="math-container">\[m^{\text{model}}_j(\theta)\]</p>: corresponding model moments, computed from the model’s steady state,</li><li><p class="math-container">\[w_j\]</p>: implicit weights from the optimizer.</li></ul><p>The output is an updated <code>m_par</code> where the chosen parameters are replaced by the parameter values that best match your targets.</p><hr/><h2 id="2-—-Required-Ingredients"><a class="docs-heading-anchor" href="#2-—-Required-Ingredients">2 — Required Ingredients</a><a id="2-—-Required-Ingredients-1"></a><a class="docs-heading-anchor-permalink" href="#2-—-Required-Ingredients" title="Permalink"></a></h2><h3 id="2.1-run_calibration-Signature"><a class="docs-heading-anchor" href="#2.1-run_calibration-Signature">2.1 <code>run_calibration</code> Signature</a><a id="2.1-run_calibration-Signature-1"></a><a class="docs-heading-anchor-permalink" href="#2.1-run_calibration-Signature" title="Permalink"></a></h3><pre><code class="language-julia hljs">m_par = BASEforHANK.SteadyState.run_calibration(
+    moments_function,
+    cal_dict,
+    m_par;
+    solver = &quot;NelderMead&quot;,
+)</code></pre><ul><li><p><strong><code>moments_function::Function</code></strong> User-written function. Given a parameter object <code>m_par</code>, it must:</p><ol><li>Compute the steady state and required aggregates,</li><li>Return a <code>Dict{String, Float64}</code> with model moments, keyed by moment names.</li></ol></li><li><p><strong><code>cal_dict::Dict</code></strong> Collects all calibration choices (what to calibrate, what to match, and solver options).</p></li><li><p><strong><code>m_par::ModelParameters</code></strong> An instance of <code>::ModelParameters</code>. The optimizer will use this struct to define the initial parameter vector for the initialization of the optimization (depending on the optimizer) and then after running the optimization, the function will output a new set of parameters, all contained in <code>m_par</code>.</p></li><li><p><strong><code>solver::String</code></strong> <em>(optional)</em> Optimization algorithm. Currently:</p><ul><li><code>&quot;NelderMead&quot;</code>: local optimizer (default).</li><li><code>&quot;BBO&quot;</code>: global optimizer using <code>BlackBoxOptim</code>.</li></ul></li></ul><p>Details on the solvers can be found within their respective packages. The default solver is <code>&quot;NelderMead&quot;</code>.</p><p>See <a href="#BASEforHANK.SteadyState.run_calibration">BASEforHANK.SteadyState.run_calibration</a> for the full signature and parameters. The tutorial below provides practical guidance that complements the API docs.</p><article><details class="docstring" open="true"><summary id="BASEforHANK.SteadyState.run_calibration"><a class="docstring-binding" href="#BASEforHANK.SteadyState.run_calibration"><code>BASEforHANK.SteadyState.run_calibration</code></a> — <span class="docstring-category">Function</span></summary><section><div><pre><code class="language-julia hljs">run_calibration(moments_function, cal_dict, m_par; solver = &quot;NelderMead&quot;)</code></pre><p>Calibrate model parameters by minimizing the distance between model-generated moments and empirical targets.</p><p><strong>Arguments</strong></p><ul><li><p><code>moments_function</code>: Function that takes <code>m_par</code> and returns a <code>Dict</code> of model moments (keys matching <code>cal_dict[&quot;target_moments&quot;]</code>).</p></li><li><p><code>cal_dict</code>: <code>Dict</code> with calibration settings. Required keys:</p><ul><li><code>&quot;params_to_calibrate&quot;</code>: <code>Vector{Symbol}</code> of parameter field names to tune.</li><li><code>&quot;target_moments&quot;</code>: <code>Dict</code> of empirical targets keyed by the moment names.</li><li><code>&quot;opt_options&quot;</code> (optional): optimizer-specific options.</li></ul></li><li><p><code>m_par</code>: model parameter struct (fields referenced by <code>params_to_calibrate</code>).</p></li><li><p><code>solver</code>: optimizer selector: <code>&quot;NelderMead&quot;</code> (default) or <code>&quot;BBO&quot;</code>.</p></li></ul><p><strong>Returns</strong></p><ul><li>Updated <code>m_par</code> with calibrated parameter values (same struct type as input).</li></ul><p>Notes</p><ul><li>If <code>moments_function</code> fails for a candidate parameter vector, the optimizer is given a large penalty so it moves away from invalid regions.</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/BASEforHANK/BASEtoolbox.jl/blob/19e3c97b7aad4bb260bad91e701a66aecb90a94b/src/SubModules/SteadyState/calibration_steadystate.jl#L1-L28">source</a></section></details></article><hr/><h3 id="2.2-The-Calibration-Dictionary-cal_dict"><a class="docs-heading-anchor" href="#2.2-The-Calibration-Dictionary-cal_dict">2.2 The Calibration Dictionary <code>cal_dict</code></a><a id="2.2-The-Calibration-Dictionary-cal_dict-1"></a><a class="docs-heading-anchor-permalink" href="#2.2-The-Calibration-Dictionary-cal_dict" title="Permalink"></a></h3><p>At minimum, <code>cal_dict</code> must specify:</p><pre><code class="language-julia hljs">cal_dict = Dict()
+cal_dict[&quot;target_moments&quot;] = Dict()
+
+# 1. Parameters to calibrate (symbols of fields in ModelParameters), for example:
+cal_dict[&quot;params_to_calibrate&quot;] = [:β, :λ]
+
+# 2. Target moments (keyed by a descriptive string), for example:
+cal_dict[&quot;target_moments&quot;][&quot;K/Y&quot;] = 11.22 / 4   # Capital–output ratio
+cal_dict[&quot;target_moments&quot;][&quot;B/K&quot;] = 0.25       # Liquid–to–illiquid ratio
+
+# 3. Optional: optimization options (here for Nelder–Mead)
+cal_dict[&quot;opt_options&quot;] = Optim.Options(;
+    time_limit  = 1200,
+    f_reltol    = 1e-3,
+    store_trace = true,
+    show_trace  = true,
+    show_every  = 30,
+)</code></pre><p><strong>Keys:</strong></p><ul><li><p><code>&quot;params_to_calibrate&quot; :: Vector{Symbol}</code> Parameters from <code>ModelParameters</code> that the optimizer may change.</p></li><li><p><code>&quot;target_moments&quot; :: Dict{String, Float64}</code> Mapping of <strong>moment names</strong> → <strong>target values</strong>. Each key <strong>must</strong> match the keys returned by your <code>moments_function</code>.</p></li><li><p><code>&quot;opt_options&quot;</code> <em>(optional)</em></p><ul><li>For <code>&quot;NelderMead&quot;</code>: <code>Optim.Options</code>.</li><li>For <code>&quot;BBO&quot;</code>: a named tuple with the optimizer settings (see Example 3 below).</li></ul></li></ul><hr/><h3 id="2.3-The-Moments-Function"><a class="docs-heading-anchor" href="#2.3-The-Moments-Function">2.3 The Moments Function</a><a id="2.3-The-Moments-Function-1"></a><a class="docs-heading-anchor-permalink" href="#2.3-The-Moments-Function" title="Permalink"></a></h3><p>The core of the calibration is the function:</p><pre><code class="language-julia hljs">function my_moments_function(m_par)::Dict
+    # 1. Compute steady state
+    ss_full = quiet_call(call_find_steadystate, m_par)
+
+    # 2. Compute aggregates required for your moments
+    n_par = ss_full.n_par
+    args_hh_prob = BASEforHANK.IncomesETC.compute_args_hh_prob_ss(ss_full.KSS, m_par, n_par)
+    BASEforHANK.Parsing.@read_args_hh_prob()  # defines aggregates like N, etc.
+
+    # Example aggregates
+    K = ss_full.KSS
+    Y = BASEforHANK.IncomesETC.output(m_par.Z, K, N, m_par)
+
+    # 3. Construct model moments dictionary
+    model_moments = Dict(
+        &quot;K/Y&quot; =&gt; K / Y / 4.0,  # Quarterly capital-output ratio
+    )
+
+    return model_moments
+end</code></pre><p><strong>Requirements:</strong></p><ul><li>The function must accept <strong>only</strong> <code>m_par</code> as input.</li><li>It <strong>must</strong> return a <code>Dict{String, Float64}</code>.</li><li>The <strong>keys</strong> in this <code>Dict</code> must match those in <code>cal_dict[&quot;target_moments&quot;]</code>.</li><li>You are free to compute any aggregates you like, as long as they are implied by the model. We provide three examples below so you have a sense of how to precisely do this. Although you will have to find the equations to generate the aggregates you wish to match, it buys you the flexibility of being able to stipulate any moment (as long as there is a model-counterpart).</li></ul><p><strong>What does it do?</strong></p><ul><li><p>(1) <strong>Computes some aggregates:</strong> <code>ss_full = quiet_call(call_find_steadystate, m_par)</code> is run. This will always need to be called, since this returns certain steady-state aggregates necessary in its own right and for the computation of other aggregates. On top, <code>BASEforHANK.IncomesETC.compute_args_hh_prob_ss</code> will always need to be called, since this returns additional aggregates possibly relevant for the user&#39;s calibration. From this, the user would be able to compute plenty moments of interest.</p></li><li><p>(2) <strong>Computes the model-moments:</strong> The model-moments of interest to the user will need to be defined by in a dictionary <code>model_moments::Dict()</code>. Here in this example, you the user wanted the capital-to-output ratio and so, the user needs to find its counterpart in the code. In this case, capital in the package code is <code>K</code> and output is <code>Y</code>. The capital-to-output ratio is then computed as <code>K/Y</code>. The actual key in the dictionary, denoted as a <code>String</code>, <code>&quot;K/Y&quot;</code> here, can be anything and will only appear in the end, when we print the final model-moments generated from the parameters returned by the optimizer. For example, you can define it as: <code>model_moments = Dict(&quot;Capital-to-Output&quot; =&gt; K / Y / 4.0)</code>. BUT: the keys for the moments within <code>model_moments</code> has to match the keys of <code>cal_dict</code> e.g., <code>cal_dict[&quot;target_moments&quot;][&quot;Capital-to-Output&quot;] = K / Y / 4.0)</code>.</p></li><li><p>(3) <strong>Output:</strong> The function in the end returns the model-moments, which the optimizer then compares to the target during the optimization procedure and ultimately, in a <code>PrettyTable</code>, once the optimizer has ran through to the specified criteria.</p></li></ul><hr/><h2 id="3-—-Basic-Examples"><a class="docs-heading-anchor" href="#3-—-Basic-Examples">3 — Basic Examples</a><a id="3-—-Basic-Examples-1"></a><a class="docs-heading-anchor-permalink" href="#3-—-Basic-Examples" title="Permalink"></a></h2><h3 id="3.1-One-Target-Calibration"><a class="docs-heading-anchor" href="#3.1-One-Target-Calibration">3.1 One-Target Calibration</a><a id="3.1-One-Target-Calibration-1"></a><a class="docs-heading-anchor-permalink" href="#3.1-One-Target-Calibration" title="Permalink"></a></h3><p>Goal: calibrate β to match a target capital–output ratio.</p><pre><code class="language-julia hljs"># 1. Calibration dictionary
+cal_dict_one_target = Dict()
+cal_dict_one_target[&quot;target_moments&quot;] = Dict()
+
+cal_dict_one_target[&quot;params_to_calibrate&quot;] = [:β]
+cal_dict_one_target[&quot;target_moments&quot;][&quot;K/Y&quot;] = 11.22 / 4   # target K/Y (quarterly)
+
+cal_dict_one_target[&quot;opt_options&quot;] = Optim.Options(;
+    time_limit = 1200,
+)</code></pre><pre><code class="language-julia hljs"># 2. Moments function
+function calculate_one_moment(m_par)
+    # Steady state
+    ss_full = quiet_call(call_find_steadystate, m_par)
+    n_par = ss_full.n_par
+
+    # Aggregates
+    args_hh_prob = BASEforHANK.IncomesETC.compute_args_hh_prob_ss(ss_full.KSS, m_par, n_par)
+    BASEforHANK.Parsing.@read_args_hh_prob()
+
+    K = ss_full.KSS
+    Y = BASEforHANK.IncomesETC.output(m_par.Z, K, N, m_par)
+
+    model_moments = Dict(&quot;K/Y&quot; =&gt; K / Y / 4.0)
+    return model_moments
+end</code></pre><pre><code class="language-julia hljs"># 3. Run calibration
+m_par = BASEforHANK.SteadyState.run_calibration(
+    calculate_one_moment,
+    cal_dict_one_target,
+    m_par;
+    solver = &quot;NelderMead&quot;,
+)</code></pre><hr/><h3 id="3.2-Two-Target-Calibration"><a class="docs-heading-anchor" href="#3.2-Two-Target-Calibration">3.2 Two-Target Calibration</a><a id="3.2-Two-Target-Calibration-1"></a><a class="docs-heading-anchor-permalink" href="#3.2-Two-Target-Calibration" title="Permalink"></a></h3><p>Goal: calibrate β and λ to match <code>K/Y</code> and <code>B/K</code>.</p><pre><code class="language-julia hljs"># 1. Calibration dictionary
+cal_dict_two_targets = Dict()
+cal_dict_two_targets[&quot;target_moments&quot;] = Dict()
+
+cal_dict_two_targets[&quot;params_to_calibrate&quot;] = [:β, :λ]
+cal_dict_two_targets[&quot;target_moments&quot;][&quot;K/Y&quot;] = 11.22 / 4
+cal_dict_two_targets[&quot;target_moments&quot;][&quot;B/K&quot;] = 0.25
+
+cal_dict_two_targets[&quot;opt_options&quot;] = Optim.Options(
+    time_limit = 1200,
+    f_reltol   = 1e-3,
+)</code></pre><pre><code class="language-julia hljs"># 2. Moments function with two moments
+function calculate_two_moments(m_par)
+    # Steady state
+    ss_full = quiet_call(call_find_steadystate, m_par)
+    n_par   = ss_full.n_par
+
+    args_hh_prob = BASEforHANK.IncomesETC.compute_args_hh_prob_ss(ss_full.KSS, m_par, n_par)
+    BASEforHANK.Parsing.@read_args_hh_prob()
+
+    K = ss_full.KSS
+    Y = BASEforHANK.IncomesETC.output(m_par.Z, K, N, m_par)
+
+    # Total bonds: integrate over steady-state distribution
+    B = sum(ss_full.distrSS .* ss_full.n_par.mesh_b)
+
+    model_moments = Dict(
+        &quot;K/Y&quot; =&gt; K / Y / 4.0,
+        &quot;B/K&quot; =&gt; B / K,
+    )
+
+    return model_moments
+end</code></pre><pre><code class="language-julia hljs"># 3. Run calibration
+m_par = BASEforHANK.SteadyState.run_calibration(
+    calculate_two_moments,
+    cal_dict_two_targets,
+    m_par;
+    solver = &quot;NelderMead&quot;,
+)</code></pre><hr/><h2 id="4-—-Higher-Dimensional-Example-and-Global-Optimization"><a class="docs-heading-anchor" href="#4-—-Higher-Dimensional-Example-and-Global-Optimization">4 — Higher-Dimensional Example and Global Optimization</a><a id="4-—-Higher-Dimensional-Example-and-Global-Optimization-1"></a><a class="docs-heading-anchor-permalink" href="#4-—-Higher-Dimensional-Example-and-Global-Optimization" title="Permalink"></a></h2><p>When calibrating several parameters at once, one can still use <code>NelderMead</code>, but also the global optimizer such as <code>BlackBoxOptim</code> (solver <code>&quot;BBO&quot;</code>). Below is a compact example with five targets and five parameters.</p><h3 id="4.1-Calibration-Dictionary-for-&quot;BBO&quot;"><a class="docs-heading-anchor" href="#4.1-Calibration-Dictionary-for-&quot;BBO&quot;">4.1 Calibration Dictionary for <code>&quot;BBO&quot;</code></a><a id="4.1-Calibration-Dictionary-for-&quot;BBO&quot;-1"></a><a class="docs-heading-anchor-permalink" href="#4.1-Calibration-Dictionary-for-&quot;BBO&quot;" title="Permalink"></a></h3><pre><code class="language-julia hljs">cal_dict_BBO = Dict(
+    &quot;params_to_calibrate&quot; =&gt; [:β, :λ, :Tlev, :ζ, :Rbar],
+    &quot;target_moments&quot; =&gt; Dict(
+        &quot;K/Y&quot;            =&gt; 11.22 / 4,
+        &quot;B/K&quot;            =&gt; 0.25,
+        &quot;G/Y&quot;            =&gt; 0.20,
+        &quot;T10W&quot;           =&gt; 0.67,
+        &quot;Frac Borrowers&quot; =&gt; 0.16,
+    ),
+    &quot;opt_options&quot; =&gt; (
+        SearchRange = [
+            (0.90, 0.999),  # β
+            (0.01, 0.20),   # λ
+            (1.00, 1.50),   # Tlev
+            (0.00, 0.0005), # ζ
+            (0.00, 0.05),   # Rbar
+        ],
+        Method        = :adaptive_de_rand_1_bin_radiuslimited,
+        MaxTime       = 10800,   # seconds
+        TraceInterval = 30,
+        TraceMode     = :compact,
+        TargetFitness = 1e-3,
+    ),
+)</code></pre><p>Key points for <code>&quot;BBO&quot;</code>:</p><ul><li><code>&quot;opt_options&quot;</code> must be a named tuple.</li><li><code>SearchRange</code> is <strong>required</strong>: it gives lower and upper bounds for each parameter in <code>&quot;params_to_calibrate&quot;</code>.</li><li>The broader the bounds, the longer the search may take.</li><li>More can be read about <code>BlackBoxOptim</code> here: https://github.com/robertfeldt/BlackBoxOptim.jl</li></ul><h3 id="4.2-Moments-Function-(Sketch)"><a class="docs-heading-anchor" href="#4.2-Moments-Function-(Sketch)">4.2 Moments Function (Sketch)</a><a id="4.2-Moments-Function-(Sketch)-1"></a><a class="docs-heading-anchor-permalink" href="#4.2-Moments-Function-(Sketch)" title="Permalink"></a></h3><p>The full example computes:</p><ul><li><code>K/Y</code> (capital-output),</li><li><code>B/K</code> (liquid–to–illiquid ratio),</li><li><code>G/Y</code> (government spending-output),</li><li><code>T10W</code> (top 10% wealth share),</li><li><code>Frac Borrowers</code> (fraction of borrowers).</li></ul><p>The structure is the same: compute the steady state, compute the necessary aggregates, then build and return a <code>Dict</code>. Conceptually:</p><pre><code class="language-julia hljs">function calculate_moments(m_par)
+    ss_full = quiet_call(call_find_steadystate, m_par)
+    n_par   = ss_full.n_par
+
+    args_hh_prob = BASEforHANK.IncomesETC.compute_args_hh_prob_ss(ss_full.KSS, m_par, n_par)
+    BASEforHANK.Parsing.@read_args_hh_prob()
+
+    # Example aggregates (only schematic)
+    K = ss_full.KSS
+    B = sum(ss_full.distrSS .* ss_full.n_par.mesh_b)
+    Y = BASEforHANK.IncomesETC.output(m_par.Z, K, N, m_par)
+    # ... compute G, T, wealth distribution, TOP10Wshare, fr_borr, etc. ...
+
+    model_moments = Dict(
+        &quot;K/Y&quot;            =&gt; K / Y / 4.0,
+        &quot;B/K&quot;            =&gt; B / K,
+        &quot;G/Y&quot;            =&gt; G / Y,
+        &quot;T10W&quot;           =&gt; TOP10Wshare,
+        &quot;Frac Borrowers&quot; =&gt; fr_borr,
+    )
+    return model_moments
+end</code></pre><p>Then run:</p><pre><code class="language-julia hljs">m_par = BASEforHANK.SteadyState.run_calibration(
+    calculate_moments,
+    cal_dict_BBO,
+    m_par;
+    solver = &quot;BBO&quot;,
+)</code></pre><hr/><h2 id="5-—-Practical-Tips-and-Checklist"><a class="docs-heading-anchor" href="#5-—-Practical-Tips-and-Checklist">5 — Practical Tips and Checklist</a><a id="5-—-Practical-Tips-and-Checklist-1"></a><a class="docs-heading-anchor-permalink" href="#5-—-Practical-Tips-and-Checklist" title="Permalink"></a></h2><p><strong>Tips:</strong></p><ul><li>Start with <strong>few parameters and moments</strong> to test your setup.</li><li>Use a <strong>short time limit</strong> initially (e.g. 20 minutes) and inspect how close the solution gets.</li><li>Narrow the <code>SearchRange</code> when using <code>&quot;BBO&quot;</code> to reduce runtime.</li><li>Check the optimizer trace (objective values) for convergence issues or weird behavior.</li></ul><p><strong>Checklist:</strong></p><ul><li><p>[ ] Decide which model parameters to calibrate (<code>&quot;params_to_calibrate&quot;</code>).</p></li><li><p>[ ] Decide which data (or target) moments to match and their values (<code>&quot;target_moments&quot;</code>).</p></li><li><p>[ ] Write a <code>moments_function(m_par)</code> that:</p><ul><li>[ ] Computes the steady state,</li><li>[ ] Computes aggregates needed for the target moments,</li><li>[ ] Returns a <code>Dict</code> with keys matching <code>&quot;target_moments&quot;</code>.</li></ul></li><li><p>[ ] Set reasonable optimization options in <code>&quot;opt_options&quot;</code> (and bounds for <code>&quot;BBO&quot;</code>).</p></li><li><p>[ ] Run <code>run_calibration</code> with your chosen solver.</p></li><li><p>[ ] Inspect the results: updated <code>m_par</code> and the printed model vs. target moments.</p></li></ul><p>Once this is in place, calibration becomes a drop-in step in your workflow: you can quickly test alternative targets, different sets of calibrated parameters, or change solvers by modifying just <code>cal_dict</code> and the moments function.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../SteadyState/">« Steady state</a><a class="docs-footer-nextpage" href="../PerturbationSolution/">Perturbation solution »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Thursday 11 December 2025 12:40">Thursday 11 December 2025</span>. Using Julia version 1.12.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
