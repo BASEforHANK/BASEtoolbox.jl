@@ -147,11 +147,9 @@ Notes
     properly restored when the call exits.
 """
 function quiet_call(f, args...; kwargs...)
-    open("/dev/null", "w") do devnull
-        redirect_stdout(devnull) do
-            redirect_stderr(devnull) do
-                return f(args...; kwargs...)
-            end
+    redirect_stdout(devnull) do
+        redirect_stderr(devnull) do
+            return f(args...; kwargs...)
         end
     end
 end
