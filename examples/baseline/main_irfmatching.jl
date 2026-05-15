@@ -62,7 +62,10 @@ e_set = EstimationSettings(;
         "scale_responses_by" => :B, # This variable then needs to be in the set of responses. Scaling is done so peak "X" response = 1 i.e., responses are scaled by max of B's responses
         "irfs_to_target" => paths["src_example"] * "/Data/irf_noisy_0706_inclPC.csv",
     ),
+    sampler = :dime,
 );
+
+@printf "-+-+-+-+-+ Sampler: " e_set.sampler
 
 # set some paths
 @set! e_set.save_mode_file = paths["bld_example"] * "/HANK_mode.jld2";

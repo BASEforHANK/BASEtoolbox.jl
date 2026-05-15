@@ -580,4 +580,15 @@ in the fields `mode_start_file`, `data_file`, `save_mode_file` and `save_posteri
     mhscale::Float64 = 0.00015
     debug_print::Bool = true
     seed::Int = 778187
+
+    # Sampler selection (:rwmh or :dime)
+    sampler::Symbol = :dime
+
+    # DIME settings (used when sampler == :dime)
+    dime_nchain_factor::Int = 5
+    dime_sigma::Float64 = 1e-5
+    dime_gamma::Union{Nothing,Float64} = nothing
+    dime_aimh_prob::Float64 = 0.1
+    dime_df_proposal_dist::Int = 10
+    dime_rho::Float64 = 0.999
 end
