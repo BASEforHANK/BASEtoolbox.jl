@@ -575,8 +575,8 @@ in the fields `mode_start_file`, `data_file`, `save_mode_file` and `save_posteri
     x_tol::Float64 = 1.0e-4
 
     multi_chain_init::Bool = false
-    ndraws::Int = 400
-    burnin::Int = 100
+    ndraws::Int = 20
+    burnin::Int = 50
     mhscale::Float64 = 0.00015
     debug_print::Bool = true
     seed::Int = 778187
