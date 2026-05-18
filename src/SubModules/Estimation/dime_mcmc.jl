@@ -55,33 +55,18 @@ function dime_mcmc(
         )
     end
 
+    orig_blas_threads = LinearAlgebra.BLAS.get_num_threads()
+    LinearAlgebra.BLAS.set_num_threads(1)
+
     init = _dime_ensemble_init(xhat, Σ, nchain, vec_logprob)
 
     @printf "DIME ensemble initialized: %d chains, %d iterations (%d burnin + %d production), %d threads\n" nchain niter e_set.burnin e_set.ndraws Threads.nthreads()
     flush(stdout)
     flush(stderr)
 
-    orig_blas_threads = LinearAlgebra.BLAS.get_num_threads()
-    LinearAlgebra.BLAS.set_num_threads(1)
-
-    # Wrap log-prob to log progress to stdout (ProgressBars may not render in all IDEs)
-    call_count = Threads.Atomic{Int}(0)
-    calls_per_iter = 2  # RunDIME evaluates two half-ensembles per iteration
-    log_every = 1 #max(1, niter ÷ 20)
-    function vec_logprob_logged(params_matrix::AbstractMatrix)
-        lprobs = vec_logprob(params_matrix)
-        iter_est = Threads.atomic_add!(call_count, 1) ÷ calls_per_iter + 1
-        if iter_est % log_every == 0
-            best = maximum(lprobs)
-            @printf "  DIME iteration ~%d/%d  (best ll in batch: %.2f)\n" iter_est niter best
-            flush(stdout)
-        end
-        return lprobs
-    end
-
     try
         chains_3d, lprobs_2d, _ = RunDIME(
-            vec_logprob_logged,
+            vec_logprob,
             init,
             niter;
             sigma = e_set.dime_sigma,
