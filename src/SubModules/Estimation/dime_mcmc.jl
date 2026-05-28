@@ -58,7 +58,14 @@ function dime_mcmc(
     orig_blas_threads = LinearAlgebra.BLAS.get_num_threads()
     LinearAlgebra.BLAS.set_num_threads(1)
 
-    init = _dime_ensemble_init(xhat, Σ, nchain, vec_logprob)
+    init = _dime_ensemble_init(
+        xhat,
+        Σ,
+        nchain,
+        vec_logprob;
+        sample_from_prior = !e_set.do_mode_finding,
+        priors = er.priors,
+    )
 
     @printf "DIME ensemble initialized: %d chains, %d iterations (%d burnin + %d production), %d threads\n" nchain niter e_set.burnin e_set.ndraws Threads.nthreads()
     flush(stdout)
@@ -229,26 +236,38 @@ function _dime_ensemble_init(
     vec_logprob::Function;
     max_attempts::Int = 10,
     init_scale::Float64 = 0.5,
+    sample_from_prior::Bool = false,
+    priors::Vector = [],
 )
     ndim = length(xhat)
-    NormDist = MvNormal(zeros(ndim), Matrix(Σ))
 
-    init = xhat .+ init_scale .* rand(NormDist, nchain)
-    lprobs = vec_logprob(init)
-
-    for attempt = 1:max_attempts
-        bad_idx = findall(lprobs .< -1e6)
-        if isempty(bad_idx)
-            return init
-        end
-        scale = init_scale / (2^attempt)
-        init[:, bad_idx] .= xhat .+ scale .* rand(NormDist, length(bad_idx))
-        lprobs[bad_idx] .= vec_logprob(@view init[:, bad_idx])
+    if sample_from_prior && !isempty(priors)
+        @printf "Ensemble init: sampling %d chains from the prior.\n" nchain
+        init = hcat([rand.(priors) for _ = 1:nchain]...)
+    else
+        @printf "Ensemble init: drawing %d chains around xhat (mode) with scale=%.3f.\n" nchain init_scale
+        NormDist = MvNormal(zeros(ndim), Matrix(Σ))
+        init = xhat .+ init_scale .* rand(NormDist, nchain)
     end
 
-    # last resort: place remaining bad chains very close to the mode
+    lprobs = vec_logprob(init)
+
     bad_idx = findall(lprobs .< -1e6)
+    @printf "Ensemble init: %d / %d chains have valid log-prob after initial draw.\n" (nchain - length(bad_idx)) nchain
     if !isempty(bad_idx)
+        @printf "Ensemble init: retrying %d bad chains using fallback (shrinking around xhat).\n" length(bad_idx)
+        NormDist_fallback = MvNormal(zeros(ndim), Matrix(Σ))
+        for attempt = 1:max_attempts
+            scale = init_scale / (2^attempt)
+            init[:, bad_idx] .= xhat .+ scale .* rand(NormDist_fallback, length(bad_idx))
+            lprobs[bad_idx] .= vec_logprob(@view init[:, bad_idx])
+            bad_idx = findall(lprobs .< -1e6)
+            if isempty(bad_idx)
+                return init
+            end
+        end
+
+        # last resort: place remaining bad chains very close to the mode
         for j in bad_idx
             init[:, j] .= xhat .+ 1e-4 .* randn(ndim)
         end
