@@ -339,7 +339,10 @@ function find_mode(
     smoother_output,
     m_par,
     sr,
-    lr = mode_finding(sr, lr, m_par, e_set, par_start)
+    lr = mode_finding(
+        sr, lr, m_par, e_set, par_start;
+        skip_optimization = !e_set.do_mode_finding,
+    )
 
     lr = update_model(sr, lr, m_par)
 

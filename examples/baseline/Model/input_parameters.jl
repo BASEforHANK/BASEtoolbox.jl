@@ -567,6 +567,7 @@ in the fields `mode_start_file`, `data_file`, `save_mode_file` and `save_posteri
     save_posterior_file::String = ""
 
     estimate_model::Bool = true
+    do_mode_finding::Bool = false
 
     max_iter_mode::Int = 3
     optimizer::Optim.AbstractOptimizer = NelderMead()
