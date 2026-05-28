@@ -567,6 +567,7 @@ in the fields `mode_start_file`, `data_file`, `save_mode_file` and `save_posteri
     save_posterior_file::String = ""
 
     estimate_model::Bool = true
+    do_mode_finding::Bool = false
 
     max_iter_mode::Int = 3
     optimizer::Optim.AbstractOptimizer = NelderMead()
@@ -575,9 +576,20 @@ in the fields `mode_start_file`, `data_file`, `save_mode_file` and `save_posteri
     x_tol::Float64 = 1.0e-4
 
     multi_chain_init::Bool = false
-    ndraws::Int = 400
-    burnin::Int = 100
+    ndraws::Int = 20
+    burnin::Int = 50
     mhscale::Float64 = 0.00015
     debug_print::Bool = true
     seed::Int = 778187
+
+    # Sampler selection (:rwmh or :dime)
+    sampler::Symbol = :dime
+
+    # DIME settings (used when sampler == :dime)
+    dime_nchain_factor::Int = 5
+    dime_sigma::Float64 = 1e-5
+    dime_gamma::Union{Nothing,Float64} = nothing
+    dime_aimh_prob::Float64 = 0.1
+    dime_df_proposal_dist::Int = 10
+    dime_rho::Float64 = 0.999
 end

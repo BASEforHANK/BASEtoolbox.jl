@@ -62,7 +62,7 @@ Notes:
   - The optimizer and tolerances are taken from `e_set` (e.g., `e_set.optimizer`,
     `e_set.x_tol`).        # Load data
 """
-function mode_finding(sr, lr, m_par, e_set, par_start)
+function mode_finding(sr, lr, m_par, e_set, par_start; skip_optimization::Bool = false)
     if !e_set.irf_matching # No irf matching? => likelihood estimation
         # Load data
         Data_temp = DataFrame(CSV.File(e_set.data_file; missingstring = "NaN"))
@@ -114,7 +114,31 @@ function mode_finding(sr, lr, m_par, e_set, par_start)
             append!(priors, meas_error_prior)          # add the meas. error priors
         end
 
+        if skip_optimization
+            @printf "skip_optimization=true: skipping numerical optimization, returning prior modes.\n"
+            par_final = mode.(priors)
+            hessian_final = Matrix{Float64}(I, length(par_final), length(par_final))
+
+            return par_final,
+            hessian_final,
+            NaN,
+            meas_error,
+            meas_error_std,
+            parnames,
+            Data,
+            Data_missing,
+            [],
+            [],
+            H_sel,
+            priors,
+            [],
+            m_par,
+            sr,
+            lr
+        end
+
         # Optimization
+        @printf "Running numerical optimization...\n"
         # Define objective function
         Laux(pp) =
             -likeli(
@@ -387,9 +411,33 @@ function mode_finding(sr, lr, m_par, e_set, par_start)
             append!(indexes_sel_vars, getfield(sr.indexes_r, i))
         end
 
+        if skip_optimization
+            @printf "skip_optimization=true: skipping numerical optimization, returning prior modes.\n"
+            par_final = mode.(priors)
+            hessian_final = Matrix{Float64}(I, length(par_final), length(par_final))
+
+            return par_final,
+            hessian_final,
+            NaN,
+            [],
+            [],
+            parnames,
+            [],
+            [],
+            IRFtargets,
+            IRFserrors,
+            [],
+            priors,
+            [],
+            m_par,
+            sr,
+            lr
+        end
+
         m_par = Flatten.reconstruct(m_par, par)
 
         # Optimization
+        @printf "Running numerical optimization (IRF matching)...\n"
         # Define objective function
         Lirfaux(pp) =
             -irfmatch(

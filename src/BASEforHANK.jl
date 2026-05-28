@@ -339,7 +339,10 @@ function find_mode(
     smoother_output,
     m_par,
     sr,
-    lr = mode_finding(sr, lr, m_par, e_set, par_start)
+    lr = mode_finding(
+        sr, lr, m_par, e_set, par_start;
+        skip_optimization = !e_set.do_mode_finding,
+    )
 
     lr = update_model(sr, lr, m_par)
 
@@ -365,8 +368,12 @@ end
 """
     sample_posterior(sr, lr, er, m_par, e_set)
 
-Sample from the posterior with Random-Walk Metropolis–Hastings [`rwmh()`](@ref), compute the
-sample mean as a point estimate, and return draws and diagnostics.
+Sample from the posterior using the sampler specified by `e_set.sampler`:
+
+  - `:rwmh` (default): Random-Walk Metropolis–Hastings via [`rwmh()`](@ref)
+  - `:dime`: DIME ensemble MCMC via [`dime_mcmc()`](@ref)
+
+Computes the sample mean as a point estimate and returns draws and diagnostics.
 
 # Arguments
 
@@ -403,22 +410,34 @@ function sample_posterior(
     e_set::EstimationSettings,
 )
     @printf "Started MCMC. This might take a while...\n"
+    @printf "======================================\n"
+    @printf "  Sampler: %s\n" string(e_set.sampler)
+    @printf "======================================\n"
 
     hessian_sym = Symmetric(nearest_spd(inv(er.hessian_final)))
-    if e_set.multi_chain_init == true
-        init_draw, init_success =
-            multi_chain_init(er.par_final, hessian_sym, sr, lr, er, m_par, e_set)
 
-        par_final = init_draw
-        if init_success == false
-            error("Couldn't find initial value that produces posterior")
+    if e_set.sampler == :rwmh
+        if e_set.multi_chain_init == true
+            init_draw, init_success =
+                multi_chain_init(er.par_final, hessian_sym, sr, lr, er, m_par, e_set)
+
+            par_final = init_draw
+            if init_success == false
+                error("Couldn't find initial value that produces posterior")
+            end
+        else
+            par_final = copy(er.par_final)
         end
-    else
-        par_final = copy(er.par_final)
-    end
 
-    draws_raw, posterior, accept_rate =
-        rwmh(par_final, hessian_sym, sr, lr, er, m_par, e_set)
+        draws_raw, posterior, accept_rate =
+            rwmh(par_final, hessian_sym, sr, lr, er, m_par, e_set)
+    elseif e_set.sampler == :dime
+        par_final = copy(er.par_final)
+        draws_raw, posterior, accept_rate =
+            dime_mcmc(par_final, hessian_sym, sr, lr, er, m_par, e_set)
+    else
+        error("Unknown sampler: $(e_set.sampler). Use :rwmh or :dime.")
+    end
 
     ##
     parnames_ascii = collect(metaflatten(m_par, label))
@@ -428,11 +447,15 @@ function sample_posterior(
         end
     end
 
+    # RWMH includes burnin rows; DIME returns only post-burnin draws
+    if e_set.sampler == :dime
+        draws_for_chains = draws_raw
+    else
+        draws_for_chains = draws_raw[(e_set.burnin + 1):end, :]
+    end
+
     chn = Chains(
-        reshape(
-            draws_raw[(e_set.burnin + 1):end, :],
-            (size(draws_raw[(e_set.burnin + 1):end, :])..., 1),
-        ),
+        reshape(draws_for_chains, (size(draws_for_chains)..., 1)),
         [string(parnames_ascii[i]) for i in eachindex(parnames_ascii)],
     )
     chn_summary = summarize(chn)

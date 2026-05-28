@@ -33,9 +33,10 @@ using LinearAlgebra,
 using Parameters: @unpack
 using MatrixEquations: lyapd
 using ProximalOperators: prox!, IndPSD
+using DIMESampler: RunDIME
 import Flatten: flattenable
 
-export mode_finding, likeli, nearest_spd, rwmh
+export mode_finding, likeli, nearest_spd, rwmh, dime_mcmc
 
 include("Estimation/likeli.jl")
 include("Estimation/filter_smoother.jl")
@@ -44,5 +45,6 @@ include("Estimation/mcmc.jl")
 include("Estimation/measurement_error.jl")
 include("Estimation/mode_finding.jl")
 include("Estimation/nearest_spd.jl")
+include("Estimation/dime_mcmc.jl")
 
 end # end submodule Estimation
