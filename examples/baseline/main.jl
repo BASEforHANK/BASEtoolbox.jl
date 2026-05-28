@@ -123,24 +123,26 @@ if e_set.estimate_model == true
     er_mode, posterior_mode, smoother_mode, sr_mode, lr_mode, m_par_mode =
         find_mode(sr_reduc, lr_reduc, m_par, e_set)
 
-    # Only relevant output for later plotting will be saved.
-    # If you require all smoother output including the variance estimates
-    # over time, items 4 and 5, comment out the next line.
-    # This increases the hard disk storage significantly.
-    smoother_mode = (0.0, 0.0, smoother_mode[3], 0.0, 0.0, smoother_mode[6], 0.0)
+    if e_set.do_mode_finding
+        # Only relevant output for later plotting will be saved.
+        # If you require all smoother output including the variance estimates
+        # over time, items 4 and 5, comment out the next line.
+        # This increases the hard disk storage significantly.
+        smoother_mode = (0.0, 0.0, smoother_mode[3], 0.0, 0.0, smoother_mode[6], 0.0)
 
-    # Stores mode finding results in file e_set.save_mode_file
-    jldsave(
-        e_set.save_mode_file,
-        true;
-        posterior_mode,
-        smoother_mode,
-        sr_mode,
-        lr_mode,
-        er_mode,
-        m_par_mode,
-        e_set,
-    )
+        # Stores mode finding results in file e_set.save_mode_file
+        jldsave(
+            e_set.save_mode_file,
+            true;
+            posterior_mode,
+            smoother_mode,
+            sr_mode,
+            lr_mode,
+            er_mode,
+            m_par_mode,
+            e_set,
+        )
+    end
     # !! warning: the provided mode file does not contain smoothed covars (smoother_mode[4] and [5])!!
     # @load BASEforHANK.e_set.save_mode_file posterior_mode sr_mode lr_mode er_mode m_par_mode smoother_mode
 
